@@ -205,7 +205,7 @@ sequenceDiagram
     C2->>API: UPDATE (rv: 100)
     API-->>C2: Conflict (rv mismatch)
     
-    style C2 fill:#FFB6C1
+    Note over C2: Conflict detected
 ```
 
 ### Handling Conflicts
