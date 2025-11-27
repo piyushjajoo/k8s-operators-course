@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> Unknown
+    Unknown --> True: Resource ready
+    Unknown --> False: Resource not ready
+    True --> False: Resource degraded
+    False --> True: Resource recovered
+    True --> [*]
+    False --> [*]
+

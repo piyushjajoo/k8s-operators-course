@@ -1,0 +1,14 @@
+graph LR
+    RESOURCE[Custom Resource] --> SPEC[spec]
+    RESOURCE --> STATUS[status subresource]
+    
+    SPEC --> USER[User writes]
+    STATUS --> CONTROLLER[Controller writes]
+    
+    STATUS --> CONDITIONS[conditions]
+    STATUS --> PHASE[phase]
+    STATUS --> OBSERVED[observedGeneration]
+    
+    style STATUS fill:#FFB6C1
+    style CONDITIONS fill:#90EE90
+

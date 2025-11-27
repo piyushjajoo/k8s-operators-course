@@ -32,10 +32,11 @@ The course is divided into 8 modules, each building on the previous:
    - [Reconciliation logic](module-03/lessons/03-reconciliation-logic.md)
    - [Client operations](module-03/lessons/04-client-go.md)
 
-4. **Module 4: Advanced Reconciliation Patterns** (Coming Soon)
-   - Status management
-   - Finalizers
-   - Watching and indexing
+4. **[Module 4: Advanced Reconciliation Patterns](module-04/README.md)** ✅
+   - [Conditions and status](module-04/lessons/01-conditions-status.md)
+   - [Finalizers and cleanup](module-04/lessons/02-finalizers-cleanup.md)
+   - [Watching and indexing](module-04/lessons/03-watching-indexing.md)
+   - [Advanced patterns](module-04/lessons/04-advanced-patterns.md)
 
 5. **Module 5: Webhooks and Admission Control** (Coming Soon)
    - Validating webhooks
@@ -83,6 +84,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 3.3: Reconciliation Logic](module-03/lessons/03-reconciliation-logic.md) | [Lab 3.3](module-03/labs/lab-03-reconciliation-logic.md)
 - [Lesson 3.4: Client Operations](module-03/lessons/04-client-go.md) | [Lab 3.4](module-03/labs/lab-04-client-go.md)
 
+### Module 4: Advanced Reconciliation Patterns ✅
+
+- [Module Overview](module-04/README.md)
+- [Lesson 4.1: Conditions and Status](module-04/lessons/01-conditions-status.md) | [Lab 4.1](module-04/labs/lab-01-conditions-status.md)
+- [Lesson 4.2: Finalizers and Cleanup](module-04/lessons/02-finalizers-cleanup.md) | [Lab 4.2](module-04/labs/lab-02-finalizers-cleanup.md)
+- [Lesson 4.3: Watching and Indexing](module-04/lessons/03-watching-indexing.md) | [Lab 4.3](module-04/labs/lab-03-watching-indexing.md)
+- [Lesson 4.4: Advanced Patterns](module-04/lessons/04-advanced-patterns.md) | [Lab 4.4](module-04/labs/lab-04-advanced-patterns.md)
+
 ## Getting Started
 
 ### Prerequisites
@@ -127,7 +136,8 @@ The course is divided into 8 modules, each building on the previous:
 - ✅ Module 1: Complete
 - ✅ Module 2: Complete
 - ✅ Module 3: Complete
-- 🚧 Module 4-8: In Progress
+- ✅ Module 4: Complete
+- 🚧 Module 5-8: In Progress
 
 ## Learning Approach
 

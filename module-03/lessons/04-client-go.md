@@ -356,5 +356,5 @@ Congratulations! You've completed Module 3. You now understand:
 
 In [Module 4](../module-04/README.md), you'll learn advanced reconciliation patterns like conditions, finalizers, and multi-phase reconciliation.
 
-**Navigation:** [← Previous: Reconciliation Logic](03-reconciliation-logic.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
+**Navigation:** [← Previous: Reconciliation Logic](03-reconciliation-logic.md) | [Module Overview](../README.md) | [Next: Module 4 →](../module-04/README.md)
 
