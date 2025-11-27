@@ -92,9 +92,10 @@ Each lesson includes hands-on exercises that add testing and observability to yo
 ## Solutions
 
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
-- [Lab 6.2 Solutions](solutions/) - Unit test examples
-- [Lab 6.3 Solutions](solutions/) - Integration test examples
-- [Lab 6.4 Solutions](solutions/) - Observability examples
+- [Lab 6.1 Solutions](solutions/suite_test.go) - Test suite setup
+- [Lab 6.2 Solutions](solutions/database_controller_test.go) - Unit test examples
+- [Lab 6.3 Solutions](solutions/integration_test.go) - Integration test examples
+- [Lab 6.4 Solutions](solutions/metrics.go, solutions/observability.go) - Observability examples
 
 ## Additional Resources
 

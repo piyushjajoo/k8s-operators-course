@@ -266,7 +266,8 @@ In this lab, you:
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
-- [Observability Examples](../solutions/) - Complete observability examples
+- [Metrics Implementation](../solutions/metrics.go) - Prometheus metrics setup
+- [Observability Examples](../solutions/observability.go) - Structured logging and events
 
 ## Congratulations!
 

@@ -270,6 +270,11 @@ In this lab, you:
 5. Coverage helps identify untested code
 6. Proper test structure is important
 
+## Solutions
+
+The test suite setup from this lab is used in all subsequent tests:
+- [Test Suite Setup](../solutions/suite_test.go) - Complete test suite with envtest configuration
+
 ## Next Steps
 
 Now let's write comprehensive unit tests for your operator!

@@ -322,7 +322,7 @@ In this lab, you:
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
-- [Integration Test Examples](../solutions/) - Complete integration test examples
+- [Integration Test Examples](../solutions/integration_test.go) - Complete integration test examples
 
 ## Next Steps
 

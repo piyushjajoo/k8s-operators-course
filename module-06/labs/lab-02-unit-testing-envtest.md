@@ -258,7 +258,8 @@ In this lab, you:
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
-- [Unit Test Examples](../solutions/) - Complete unit test examples
+- [Test Suite Setup](../solutions/suite_test.go) - Complete test suite with envtest
+- [Unit Test Examples](../solutions/database_controller_test.go) - Complete unit test examples
 
 ## Next Steps
 

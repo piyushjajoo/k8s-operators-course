@@ -185,7 +185,7 @@ Complete working solutions for all labs are available in each module's `solution
 - **Module 3**: [Database operator](module-03/solutions/) - Complete Database operator (types, controller)
 - **Module 4**: [Advanced patterns](module-04/solutions/) - Condition helpers, finalizers, watch setup
 - **Module 5**: [Webhooks](module-05/solutions/) - Validating and mutating webhooks
-- **Module 6**: [Testing](module-06/solutions/) - Unit and integration test examples
+- **Module 6**: [Testing](module-06/solutions/) - Unit tests, integration tests, metrics, and observability examples
 
 Each solution includes:
 - Complete, working code examples
