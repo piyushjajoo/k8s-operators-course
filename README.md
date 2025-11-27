@@ -44,10 +44,11 @@ The course is divided into 8 modules, each building on the previous:
    - [Mutating webhooks](module-05/lessons/03-mutating-webhooks.md)
    - [Webhook deployment](module-05/lessons/04-webhook-deployment.md)
 
-6. **Module 6: Testing and Debugging** (Coming Soon)
-   - Unit testing
-   - Integration testing
-   - Observability
+6. **[Module 6: Testing and Debugging](module-06/README.md)** ✅
+   - [Testing fundamentals](module-06/lessons/01-testing-fundamentals.md)
+   - [Unit testing](module-06/lessons/02-unit-testing-envtest.md)
+   - [Integration testing](module-06/lessons/03-integration-testing.md)
+   - [Debugging and observability](module-06/lessons/04-debugging-observability.md)
 
 7. **Module 7: Production Considerations** (Coming Soon)
    - Packaging and distribution
@@ -101,6 +102,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 5.3: Mutating Webhooks](module-05/lessons/03-mutating-webhooks.md) | [Lab 5.3](module-05/labs/lab-03-mutating-webhooks.md)
 - [Lesson 5.4: Webhook Deployment](module-05/lessons/04-webhook-deployment.md) | [Lab 5.4](module-05/labs/lab-04-webhook-deployment.md)
 
+### Module 6: Testing and Debugging ✅
+
+- [Module Overview](module-06/README.md)
+- [Lesson 6.1: Testing Fundamentals](module-06/lessons/01-testing-fundamentals.md) | [Lab 6.1](module-06/labs/lab-01-testing-fundamentals.md)
+- [Lesson 6.2: Unit Testing](module-06/lessons/02-unit-testing-envtest.md) | [Lab 6.2](module-06/labs/lab-02-unit-testing-envtest.md)
+- [Lesson 6.3: Integration Testing](module-06/lessons/03-integration-testing.md) | [Lab 6.3](module-06/labs/lab-03-integration-testing.md)
+- [Lesson 6.4: Debugging and Observability](module-06/lessons/04-debugging-observability.md) | [Lab 6.4](module-06/labs/lab-04-debugging-observability.md)
+
 ## Getting Started
 
 ### Prerequisites
@@ -147,7 +156,8 @@ The course is divided into 8 modules, each building on the previous:
 - ✅ Module 3: Complete
 - ✅ Module 4: Complete
 - ✅ Module 5: Complete
-- 🚧 Module 6-8: In Progress
+- ✅ Module 6: Complete
+- 🚧 Module 7-8: In Progress
 
 ## Learning Approach
 
@@ -175,6 +185,7 @@ Complete working solutions for all labs are available in each module's `solution
 - **Module 3**: [Database operator](module-03/solutions/) - Complete Database operator (types, controller)
 - **Module 4**: [Advanced patterns](module-04/solutions/) - Condition helpers, finalizers, watch setup
 - **Module 5**: [Webhooks](module-05/solutions/) - Validating and mutating webhooks
+- **Module 6**: [Testing](module-06/solutions/) - Unit and integration test examples
 
 Each solution includes:
 - Complete, working code examples
