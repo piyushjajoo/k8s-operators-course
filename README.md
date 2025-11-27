@@ -26,10 +26,11 @@ The course is divided into 8 modules, each building on the previous:
    - [Development environment](module-02/lessons/03-dev-environment.md)
    - [Your first operator](module-02/lessons/04-first-operator.md)
 
-3. **Module 3: Building Custom Controllers** (Coming Soon)
-   - Controller runtime
-   - API design
-   - Reconciliation logic
+3. **[Module 3: Building Custom Controllers](module-03/README.md)** ✅
+   - [Controller runtime](module-03/lessons/01-controller-runtime.md)
+   - [API design](module-03/lessons/02-designing-api.md)
+   - [Reconciliation logic](module-03/lessons/03-reconciliation-logic.md)
+   - [Client operations](module-03/lessons/04-client-go.md)
 
 4. **Module 4: Advanced Reconciliation Patterns** (Coming Soon)
    - Status management
@@ -74,6 +75,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 2.3: Dev Environment](module-02/lessons/03-dev-environment.md) | [Lab 2.3](module-02/labs/lab-03-dev-environment.md)
 - [Lesson 2.4: First Operator](module-02/lessons/04-first-operator.md) | [Lab 2.4](module-02/labs/lab-04-first-operator.md)
 
+### Module 3: Building Custom Controllers ✅
+
+- [Module Overview](module-03/README.md)
+- [Lesson 3.1: Controller Runtime](module-03/lessons/01-controller-runtime.md) | [Lab 3.1](module-03/labs/lab-01-controller-runtime.md)
+- [Lesson 3.2: API Design](module-03/lessons/02-designing-api.md) | [Lab 3.2](module-03/labs/lab-02-designing-api.md)
+- [Lesson 3.3: Reconciliation Logic](module-03/lessons/03-reconciliation-logic.md) | [Lab 3.3](module-03/labs/lab-03-reconciliation-logic.md)
+- [Lesson 3.4: Client Operations](module-03/lessons/04-client-go.md) | [Lab 3.4](module-03/labs/lab-04-client-go.md)
+
 ## Getting Started
 
 ### Prerequisites
@@ -117,7 +126,8 @@ The course is divided into 8 modules, each building on the previous:
 
 - ✅ Module 1: Complete
 - ✅ Module 2: Complete
-- 🚧 Module 3-8: In Progress
+- ✅ Module 3: Complete
+- 🚧 Module 4-8: In Progress
 
 ## Learning Approach
 

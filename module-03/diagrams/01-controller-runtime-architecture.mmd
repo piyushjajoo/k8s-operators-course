@@ -1,0 +1,28 @@
+graph TB
+    subgraph "Your Operator"
+        RECONCILE[Reconciler]
+        CLIENT[Client]
+    end
+    
+    subgraph "controller-runtime"
+        MANAGER[Manager]
+        CACHE[Cache]
+        INFORMER[Informer]
+    end
+    
+    subgraph "Kubernetes"
+        API[API Server]
+        ETCD[(etcd)]
+    end
+    
+    RECONCILE --> MANAGER
+    CLIENT --> MANAGER
+    MANAGER --> CACHE
+    MANAGER --> INFORMER
+    CACHE --> API
+    INFORMER --> API
+    API --> ETCD
+    
+    style MANAGER fill:#FFB6C1
+    style RECONCILE fill:#90EE90
+
