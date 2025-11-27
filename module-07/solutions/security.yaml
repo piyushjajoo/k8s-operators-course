@@ -1,0 +1,90 @@
+# Solution: Security Configuration from Module 7
+# This demonstrates security best practices
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-operator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: database-operator
+  template:
+    metadata:
+      labels:
+        app: database-operator
+    spec:
+      serviceAccountName: database-operator
+      # Security context for pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: manager
+        image: database-operator:latest
+        # Security context for container
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: kube-api-access
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          readOnly: true
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: kube-api-access
+        projected:
+          sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              name: kube-root-ca.crt
+              items:
+              - key: ca.crt
+                path: ca.crt
+          - downwardAPI:
+              items:
+              - path: namespace
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-operator
+spec:
+  podSelector:
+    matchLabels:
+      app: database-operator
+  policyTypes:
+  - Ingress
+  - Egress
+  egress:
+  # Allow egress to Kubernetes API
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow egress to DNS
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: UDP
+      port: 53
+

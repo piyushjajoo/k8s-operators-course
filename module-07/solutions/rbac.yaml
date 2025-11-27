@@ -1,0 +1,94 @@
+# Solution: Optimized RBAC Configuration from Module 7
+# This demonstrates least privilege RBAC
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: database-operator
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: database-operator
+  namespace: default
+rules:
+# Database resources
+- apiGroups:
+  - database.example.com
+  resources:
+  - databases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - database.example.com
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - database.example.com
+  resources:
+  - databases/finalizers
+  verbs:
+  - update
+# StatefulSets
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+# Services
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+# Events (for emitting events)
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: database-operator
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: database-operator
+subjects:
+- kind: ServiceAccount
+  name: database-operator
+  namespace: default
+

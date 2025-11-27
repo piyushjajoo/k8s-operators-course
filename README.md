@@ -50,10 +50,11 @@ The course is divided into 8 modules, each building on the previous:
    - [Integration testing](module-06/lessons/03-integration-testing.md)
    - [Debugging and observability](module-06/lessons/04-debugging-observability.md)
 
-7. **Module 7: Production Considerations** (Coming Soon)
-   - Packaging and distribution
-   - RBAC and security
-   - High availability
+7. **[Module 7: Production Considerations](module-07/README.md)** ✅
+   - [Packaging and distribution](module-07/lessons/01-packaging-distribution.md)
+   - [RBAC and security](module-07/lessons/02-rbac-security.md)
+   - [High availability](module-07/lessons/03-high-availability.md)
+   - [Performance and scalability](module-07/lessons/04-performance-scalability.md)
 
 8. **Module 8: Advanced Topics** (Coming Soon)
    - Multi-tenancy
@@ -110,6 +111,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 6.3: Integration Testing](module-06/lessons/03-integration-testing.md) | [Lab 6.3](module-06/labs/lab-03-integration-testing.md)
 - [Lesson 6.4: Debugging and Observability](module-06/lessons/04-debugging-observability.md) | [Lab 6.4](module-06/labs/lab-04-debugging-observability.md)
 
+### Module 7: Production Considerations ✅
+
+- [Module Overview](module-07/README.md)
+- [Lesson 7.1: Packaging and Distribution](module-07/lessons/01-packaging-distribution.md) | [Lab 7.1](module-07/labs/lab-01-packaging-distribution.md)
+- [Lesson 7.2: RBAC and Security](module-07/lessons/02-rbac-security.md) | [Lab 7.2](module-07/labs/lab-02-rbac-security.md)
+- [Lesson 7.3: High Availability](module-07/lessons/03-high-availability.md) | [Lab 7.3](module-07/labs/lab-03-high-availability.md)
+- [Lesson 7.4: Performance and Scalability](module-07/lessons/04-performance-scalability.md) | [Lab 7.4](module-07/labs/lab-04-performance-scalability.md)
+
 ## Getting Started
 
 ### Prerequisites
@@ -157,7 +166,8 @@ The course is divided into 8 modules, each building on the previous:
 - ✅ Module 4: Complete
 - ✅ Module 5: Complete
 - ✅ Module 6: Complete
-- 🚧 Module 7-8: In Progress
+- ✅ Module 7: Complete
+- 🚧 Module 8: In Progress
 
 ## Learning Approach
 
@@ -186,6 +196,7 @@ Complete working solutions for all labs are available in each module's `solution
 - **Module 4**: [Advanced patterns](module-04/solutions/) - Condition helpers, finalizers, watch setup
 - **Module 5**: [Webhooks](module-05/solutions/) - Validating and mutating webhooks
 - **Module 6**: [Testing](module-06/solutions/) - Unit tests, integration tests, metrics, and observability examples
+- **Module 7**: [Production](module-07/solutions/) - Dockerfile, Helm chart, RBAC, security, HA, and performance examples
 
 Each solution includes:
 - Complete, working code examples

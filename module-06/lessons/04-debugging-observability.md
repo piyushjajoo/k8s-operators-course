@@ -320,5 +320,5 @@ Congratulations! You've completed Module 6. You now understand:
 
 In [Module 7](../module-07/README.md), you'll learn about production deployment and best practices.
 
-**Navigation:** [← Previous: Integration Testing](03-integration-testing.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
+**Navigation:** [← Previous: Integration Testing](03-integration-testing.md) | [Module Overview](../README.md) | [Next: Module 7 →](../module-07/README.md)
 

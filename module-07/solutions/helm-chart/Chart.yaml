@@ -1,0 +1,16 @@
+# Solution: Helm Chart from Module 7
+# Complete Helm chart for Database Operator
+
+apiVersion: v2
+name: database-operator
+description: A Helm chart for Database Operator
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - operator
+  - database
+  - postgresql
+maintainers:
+  - name: Database Operator Team
+

@@ -1,0 +1,55 @@
+# Solution: High Availability Deployment from Module 7
+# This demonstrates HA configuration with multiple replicas and PDB
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-operator
+spec:
+  replicas: 3  # Multiple replicas for HA
+  selector:
+    matchLabels:
+      app: database-operator
+  template:
+    metadata:
+      labels:
+        app: database-operator
+    spec:
+      serviceAccountName: database-operator
+      containers:
+      - name: manager
+        image: database-operator:latest
+        args:
+        - --leader-elect=true  # Enable leader election
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: database-operator-pdb
+spec:
+  minAvailable: 2  # Keep at least 2 pods available
+  selector:
+    matchLabels:
+      app: database-operator
+

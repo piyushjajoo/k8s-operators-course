@@ -1,0 +1,37 @@
+# Solution: Helm Chart Values from Module 7
+# Default values for Database Operator
+
+image:
+  repository: database-operator
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+replicaCount: 3
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+leaderElection:
+  enabled: true
+  resourceName: database-operator-leader-election
+  namespace: default
+
+serviceAccount:
+  create: true
+  name: database-operator
+  annotations: {}
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  fsGroup: 65532
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
