@@ -1,5 +1,7 @@
 # Lesson 1.2: Kubernetes API Machinery
 
+**Navigation:** [← Previous: Control Plane](01-control-plane.md) | [Module Overview](../README.md) | [Next: Controller Pattern →](03-controller-pattern.md)
+
 ## Introduction
 
 The Kubernetes API is RESTful and follows specific conventions. Understanding these conventions is essential for building operators, as you'll be creating and managing resources through this same API.
@@ -306,7 +308,13 @@ When building operators:
 - API discovery helps clients understand your resources
 - Subresources (like status) are useful for your custom resources
 
+## Related Lab
+
+- [Lab 1.2: Working with the Kubernetes API](../labs/lab-02-api-machinery.md) - Hands-on exercises for this lesson
+
 ## Next Steps
 
 In the next lesson, we'll explore the controller pattern - the foundation of how operators work.
+
+**Navigation:** [← Previous: Control Plane](01-control-plane.md) | [Module Overview](../README.md) | [Next: Controller Pattern →](03-controller-pattern.md)
 

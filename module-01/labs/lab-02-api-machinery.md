@@ -1,5 +1,8 @@
 # Lab 1.2: Working with the Kubernetes API
 
+**Related Lesson:** [Lesson 1.2: Kubernetes API Machinery](../lessons/02-api-machinery.md)  
+**Navigation:** [← Previous Lab: Control Plane](lab-01-control-plane.md) | [Module Overview](../README.md) | [Next Lab: Controller Pattern →](lab-03-controller-pattern.md)
+
 ## Objectives
 
 - Understand Kubernetes API structure
@@ -307,4 +310,6 @@ In this lab, you:
 3. Spec describes desired state, status describes actual state
 4. Resource versions enable optimistic concurrency control
 5. Subresources provide additional functionality (status, scale, exec, etc.)
+
+**Navigation:** [← Previous Lab: Control Plane](lab-01-control-plane.md) | [Related Lesson](../lessons/02-api-machinery.md) | [Next Lab: Controller Pattern →](lab-03-controller-pattern.md)
 

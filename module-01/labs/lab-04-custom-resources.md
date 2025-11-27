@@ -1,5 +1,8 @@
 # Lab 1.4: Creating Your First CRD
 
+**Related Lesson:** [Lesson 1.4: Custom Resources](../lessons/04-custom-resources.md)  
+**Navigation:** [← Previous Lab: Controller Pattern](lab-03-controller-pattern.md) | [Module Overview](../README.md)
+
 ## Objectives
 
 - Create a Custom Resource Definition (CRD)
@@ -469,4 +472,6 @@ In this lab, you:
 - Simple key-value configuration
 - No validation needed
 - No API semantics required
+
+**Navigation:** [← Previous Lab: Controller Pattern](lab-03-controller-pattern.md) | [Related Lesson](../lessons/04-custom-resources.md) | [Module Overview](../README.md)
 

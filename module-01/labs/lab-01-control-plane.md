@@ -1,5 +1,8 @@
 # Lab 1.1: Exploring the Control Plane
 
+**Related Lesson:** [Lesson 1.1: Kubernetes Control Plane Review](../lessons/01-control-plane.md)  
+**Navigation:** [Module Overview](../README.md) | [Next Lab: API Machinery →](lab-02-api-machinery.md)
+
 ## Objectives
 
 - Explore Kubernetes control plane components
@@ -254,4 +257,6 @@ In this lab, you:
 3. The API Server is the central communication hub
 4. Owner references maintain resource relationships
 5. Reconciliation happens automatically when desired != actual state
+
+**Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-control-plane.md) | [Next Lab: API Machinery →](lab-02-api-machinery.md)
 

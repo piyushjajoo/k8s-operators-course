@@ -1,5 +1,7 @@
 # Module 1: Summary
 
+**Navigation:** [Module Overview](README.md) | [Course Overview](../README.md)
+
 ## What We Built
 
 Module 1 provides a comprehensive deep dive into Kubernetes architecture, focusing on the foundations needed to build operators.
@@ -112,4 +114,6 @@ module-01/
 - Mermaid diagrams are included for visual learning
 - Content is brief but explanatory, focusing on examples
 - Ready for students to use immediately
+
+**Navigation:** [Module Overview](README.md) | [Course Overview](../README.md)
 

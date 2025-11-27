@@ -1,5 +1,7 @@
 # Lesson 1.1: Kubernetes Control Plane Review
 
+**Navigation:** [Module Overview](../README.md) | [Next Lesson: API Machinery →](02-api-machinery.md)
+
 ## Introduction
 
 The Kubernetes control plane is the brain of your cluster. Understanding its components and how they interact is crucial for building operators, as operators extend and interact with these same components.
@@ -223,7 +225,13 @@ When building operators, you'll:
 - Implement controllers that follow the same pattern as built-in controllers
 - Use the same watch mechanisms that built-in controllers use
 
+## Related Lab
+
+- [Lab 1.1: Exploring the Control Plane](../labs/lab-01-control-plane.md) - Hands-on exercises for this lesson
+
 ## Next Steps
 
 In the next lesson, we'll dive deeper into the Kubernetes API machinery to understand how resources are structured and how the API works.
+
+**Navigation:** [← Module Overview](../README.md) | [Next: Lesson 1.2 - API Machinery →](02-api-machinery.md)
 

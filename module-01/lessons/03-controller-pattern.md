@@ -1,5 +1,7 @@
 # Lesson 1.3: The Controller Pattern
 
+**Navigation:** [← Previous: API Machinery](02-api-machinery.md) | [Module Overview](../README.md) | [Next: Custom Resources →](04-custom-resources.md)
+
 ## Introduction
 
 The controller pattern is the foundation of Kubernetes and operators. Understanding how controllers work is essential for building effective operators. Controllers continuously watch resources and reconcile the desired state with the actual state.
@@ -347,7 +349,13 @@ When building operators:
 - You'll implement leader election for HA
 - You'll update status to reflect progress
 
+## Related Lab
+
+- [Lab 1.3: Observing Controllers in Action](../labs/lab-03-controller-pattern.md) - Hands-on exercises for this lesson
+
 ## Next Steps
 
 In the next lesson, we'll learn about Custom Resources and CRDs - the foundation for building operators.
+
+**Navigation:** [← Previous: API Machinery](02-api-machinery.md) | [Module Overview](../README.md) | [Next: Custom Resources →](04-custom-resources.md)
 

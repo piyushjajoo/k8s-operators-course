@@ -1,5 +1,7 @@
 # Lesson 1.4: Custom Resources
 
+**Navigation:** [← Previous: Controller Pattern](03-controller-pattern.md) | [Module Overview](../README.md)
+
 ## Introduction
 
 Custom Resources extend Kubernetes with domain-specific objects. Custom Resource Definitions (CRDs) define the schema for these resources. Understanding CRDs is essential for building operators, as operators manage Custom Resources.
@@ -397,6 +399,10 @@ When building operators:
 - Validation in CRD schema prevents invalid resources
 - CRDs enable declarative management of your applications
 
+## Related Lab
+
+- [Lab 1.4: Creating Your First CRD](../labs/lab-04-custom-resources.md) - Hands-on exercises for this lesson
+
 ## Next Steps
 
 Congratulations! You've completed Module 1. You now understand:
@@ -406,4 +412,6 @@ Congratulations! You've completed Module 1. You now understand:
 - Custom Resources and CRDs
 
 In Module 2, you'll build your first operator using Kubebuilder!
+
+**Navigation:** [← Previous: Controller Pattern](03-controller-pattern.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
 

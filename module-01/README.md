@@ -18,10 +18,17 @@ By the end of this module, you will:
 
 ## Module Structure
 
-1. **Lesson 1.1**: Kubernetes Control Plane Review
-2. **Lesson 1.2**: Kubernetes API Machinery
-3. **Lesson 1.3**: The Controller Pattern
-4. **Lesson 1.4**: Custom Resources
+1. **[Lesson 1.1: Kubernetes Control Plane Review](lessons/01-control-plane.md)**
+   - [Lab 1.1: Exploring the Control Plane](labs/lab-01-control-plane.md)
+
+2. **[Lesson 1.2: Kubernetes API Machinery](lessons/02-api-machinery.md)**
+   - [Lab 1.2: Working with the Kubernetes API](labs/lab-02-api-machinery.md)
+
+3. **[Lesson 1.3: The Controller Pattern](lessons/03-controller-pattern.md)**
+   - [Lab 1.3: Observing Controllers in Action](labs/lab-03-controller-pattern.md)
+
+4. **[Lesson 1.4: Custom Resources](lessons/04-custom-resources.md)**
+   - [Lab 1.4: Creating Your First CRD](labs/lab-04-custom-resources.md)
 
 ## Setup
 
@@ -47,12 +54,19 @@ Before starting, ensure you have:
 
 Each lesson includes hands-on exercises. All labs use the kind cluster you set up.
 
-- **Lab 1.1**: Exploring the Control Plane
-- **Lab 1.2**: Working with the Kubernetes API
-- **Lab 1.3**: Observing Controllers in Action
-- **Lab 1.4**: Creating Your First CRD
+- [Lab 1.1: Exploring the Control Plane](labs/lab-01-control-plane.md)
+- [Lab 1.2: Working with the Kubernetes API](labs/lab-02-api-machinery.md)
+- [Lab 1.3: Observing Controllers in Action](labs/lab-03-controller-pattern.md)
+- [Lab 1.4: Creating Your First CRD](labs/lab-04-custom-resources.md)
 
-## Next Steps
+## Additional Resources
 
-After completing this module, proceed to [Module 2: Introduction to Operators](../module-02/README.md).
+- [Module Summary](SUMMARY.md)
+- [Testing Guide](TESTING.md)
+- [Course Build Plan](../COURSE_BUILD_PLAN.md)
+
+## Navigation
+
+- [← Back to Course Overview](../README.md)
+- [Next: Module 2 →](../module-02/README.md) (Coming Soon)
 

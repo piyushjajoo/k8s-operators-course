@@ -1,5 +1,8 @@
 # Lab 1.3: Observing Controllers in Action
 
+**Related Lesson:** [Lesson 1.3: The Controller Pattern](../lessons/03-controller-pattern.md)  
+**Navigation:** [← Previous Lab: API Machinery](lab-02-api-machinery.md) | [Module Overview](../README.md) | [Next Lab: Custom Resources →](lab-04-custom-resources.md)
+
 ## Objectives
 
 - Observe controller reconciliation in real-time
@@ -327,4 +330,6 @@ In this lab, you:
 4. Operations are idempotent - safe to repeat
 5. Status fields reflect actual state, updated by controllers
 6. Watch mechanisms provide real-time updates
+
+**Navigation:** [← Previous Lab: API Machinery](lab-02-api-machinery.md) | [Related Lesson](../lessons/03-controller-pattern.md) | [Next Lab: Custom Resources →](lab-04-custom-resources.md)
 

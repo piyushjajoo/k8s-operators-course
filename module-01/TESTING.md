@@ -1,5 +1,7 @@
 # Module 1 Testing Guide
 
+**Navigation:** [Module Overview](README.md) | [Course Overview](../README.md)
+
 This document provides instructions for testing Module 1 content.
 
 ## Prerequisites
@@ -157,4 +159,6 @@ kind delete cluster --name k8s-operators-course
 
 # Or use the cleanup script if available
 ```
+
+**Navigation:** [Module Overview](README.md) | [Course Overview](../README.md)
 
