@@ -1,0 +1,41 @@
+# Solution: Cluster-Scoped CRD from Module 8
+# This demonstrates a cluster-scoped CustomResourceDefinition
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.database.example.com
+spec:
+  group: database.example.com
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              image:
+                type: string
+              replicas:
+                type: integer
+              tenant:
+                type: string
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
+              readyReplicas:
+                type: integer
+  scope: Cluster  # Cluster-scoped instead of Namespaced
+  names:
+    plural: databases
+    singular: database
+    kind: Database
+    shortNames:
+    - db
+

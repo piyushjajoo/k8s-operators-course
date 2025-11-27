@@ -56,9 +56,11 @@ The course is divided into 8 modules, each building on the previous:
    - [High availability](module-07/lessons/03-high-availability.md)
    - [Performance and scalability](module-07/lessons/04-performance-scalability.md)
 
-8. **Module 8: Advanced Topics** (Coming Soon)
-   - Multi-tenancy
-   - Operator composition
+8. **[Module 8: Advanced Topics and Real-World Patterns](module-08/README.md)** ✅
+   - [Multi-tenancy and namespace isolation](module-08/lessons/01-multi-tenancy.md)
+   - [Operator composition](module-08/lessons/02-operator-composition.md)
+   - [Stateful application management](module-08/lessons/03-stateful-applications.md)
+   - [Real-world patterns and best practices](module-08/lessons/04-real-world-patterns.md)
    - Stateful applications
 
 ## Quick Navigation
@@ -119,6 +121,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 7.3: High Availability](module-07/lessons/03-high-availability.md) | [Lab 7.3](module-07/labs/lab-03-high-availability.md)
 - [Lesson 7.4: Performance and Scalability](module-07/lessons/04-performance-scalability.md) | [Lab 7.4](module-07/labs/lab-04-performance-scalability.md)
 
+### Module 8: Advanced Topics and Real-World Patterns ✅
+
+- [Module Overview](module-08/README.md)
+- [Lesson 8.1: Multi-Tenancy](module-08/lessons/01-multi-tenancy.md) | [Lab 8.1](module-08/labs/lab-01-multi-tenancy.md)
+- [Lesson 8.2: Operator Composition](module-08/lessons/02-operator-composition.md) | [Lab 8.2](module-08/labs/lab-02-operator-composition.md)
+- [Lesson 8.3: Stateful Applications](module-08/lessons/03-stateful-applications.md) | [Lab 8.3](module-08/labs/lab-03-stateful-applications.md)
+- [Lesson 8.4: Real-World Patterns](module-08/lessons/04-real-world-patterns.md) | [Lab 8.4](module-08/labs/lab-04-final-project.md)
+
 ## Getting Started
 
 ### Prerequisites
@@ -167,7 +177,7 @@ The course is divided into 8 modules, each building on the previous:
 - ✅ Module 5: Complete
 - ✅ Module 6: Complete
 - ✅ Module 7: Complete
-- 🚧 Module 8: In Progress
+- ✅ Module 8: Complete
 
 ## Learning Approach
 
@@ -197,6 +207,7 @@ Complete working solutions for all labs are available in each module's `solution
 - **Module 5**: [Webhooks](module-05/solutions/) - Validating and mutating webhooks
 - **Module 6**: [Testing](module-06/solutions/) - Unit tests, integration tests, metrics, and observability examples
 - **Module 7**: [Production](module-07/solutions/) - Dockerfile, Helm chart, RBAC, security, HA, and performance examples
+- **Module 8**: [Advanced](module-08/solutions/) - Multi-tenancy, operator composition, backup/restore, and rolling update examples
 
 Each solution includes:
 - Complete, working code examples

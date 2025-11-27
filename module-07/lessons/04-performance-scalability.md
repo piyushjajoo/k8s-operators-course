@@ -322,5 +322,5 @@ Congratulations! You've completed Module 7. You now understand:
 
 In [Module 8](../module-08/README.md), you'll learn about advanced topics and real-world patterns.
 
-**Navigation:** [← Previous: High Availability](03-high-availability.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
+**Navigation:** [← Previous: High Availability](03-high-availability.md) | [Module Overview](../README.md) | [Next: Module 8 →](../module-08/README.md)
 
