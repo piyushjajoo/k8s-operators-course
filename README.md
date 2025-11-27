@@ -61,7 +61,6 @@ The course is divided into 8 modules, each building on the previous:
    - [Operator composition](module-08/lessons/02-operator-composition.md)
    - [Stateful application management](module-08/lessons/03-stateful-applications.md)
    - [Real-world patterns and best practices](module-08/lessons/04-real-world-patterns.md)
-   - Stateful applications
 
 ## Quick Navigation
 
