@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant User
+    participant kubectl
+    participant API as API Server
+    participant Auth as AuthN/AuthZ
+    participant Admission as Admission Control
+    participant etcd as etcd
+    participant Controller as Controller Manager
+    
+    User->>kubectl: kubectl apply -f pod.yaml
+    kubectl->>API: POST /api/v1/namespaces/default/pods
+    API->>Auth: Authenticate & Authorize
+    Auth-->>API: Authorized
+    API->>Admission: Run admission controllers
+    Admission-->>API: Mutations/Validations
+    API->>etcd: Store object
+    etcd-->>API: Object stored
+    API-->>kubectl: 201 Created
+    kubectl-->>User: pod/example created
+    
+    Note over Controller,etcd: Controller watches etcd
+    etcd->>Controller: Watch event (ADD)
+    Controller->>Controller: Reconcile desired state
+

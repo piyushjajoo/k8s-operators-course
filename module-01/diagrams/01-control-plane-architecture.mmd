@@ -1,0 +1,24 @@
+graph TB
+    subgraph "Control Plane"
+        API[API Server]
+        ETCD[(etcd)]
+        CM[Controller Manager]
+        SCHED[Scheduler]
+    end
+    
+    subgraph "Worker Nodes"
+        KUBELET1[kubelet]
+        KUBELET2[kubelet]
+        KUBELET3[kubelet]
+    end
+    
+    API --> ETCD
+    API --> CM
+    API --> SCHED
+    API <--> KUBELET1
+    API <--> KUBELET2
+    API <--> KUBELET3
+    
+    CM --> API
+    SCHED --> API
+

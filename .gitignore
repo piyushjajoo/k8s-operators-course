@@ -1,0 +1,67 @@
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.cache
+/tmp/
+*.pid
+
+# Test artifacts
+/test-results/
+/coverage/
+
+# Kind cluster configs (user-specific)
+kind-config-*.yaml
+
+# Local test files
+*.local.yaml
+*.local.yml
+
+# Go (if we add Go code later)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts
+bin/
+dist/
+build/
+
+# Documentation builds
+docs/_build/
+site/
+
