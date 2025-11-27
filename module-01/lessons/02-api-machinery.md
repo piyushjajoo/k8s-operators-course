@@ -6,6 +6,33 @@
 
 The Kubernetes API is RESTful and follows specific conventions. Understanding these conventions is essential for building operators, as you'll be creating and managing resources through this same API.
 
+## Theory: Kubernetes API Design Principles
+
+The Kubernetes API follows RESTful principles but extends them with Kubernetes-specific concepts:
+
+### RESTful Principles
+- **Resources** are represented as URLs (e.g., `/api/v1/namespaces/default/pods`)
+- **HTTP methods** map to operations (GET, POST, PUT, PATCH, DELETE)
+- **Stateless** - each request contains all information needed
+- **Uniform interface** - consistent patterns across all resources
+
+### Kubernetes Extensions
+- **API Groups** - organize related resources (core, apps, rbac, etc.)
+- **API Versions** - support multiple versions of the same resource
+- **Subresources** - status, scale, exec (extend resource behavior)
+- **Watch** - long-lived connections for change notifications
+- **Field Selectors** - filter resources by field values
+
+### Resource Structure
+Every Kubernetes resource follows a consistent structure:
+- **apiVersion**: API group and version
+- **kind**: Resource type
+- **metadata**: Identity and labels
+- **spec**: Desired state (user-provided)
+- **status**: Actual state (system-managed)
+
+Understanding these principles helps you design Custom Resources that feel native to Kubernetes.
+
 ## RESTful API Design
 
 Kubernetes uses a RESTful API where resources are represented as URLs:
@@ -311,6 +338,24 @@ When building operators:
 ## Related Lab
 
 - [Lab 1.2: Working with the Kubernetes API](../labs/lab-02-api-machinery.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Kubernetes API Overview](https://kubernetes.io/docs/reference/using-api/)
+- [API Concepts](https://kubernetes.io/docs/reference/using-api/api-concepts/)
+- [API Versioning](https://kubernetes.io/docs/reference/using-api/api-concepts/#versioning)
+- [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+
+### Further Reading
+- **Kubernetes in Action** by Marko Lukša - Chapter 3: Understanding Kubernetes API
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Deep dive into API machinery
+- [Kubernetes API Reference](https://kubernetes.io/docs/reference/kubernetes-api/)
+
+### Related Topics
+- [Resource Versioning and Concurrency](https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions)
+- [Field Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/)
+- [API Discovery](https://kubernetes.io/docs/reference/using-api/api-concepts/#api-discovery)
 
 ## Next Steps
 

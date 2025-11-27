@@ -6,6 +6,38 @@
 
 Now that you understand controller-runtime ([Lesson 3.1](01-controller-runtime.md)) and API design ([Lesson 3.2](02-designing-api.md)), it's time to implement robust reconciliation logic. This is where your operator's business logic lives - the code that makes desired state match actual state.
 
+## Theory: Reconciliation Logic
+
+Reconciliation is the process of continuously ensuring actual state matches desired state. It's the heart of every controller and operator.
+
+### Core Concepts
+
+**Reconciliation Loop:**
+- Continuously compares desired vs actual
+- Takes corrective actions when they differ
+- Updates status to reflect current state
+- Runs until desired == actual
+
+**Idempotency:**
+- Same input → same output
+- Safe to run multiple times
+- Enables retries and recovery
+- Critical for reliability
+
+**Owner References:**
+- Link child resources to parent
+- Enable garbage collection
+- Track resource relationships
+- Maintain resource hierarchy
+
+**Why Reconciliation Matters:**
+- **Reliability**: Handles failures and retries
+- **Consistency**: Ensures state matches desired
+- **Resilience**: Recovers from partial failures
+- **Simplicity**: Single pattern for all operations
+
+Understanding reconciliation helps you build robust, reliable operators.
+
 ## Reconciliation Loop Lifecycle
 
 The reconciliation loop follows this lifecycle:
@@ -336,6 +368,23 @@ When implementing reconciliation:
 ## Related Lab
 
 - [Lab 3.3: Building PostgreSQL Operator](../labs/lab-03-reconciliation-logic.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Controller Pattern](https://kubernetes.io/docs/concepts/architecture/controller/)
+- [Owner References](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/)
+- [Garbage Collection](https://kubernetes.io/docs/concepts/architecture/garbage-collection/)
+
+### Further Reading
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 4: Common kubectl Commands
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 2: The Kubernetes API
+- [Reconciliation in Kubernetes](https://kubernetes.io/docs/concepts/architecture/controller/#reconciliation)
+
+### Related Topics
+- [Idempotency Patterns](https://kubernetes.io/docs/concepts/architecture/controller/#reconciliation)
+- [Resource Lifecycle](https://kubernetes.io/docs/concepts/overview/working-with-objects/object-lifecycle/)
+- [Finalizers](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/)
 
 ## Next Steps
 

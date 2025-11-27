@@ -6,6 +6,78 @@
 
 As operators manage more resources, performance becomes critical. This lesson covers rate limiting, batch reconciliation, caching strategies, and techniques for managing large-scale deployments efficiently.
 
+## Theory: Performance and Scalability
+
+Performance optimization ensures operators **scale efficiently** as they manage more resources.
+
+### Why Performance Matters
+
+**Scalability:**
+- Operators must handle growth
+- Performance degrades with scale
+- Optimization enables scaling
+- Cost efficiency
+
+**User Experience:**
+- Fast reconciliation
+- Responsive status updates
+- Low latency
+- Better resource utilization
+
+**Resource Efficiency:**
+- Lower API server load
+- Reduced network traffic
+- Lower CPU/memory usage
+- Cost savings
+
+### Performance Bottlenecks
+
+**API Server Load:**
+- Too many API calls
+- Inefficient queries
+- No caching
+- Rate limiting issues
+
+**Reconciliation Overhead:**
+- Inefficient reconciliation logic
+- Unnecessary work
+- No batching
+- Sequential processing
+
+**Memory Usage:**
+- Large caches
+- Memory leaks
+- Inefficient data structures
+- No cleanup
+
+### Optimization Strategies
+
+**Rate Limiting:**
+- Control API call rate
+- Prevent API server overload
+- Respect API server limits
+- Smooth traffic patterns
+
+**Caching:**
+- Cache frequently accessed data
+- Reduce API calls
+- Faster lookups
+- Use informers
+
+**Batch Processing:**
+- Process multiple resources together
+- Reduce overhead
+- Improve efficiency
+- Better resource utilization
+
+**Parallel Processing:**
+- Process independent work in parallel
+- Utilize multiple cores
+- Faster completion
+- Careful with shared state
+
+Understanding performance helps you build scalable, efficient operators.
+
 ## Performance Optimization Strategies
 
 ```mermaid
@@ -311,6 +383,23 @@ When optimizing performance:
 ## Related Lab
 
 - [Lab 7.4: Optimizing Performance](../labs/lab-04-performance-scalability.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Kubernetes API Rate Limiting](https://kubernetes.io/docs/concepts/cluster-administration/flow-control/)
+- [Client-Go Performance](https://github.com/kubernetes/client-go/blob/master/docs/performance.md)
+- [Controller Performance](https://kubernetes.io/docs/concepts/architecture/controller/#controller-performance)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 15: Performance
+- **High Performance Go** by Ian Lance Taylor - Go performance optimization
+- [Kubernetes Scalability](https://kubernetes.io/docs/concepts/cluster-administration/cluster-large/)
+
+### Related Topics
+- [API Priority and Fairness](https://kubernetes.io/docs/concepts/cluster-administration/flow-control/)
+- [Profiling Go Programs](https://go.dev/blog/pprof)
+- [Caching Strategies](https://kubernetes.io/docs/concepts/architecture/controller/#caching)
 
 ## Next Steps
 

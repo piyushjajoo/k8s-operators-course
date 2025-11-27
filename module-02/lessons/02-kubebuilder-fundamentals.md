@@ -6,6 +6,35 @@
 
 Kubebuilder is a framework for building Kubernetes operators using the controller-runtime library. It provides scaffolding, code generation, and best practices to make operator development easier. In this lesson, you'll learn how Kubebuilder works and its architecture.
 
+## Theory: Kubebuilder Framework
+
+Kubebuilder is a SDK and framework that simplifies operator development by providing code generation, project scaffolding, and best practices.
+
+### Core Concepts
+
+**Code Generation:**
+- Generates boilerplate code (CRDs, controllers, RBAC)
+- Reduces manual coding and errors
+- Ensures consistency with Kubernetes patterns
+
+**Project Structure:**
+- Standardized layout for operator projects
+- Separates API definitions from controller logic
+- Makes projects maintainable and scalable
+
+**Controller-Runtime Integration:**
+- Built on controller-runtime (same library Kubernetes uses)
+- Provides Manager, Reconciler, Client abstractions
+- Handles caching, watching, and leader election
+
+**Why Kubebuilder:**
+- **Productivity**: Generates boilerplate, focuses on business logic
+- **Best Practices**: Enforces Kubernetes patterns
+- **Community**: Widely used, well-documented
+- **Tooling**: Rich CLI for common tasks
+
+Understanding Kubebuilder helps you build operators efficiently and correctly.
+
 ## What is Kubebuilder?
 
 Kubebuilder is:
@@ -255,6 +284,23 @@ When using Kubebuilder:
 ## Related Lab
 
 - [Lab 2.2: Kubebuilder CLI and Project Structure](../labs/lab-02-kubebuilder-fundamentals.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Kubebuilder Documentation](https://book.kubebuilder.io/)
+- [Kubebuilder Quick Start](https://book.kubebuilder.io/quick-start.html)
+- [Controller Runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
+
+### Further Reading
+- **Kubebuilder Book** - Official comprehensive guide
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 4: Working with Client Libraries
+- [Kubebuilder GitHub](https://github.com/kubernetes-sigs/kubebuilder) - Source code and examples
+
+### Related Topics
+- [Kubebuilder vs Operator SDK](https://book.kubebuilder.io/faq.html#kubebuilder-vs-operator-sdk)
+- [Project Layout](https://book.kubebuilder.io/migration/manually_migration_guide_v1_to_v2.html#project-layout)
+- [Code Generation](https://book.kubebuilder.io/reference/generating-crd.html)
 
 ## Next Steps
 

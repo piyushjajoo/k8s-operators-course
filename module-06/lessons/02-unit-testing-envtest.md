@@ -324,6 +324,23 @@ When writing unit tests:
 
 - [Lab 6.2: Writing Unit Tests](../labs/lab-02-unit-testing-envtest.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [envtest Documentation](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest)
+- [Kubebuilder Testing Guide](https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html)
+- [Go Testing Package](https://pkg.go.dev/testing)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 10: Testing
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 10: Testing
+- [Go Testing Best Practices](https://golang.org/doc/effective_go#testing)
+
+### Related Topics
+- [Table-Driven Tests](https://github.com/golang/go/wiki/TableDrivenTests)
+- [Test Coverage](https://go.dev/blog/cover)
+- [Benchmarking in Go](https://golang.org/pkg/testing/#hdr-Benchmarks)
+
 ## Next Steps
 
 Now that you understand unit testing, let's learn about integration testing with real clusters.

@@ -6,6 +6,35 @@
 
 A well-designed API is crucial for a good operator. Your Custom Resource API is what users interact with - it should be intuitive, validated, and follow Kubernetes conventions. In this lesson, you'll learn how to design APIs that are both powerful and user-friendly.
 
+## Theory: API Design Principles
+
+Good API design makes operators intuitive to use and maintain. Following Kubernetes conventions ensures consistency and tool compatibility.
+
+### Core Concepts
+
+**Spec vs Status Separation:**
+- **Spec**: User-provided desired state (immutable after creation)
+- **Status**: System-managed actual state (read-only for users)
+- Clear separation prevents conflicts and confusion
+
+**API Versioning:**
+- Support multiple API versions simultaneously
+- Enable smooth migrations
+- Follow Kubernetes versioning conventions
+
+**Validation:**
+- Validate at API level (CRD schema)
+- Provide clear error messages
+- Prevent invalid states early
+
+**Why Good API Design Matters:**
+- **Usability**: Intuitive APIs are easier to use
+- **Maintainability**: Well-designed APIs are easier to evolve
+- **Compatibility**: Following conventions ensures tool compatibility
+- **Reliability**: Validation prevents runtime errors
+
+Good API design is the foundation of a successful operator.
+
 ## API Design Principles
 
 Good API design follows these principles:
@@ -338,6 +367,23 @@ When designing APIs:
 ## Related Lab
 
 - [Lab 3.2: API Design for Database Operator](../labs/lab-02-designing-api.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [API Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md)
+- [CRD Best Practices](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#best-practices)
+- [API Versioning](https://kubernetes.io/docs/reference/using-api/api-concepts/#versioning)
+
+### Further Reading
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 3: Custom Resources
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 15: Extending Kubernetes
+- [Kubernetes API Design Principles](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md)
+
+### Related Topics
+- [OpenAPI Schema](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema)
+- [Default Values](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#defaulting)
+- [Validation Rules](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation-rules)
 
 ## Next Steps
 

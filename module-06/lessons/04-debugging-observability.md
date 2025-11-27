@@ -310,6 +310,23 @@ When debugging and adding observability:
 
 - [Lab 6.4: Adding Observability](../labs/lab-04-debugging-observability.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Delve Debugger](https://github.com/go-delve/delve)
+- [Prometheus Metrics](https://prometheus.io/docs/concepts/metric_types/)
+- [Kubernetes Events](https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/event-v1/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 11: Debugging
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 11: Observability
+- [Observability Engineering](https://www.oreilly.com/library/view/observability-engineering/9781492076438/)
+
+### Related Topics
+- [Structured Logging](https://www.structuredlogs.org/)
+- [Prometheus Best Practices](https://prometheus.io/docs/practices/)
+- [OpenTelemetry](https://opentelemetry.io/)
+
 ## Next Steps
 
 Congratulations! You've completed Module 6. You now understand:

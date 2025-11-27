@@ -6,6 +6,37 @@
 
 The Kubernetes client is your interface to the API server. Understanding how to use it effectively is crucial for building efficient operators. In this lesson, you'll learn advanced client operations, patching strategies, and how to handle concurrency.
 
+## Theory: Working with Client-Go
+
+Client-go provides low-level access to Kubernetes APIs, while controller-runtime builds on it for higher-level abstractions.
+
+### Core Concepts
+
+**Typed vs Dynamic Clients:**
+- **Typed**: Type-safe, compile-time checking, better performance
+- **Dynamic**: Runtime type checking, flexible, slower
+- Choose based on use case
+
+**Watch Mechanism:**
+- Long-lived connections for change notifications
+- More efficient than polling
+- Handles reconnection automatically
+- Used by informers and controllers
+
+**Patch Operations:**
+- Strategic merge patch: Kubernetes-aware merging
+- JSON merge patch: Standard JSON patching
+- JSON patch: Precise field updates
+- Choose based on update needs
+
+**Why Client-Go Matters:**
+- **Performance**: Efficient API interactions
+- **Control**: Fine-grained control over operations
+- **Compatibility**: Works with all Kubernetes versions
+- **Foundation**: Controller-runtime builds on it
+
+Understanding client-go helps you optimize operator performance and handle edge cases.
+
 ## Client Types
 
 There are different ways to interact with the Kubernetes API:
@@ -345,6 +376,23 @@ When working with clients:
 ## Related Lab
 
 - [Lab 3.4: Advanced Client Operations](../labs/lab-04-client-go.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Client-Go](https://github.com/kubernetes/client-go)
+- [Client-Go Examples](https://github.com/kubernetes/client-go/tree/master/examples)
+- [API Client Libraries](https://kubernetes.io/docs/reference/using-api/client-libraries/)
+
+### Further Reading
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 4: Working with Client Libraries
+- [Client-Go Documentation](https://pkg.go.dev/k8s.io/client-go)
+- [Informer Pattern](https://github.com/kubernetes/client-go/blob/master/examples/workqueue/main.go)
+
+### Related Topics
+- [Watch Mechanism](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)
+- [Patch Strategies](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
+- [Optimistic Concurrency](https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions)
 
 ## Next Steps
 

@@ -6,6 +6,39 @@
 
 Now you're ready to build your first operator! We'll create a "Hello World" operator that manages a simple Custom Resource. This operator will demonstrate all the concepts from [Module 1](../module-01/README.md): CRDs, controllers, and reconciliation.
 
+## Theory: Your First Operator
+
+Building your first operator helps you understand the complete operator lifecycle and structure.
+
+### Core Concepts
+
+**Operator Components:**
+- **CRD**: Defines your custom resource
+- **Controller**: Reconciliation logic
+- **Manager**: Coordinates controllers and clients
+- **RBAC**: Permissions for the operator
+
+**Generated Code Structure:**
+- API types (spec/status)
+- Controller reconciliation logic
+- Manager setup
+- RBAC manifests
+
+**Operator Lifecycle:**
+1. User creates Custom Resource
+2. Controller watches and reconciles
+3. Controller creates/manages Kubernetes resources
+4. Controller updates status
+5. Continuous reconciliation loop
+
+**Why Start Simple:**
+- Understand fundamentals before complexity
+- Learn generated code structure
+- Build confidence with working example
+- Foundation for more complex operators
+
+Starting with a simple operator helps you understand the pattern before building complex ones.
+
 ## What We'll Build
 
 A simple operator that:
@@ -356,6 +389,23 @@ This is the foundation for all operators!
 ## Related Lab
 
 - [Lab 2.4: Building Hello World Operator](../labs/lab-04-first-operator.md) - Complete step-by-step guide
+
+## References
+
+### Official Documentation
+- [Kubebuilder Tutorial](https://book.kubebuilder.io/cronjob-tutorial/tutorial.html)
+- [Creating a New Project](https://book.kubebuilder.io/quick-start.html#create-a-project)
+- [Implementing a Controller](https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html)
+
+### Further Reading
+- **Kubebuilder Book** - Complete tutorial and reference
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 3: Your First Operator
+- [Kubebuilder Examples](https://github.com/kubernetes-sigs/kubebuilder/tree/master/docs/book/src/cronjob-tutorial/testdata)
+
+### Related Topics
+- [Controller Runtime Patterns](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg)
+- [Reconciliation Best Practices](https://book.kubebuilder.io/reference/controller-tips.html)
+- [Generated Code Explanation](https://book.kubebuilder.io/quick-start.html#what-was-created)
 
 ## Next Steps
 

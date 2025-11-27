@@ -303,6 +303,23 @@ When setting up watches:
 
 - [Lab 4.3: Setting Up Watches and Indexes](../labs/lab-03-watching-indexing.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Informers](https://github.com/kubernetes/client-go/blob/master/tools/cache/shared_informer.go)
+- [Field Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/)
+- [Indexers](https://pkg.go.dev/k8s.io/client-go/tools/cache#Indexer)
+
+### Further Reading
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 4: Working with Client Libraries
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 7: Advanced Patterns
+- [client-go Informers](https://github.com/kubernetes/client-go/tree/master/examples/workqueue)
+
+### Related Topics
+- [Informer Pattern](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/controllers.md)
+- [Workqueue Pattern](https://github.com/kubernetes/client-go/blob/master/util/workqueue/)
+- [Controller Performance](https://kubernetes.io/docs/concepts/architecture/controller/#controller-performance)
+
 ## Next Steps
 
 Now that you understand watching and indexing, let's learn advanced patterns like multi-phase reconciliation and state machines.

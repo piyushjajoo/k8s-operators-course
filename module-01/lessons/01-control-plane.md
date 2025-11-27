@@ -6,6 +6,30 @@
 
 The Kubernetes control plane is the brain of your cluster. Understanding its components and how they interact is crucial for building operators, as operators extend and interact with these same components.
 
+## Theory: Understanding the Control Plane
+
+The Kubernetes control plane is a distributed system that maintains the desired state of your cluster. It follows a **declarative model** where you specify what you want (desired state), and the control plane works to make the cluster match that state.
+
+### Key Concepts
+
+**Declarative vs Imperative:**
+- **Declarative**: You describe the desired end state (e.g., "I want 3 replicas")
+- **Imperative**: You give step-by-step commands (e.g., "create pod, create pod, create pod")
+- Kubernetes uses declarative APIs - you declare what you want, controllers make it happen
+
+**Eventual Consistency:**
+- The control plane works to make the cluster match desired state
+- Changes may take time to propagate
+- Controllers continuously reconcile to maintain consistency
+
+**Separation of Concerns:**
+- API Server: Validates and stores state
+- etcd: Persists state
+- Controllers: Reconcile state
+- Scheduler: Assigns workloads
+
+Understanding these principles helps you build operators that follow the same patterns.
+
 ## Control Plane Components
 
 The Kubernetes control plane consists of several key components that work together to manage your cluster:

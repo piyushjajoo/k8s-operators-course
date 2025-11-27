@@ -6,6 +6,65 @@
 
 Production operators need to be highly available - they should continue operating even if individual pods fail. This lesson covers leader election, multiple replicas, failover handling, and resource management for high availability.
 
+## Theory: High Availability
+
+High availability ensures operators **continue operating** despite failures.
+
+### Why High Availability?
+
+**Reliability:**
+- Operators manage critical workloads
+- Single point of failure is unacceptable
+- Redundancy prevents outages
+- Failover ensures continuity
+
+**Scalability:**
+- Handle increased load
+- Distribute work across replicas
+- Scale horizontally
+- Performance under load
+
+**Resilience:**
+- Survive pod failures
+- Survive node failures
+- Automatic recovery
+- Zero-downtime deployments
+
+### Leader Election
+
+**Why Leader Election?**
+- Controllers must not conflict
+- Only one should reconcile at a time
+- Prevents duplicate work
+- Ensures consistency
+
+**How It Works:**
+- Controllers compete for lease
+- Winner becomes leader
+- Leader reconciles resources
+- Others wait as standby
+
+**Failover:**
+- Leader renews lease periodically
+- If leader fails, lease expires
+- Another controller acquires lease
+- New leader takes over
+
+### Resource Management
+
+**Resource Requests:**
+- Guaranteed resources
+- Scheduler uses for placement
+- Ensures operator has resources
+
+**Resource Limits:**
+- Maximum resources
+- Prevents resource exhaustion
+- Protects other workloads
+- Enables overcommitment
+
+Understanding high availability helps you build reliable, production-ready operators.
+
 ## High Availability Architecture
 
 Here's how HA works for operators:
@@ -252,6 +311,23 @@ When implementing high availability:
 ## Related Lab
 
 - [Lab 7.3: Implementing HA](../labs/lab-03-high-availability.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Leader Election](https://kubernetes.io/docs/concepts/architecture/leases/)
+- [Pod Disruption Budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/#pod-disruption-budgets)
+- [Resource Management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 14: High Availability
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 12: Deploying Applications
+- [Kubernetes High Availability](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/)
+
+### Related Topics
+- [Leases API](https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/lease-v1/)
+- [Health Checks](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
+- [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 
 ## Next Steps
 

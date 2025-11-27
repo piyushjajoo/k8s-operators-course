@@ -243,6 +243,23 @@ When implementing finalizers:
 
 - [Lab 4.2: Implementing Finalizers](../labs/lab-02-finalizers-cleanup.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Finalizers](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/)
+- [Garbage Collection](https://kubernetes.io/docs/concepts/architecture/garbage-collection/)
+- [Owner References](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 6: Finalizers and Cleanup
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 7: Resource Lifecycle
+- [Kubernetes Finalizers Explained](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/)
+
+### Related Topics
+- [Owner References Pattern](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/)
+- [Garbage Collection](https://kubernetes.io/docs/concepts/architecture/garbage-collection/)
+- [Deletion Propagation](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/#controlling-how-the-garbage-collector-deletes-dependents)
+
 ## Next Steps
 
 Now that you understand finalizers, let's learn about watching and indexing for efficient controllers.

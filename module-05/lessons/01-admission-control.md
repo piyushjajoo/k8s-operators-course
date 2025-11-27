@@ -261,6 +261,23 @@ When implementing webhooks:
 
 - [Lab 5.1: Exploring Admission Control](../labs/lab-01-admission-control.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+- [Admission Controllers](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
+- [Webhook Configuration](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-configuration)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 9: Webhooks
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 9: Admission Control
+- [Kubernetes Admission Control Guide](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+
+### Related Topics
+- [Validating Admission Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
+- [Mutating Admission Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook)
+- [Webhook Best Practices](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#best-practices-and-warnings)
+
 ## Next Steps
 
 Now that you understand admission control, let's implement a validating webhook for your operator.

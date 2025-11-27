@@ -6,6 +6,72 @@
 
 Production operators often need to support multiple tenants or work across namespaces. This lesson covers cluster-scoped operators, namespace isolation, resource quotas, and multi-tenant patterns that enable operators to manage resources across different namespaces or tenants.
 
+## Theory: Multi-Tenancy
+
+Multi-tenancy enables **isolated resource management** for different users or teams.
+
+### Why Multi-Tenancy?
+
+**Resource Isolation:**
+- Separate tenants' resources
+- Prevent interference
+- Security boundaries
+- Compliance requirements
+
+**Resource Sharing:**
+- Share cluster infrastructure
+- Cost efficiency
+- Centralized management
+- Scalability
+
+**Access Control:**
+- Different permissions per tenant
+- RBAC enforcement
+- Network isolation
+- Resource quotas
+
+### Tenancy Models
+
+**Namespace-Based:**
+- Each tenant gets a namespace
+- Simple isolation
+- Easy to implement
+- Kubernetes-native
+
+**Label-Based:**
+- Tenants identified by labels
+- Flexible grouping
+- Cross-namespace tenancy
+- More complex
+
+**Cluster-Scoped:**
+- Single operator for all tenants
+- Centralized management
+- Efficient resource usage
+- Requires careful isolation
+
+### Isolation Mechanisms
+
+**RBAC:**
+- Role-based access control
+- Limit tenant permissions
+- Enforce boundaries
+- Prevent cross-tenant access
+
+**Resource Quotas:**
+- Limit tenant resource usage
+- Prevent resource exhaustion
+- Fair resource distribution
+- Cost control
+
+**Network Policies:**
+- Network isolation
+- Control traffic flow
+- Security boundaries
+- Tenant isolation
+
+Understanding multi-tenancy helps you build operators that support multiple users securely.
+
 ## Cluster-Scoped vs Namespaced Operators
 
 ### Namespaced Operators
@@ -240,6 +306,23 @@ When implementing multi-tenancy:
 ## Related Lab
 
 - [Lab 8.1: Building Multi-Tenant Operator](../labs/lab-01-multi-tenancy.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
+- [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+- [Cluster-Scoped Resources](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#not-all-objects-are-in-a-namespace)
+
+### Further Reading
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 13: ConfigMaps and Secrets (multi-tenancy concepts)
+- **Kubernetes Security** by Andrew Martin and Michael Hausenblas - Multi-tenancy patterns
+- [Kubernetes Multi-Tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/)
+
+### Related Topics
+- [Namespace Best Practices](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#working-with-namespaces)
+- [Resource Quota Design](https://kubernetes.io/docs/concepts/policy/resource-quotas/#quota-scopes)
+- [Network Policies for Isolation](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 ## Next Steps
 

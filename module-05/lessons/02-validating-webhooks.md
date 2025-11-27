@@ -254,6 +254,23 @@ When implementing validating webhooks:
 
 - [Lab 5.2: Building Validating Webhook](../labs/lab-02-validating-webhooks.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Validating Admission Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
+- [AdmissionReview API](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-request-and-response)
+- [Webhook Configuration](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-configuration)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 9: Webhooks
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 9: Admission Control
+- [Kubebuilder Webhooks](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html)
+
+### Related Topics
+- [AdmissionReview Request/Response](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-request-and-response)
+- [Webhook Failure Policy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy)
+- [Webhook Timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts)
+
 ## Next Steps
 
 Now that you understand validating webhooks, let's learn about mutating webhooks for defaulting and mutation.

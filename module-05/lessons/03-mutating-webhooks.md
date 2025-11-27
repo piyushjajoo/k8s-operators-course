@@ -258,6 +258,23 @@ When implementing mutating webhooks:
 
 - [Lab 5.3: Building Mutating Webhook](../labs/lab-03-mutating-webhooks.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Mutating Admission Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook)
+- [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902)
+- [AdmissionReview API](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-request-and-response)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 9: Webhooks
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 9: Admission Control
+- [Kubebuilder Defaulting Webhooks](https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html#defaulting)
+
+### Related Topics
+- [JSON Patch Specification](https://datatracker.ietf.org/doc/html/rfc6902)
+- [Webhook Mutation Best Practices](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#best-practices-and-warnings)
+- [Idempotent Mutations](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#idempotency)
+
 ## Next Steps
 
 Now that you understand mutating webhooks, let's learn about deploying webhooks and managing certificates.

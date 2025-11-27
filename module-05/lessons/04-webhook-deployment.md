@@ -354,6 +354,23 @@ When deploying webhooks:
 
 - [Lab 5.4: Certificate Management](../labs/lab-04-webhook-deployment.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Webhook Configuration](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-configuration)
+- [cert-manager](https://cert-manager.io/docs/)
+- [TLS in Kubernetes](https://kubernetes.io/docs/concepts/security/tls/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 9: Webhooks
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 9: Admission Control
+- [cert-manager Documentation](https://cert-manager.io/docs/)
+
+### Related Topics
+- [Webhook Failure Policy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy)
+- [Webhook Timeouts](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts)
+- [cert-manager Installation](https://cert-manager.io/docs/installation/)
+
 ## Next Steps
 
 Congratulations! You've completed Module 5. You now understand:

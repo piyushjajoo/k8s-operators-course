@@ -285,6 +285,23 @@ When implementing conditions:
 
 - [Lab 4.1: Implementing Status Conditions](../labs/lab-01-conditions-status.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Resource Status](https://kubernetes.io/docs/concepts/architecture/controller/#status)
+- [Conditions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties)
+- [Status Subresource](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#status-subresource)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 5: Status and Conditions
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 6: Status Management
+- [Kubernetes API Conventions - Status](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status)
+
+### Related Topics
+- [Condition Types](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties)
+- [Status Best Practices](https://sdk.operatorframework.io/docs/best-practices/best-practices/#status)
+- [Observed Generation Pattern](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#generation-and-observedgeneration)
+
 ## Next Steps
 
 Now that you understand status management, let's learn about finalizers for graceful cleanup.

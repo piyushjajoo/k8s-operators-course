@@ -6,6 +6,72 @@
 
 Real-world applications often require multiple operators working together. This lesson covers operator composition patterns, dependency management, coordination strategies, and how to build operators that work well with others.
 
+## Theory: Operator Composition
+
+Operator composition enables **complex applications** by combining multiple operators.
+
+### Why Compose Operators?
+
+**Separation of Concerns:**
+- Each operator has focused responsibility
+- Database operator manages databases
+- Backup operator manages backups
+- Clear boundaries
+
+**Reusability:**
+- Operators can be reused
+- Backup operator works with any database
+- Compose as needed
+- Build complex systems from simple parts
+
+**Modularity:**
+- Independent development
+- Independent testing
+- Independent deployment
+- Easier maintenance
+
+### Composition Patterns
+
+**Independent Operators:**
+- No dependencies
+- Work independently
+- Simple coordination
+- Easy to reason about
+
+**Dependent Operators:**
+- One depends on another
+- Requires coordination
+- Order matters
+- More complex
+
+**Composite Operators:**
+- Multiple operators in one
+- Coordinated internally
+- Single deployment
+- Tighter coupling
+
+### Coordination Mechanisms
+
+**Resource References:**
+- Operators reference each other's resources
+- Explicit dependencies
+- Clear relationships
+- Easy to understand
+
+**Status Conditions:**
+- Operators communicate via status
+- Check conditions before acting
+- Event-driven coordination
+- Loose coupling
+
+**Events:**
+- Emit Kubernetes events
+- Other operators can watch
+- Asynchronous coordination
+- Decoupled
+
+Understanding composition helps you build complex systems from simple operators.
+
 ## Operator Composition Patterns
 
 ### Pattern 1: Independent Operators
@@ -227,6 +293,23 @@ When composing operators:
 ## Related Lab
 
 - [Lab 8.2: Composing Operators](../labs/lab-02-operator-composition.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Owner References](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/)
+- [Kubernetes Events](https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/event-v1/)
+- [Resource Dependencies](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 16: Operator Composition
+- **Designing Distributed Systems** by Brendan Burns - Composition patterns
+- [Operator Best Practices](https://sdk.operatorframework.io/docs/best-practices/)
+
+### Related Topics
+- [Controller Coordination](https://kubernetes.io/docs/concepts/architecture/controller/#controller-coordination)
+- [Event-Driven Architecture](https://kubernetes.io/docs/concepts/architecture/event-driven/)
+- [Microservices Patterns](https://microservices.io/patterns/)
 
 ## Next Steps
 

@@ -6,6 +6,72 @@
 
 Stateful applications require special handling: backups, restores, migrations, and data consistency. This lesson covers patterns for managing stateful applications in operators, including backup/restore, rolling updates, and ensuring data consistency.
 
+## Theory: Stateful Application Management
+
+Stateful applications have **persistent data** that must be managed carefully.
+
+### Why Stateful Applications Are Complex
+
+**Data Persistence:**
+- Data must survive pod restarts
+- Data must be backed up
+- Data must be restored
+- Data consistency is critical
+
+**Lifecycle Management:**
+- Complex deployment procedures
+- Ordered pod creation/deletion
+- StatefulSet requirements
+- Rolling update challenges
+
+**Data Operations:**
+- Backup and restore
+- Data migration
+- Version upgrades
+- Disaster recovery
+
+### StatefulSet Characteristics
+
+**Pod Identity:**
+- Stable network identity
+- Stable storage
+- Ordered creation/deletion
+- Predictable naming
+
+**Storage:**
+- Persistent volumes
+- Pod-specific storage
+- Data survives pod restarts
+- Storage class management
+
+**Ordering:**
+- Pods created in order
+- Pods deleted in reverse order
+- Enables initialization
+- Supports stateful workloads
+
+### Backup and Restore
+
+**Backup Strategy:**
+- Regular backups
+- Point-in-time backups
+- Incremental backups
+- Backup validation
+
+**Restore Strategy:**
+- Restore from backup
+- Point-in-time restore
+- Data validation
+- Rollback capability
+
+**Consistency:**
+- Ensure data consistency
+- Transactional operations
+- Quiesce before backup
+- Verify after restore
+
+Understanding stateful applications helps you build operators that manage data reliably.
+
 ## Stateful Application Challenges
 
 ### Key Challenges
@@ -308,6 +374,23 @@ When managing stateful applications:
 ## Related Lab
 
 - [Lab 8.3: Managing Stateful Applications](../labs/lab-03-stateful-applications.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+- [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
+
+### Further Reading
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 7: StatefulSets
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 17: Stateful Applications
+- [StatefulSet Patterns](https://kubernetes.io/docs/tutorials/stateful-application/)
+
+### Related Topics
+- [StatefulSet Best Practices](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#limitations)
+- [Persistent Volume Claims](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [Data Backup Strategies](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
 
 ## Next Steps
 

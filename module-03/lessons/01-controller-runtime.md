@@ -6,6 +6,38 @@
 
 In [Module 2](../module-02/README.md), you built your first operator using kubebuilder. The operator used controller-runtime under the hood, but you didn't need to understand the details. Now, to build more sophisticated operators, you need to understand how controller-runtime works - the same library that powers Kubernetes itself.
 
+## Theory: Controller-Runtime Deep Dive
+
+Controller-runtime is the foundational library that implements the controller pattern in Kubernetes. Understanding it is essential for building sophisticated operators.
+
+### Core Concepts
+
+**Manager:**
+- Coordinates multiple controllers
+- Manages client connections and caching
+- Handles leader election
+- Provides unified entry point
+
+**Reconciler:**
+- Implements reconciliation logic
+- Receives reconcile requests
+- Returns reconcile results
+- Must be idempotent
+
+**Client:**
+- Typed client for Kubernetes resources
+- Uses informers for caching
+- Handles optimistic concurrency
+- Provides CRUD operations
+
+**Why Controller-Runtime:**
+- **Standardization**: Same library Kubernetes uses
+- **Efficiency**: Built-in caching and watching
+- **Reliability**: Battle-tested patterns
+- **Abstraction**: Hides complexity of direct API calls
+
+Understanding controller-runtime helps you build efficient, reliable operators.
+
 ## What is Controller-Runtime?
 
 Controller-runtime is:
@@ -305,6 +337,23 @@ When building operators:
 ## Related Lab
 
 - [Lab 3.1: Exploring Controller Runtime](../labs/lab-01-controller-runtime.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Controller Runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime)
+- [Manager Package](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/manager)
+- [Client Package](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client)
+
+### Further Reading
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 2: The Kubernetes API
+- [Controller Runtime Source](https://github.com/kubernetes-sigs/controller-runtime)
+- [Kubebuilder Book - Controller Runtime](https://book.kubebuilder.io/architecture.html)
+
+### Related Topics
+- [Informer Pattern](https://github.com/kubernetes/client-go/blob/master/examples/workqueue/main.go)
+- [Leader Election](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/leaderelection)
+- [Cache and Informers](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache)
 
 ## Next Steps
 

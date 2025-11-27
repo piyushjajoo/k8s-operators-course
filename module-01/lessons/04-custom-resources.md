@@ -6,6 +6,45 @@
 
 Custom Resources extend Kubernetes with domain-specific objects. Custom Resource Definitions (CRDs) define the schema for these resources. Understanding CRDs is essential for building operators, as operators manage Custom Resources.
 
+## Theory: Custom Resources and Extensibility
+
+Custom Resources extend Kubernetes with domain-specific types, enabling you to model your application's concepts as first-class Kubernetes objects.
+
+### Core Concepts
+
+**Custom Resource Definition (CRD):**
+- Defines a new resource type in Kubernetes
+- Like a "schema" for your custom resource
+- Registered with the API server
+- Enables validation and defaulting
+
+**Custom Resource (CR):**
+- An instance of a CRD
+- Stored in etcd like built-in resources
+- Can have spec and status
+- Managed by controllers (operators)
+
+**Why CRDs Matter:**
+- **Domain Modeling**: Represent application concepts naturally
+- **API Consistency**: Use same patterns as built-in resources
+- **Tool Compatibility**: Works with kubectl, dashboards, etc.
+- **Controller Integration**: Enables operator pattern
+
+### When to Use CRDs
+
+**Use CRDs when:**
+- You need to model domain-specific concepts
+- You want Kubernetes-native APIs
+- You need lifecycle management
+- You want to leverage Kubernetes tooling
+
+**Don't use CRDs when:**
+- Simple configuration (use ConfigMap)
+- Temporary data (use annotations)
+- No lifecycle needed (use labels/annotations)
+
+Understanding CRDs is essential for building operators, as operators manage Custom Resources.
+
 ## What are Custom Resources?
 
 Custom Resources are extensions to the Kubernetes API that store structured data. They follow the same patterns as built-in resources but are defined by you.
@@ -402,6 +441,23 @@ When building operators:
 ## Related Lab
 
 - [Lab 1.4: Creating Your First CRD](../labs/lab-04-custom-resources.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+- [Custom Resource Definitions](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+- [API Extension Patterns](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/)
+
+### Further Reading
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 15: Extending Kubernetes
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 3: Custom Resources
+- [Kubernetes API Extension Guide](https://kubernetes.io/docs/concepts/extend-kubernetes/)
+
+### Related Topics
+- [CRD Best Practices](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#best-practices)
+- [API Versioning](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#api-versioning)
+- [OpenAPI Schema](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema)
 
 ## Next Steps
 

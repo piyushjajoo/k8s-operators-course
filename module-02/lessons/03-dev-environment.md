@@ -6,6 +6,39 @@
 
 Before building your first operator, you need a complete development environment. This lesson covers setting up everything you need: Go, kubebuilder, kind cluster, and your IDE. We'll verify everything works together.
 
+## Theory: Development Environment Setup
+
+A proper development environment is crucial for efficient operator development and testing.
+
+### Core Concepts
+
+**Local Development:**
+- Run operators locally (outside cluster)
+- Connect to remote or local Kubernetes cluster
+- Faster iteration than building/deploying images
+- Easier debugging
+
+**Kind Cluster:**
+- Kubernetes in Docker
+- Perfect for local development and testing
+- No cloud resources needed
+- Fast cluster creation/destruction
+
+**Development Workflow:**
+1. Write code locally
+2. Run operator locally (go run)
+3. Test against kind cluster
+4. Iterate quickly
+5. Build image when ready
+
+**Why This Matters:**
+- **Speed**: Local development is faster than container builds
+- **Debugging**: Easier to debug local processes
+- **Cost**: No cloud resources needed for development
+- **Isolation**: Test without affecting production
+
+Setting up a good development environment accelerates your operator development.
+
 ## Development Environment Components
 
 Your operator development environment consists of:
@@ -274,6 +307,23 @@ export GO111MODULE=on
 ## Related Lab
 
 - [Lab 2.3: Setting Up Your Environment](../labs/lab-03-dev-environment.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Kind Documentation](https://kind.sigs.k8s.io/)
+- [Kubebuilder Installation](https://book.kubebuilder.io/quick-start.html#installation)
+- [Go Installation](https://go.dev/doc/install)
+
+### Further Reading
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 1: Introduction
+- [Kind Quick Start](https://kind.sigs.k8s.io/docs/user/quick-start/)
+- [Kubectl Installation](https://kubernetes.io/docs/tasks/tools/)
+
+### Related Topics
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) - For running kind
+- [VS Code Go Extension](https://marketplace.visualstudio.com/items?itemName=golang.Go) - Go development
+- [Kubernetes Development Tools](https://kubernetes.io/docs/tasks/tools/)
 
 ## Next Steps
 

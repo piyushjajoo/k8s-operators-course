@@ -273,6 +273,23 @@ When writing integration tests:
 
 - [Lab 6.3: Creating Integration Tests](../labs/lab-03-integration-testing.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Ginkgo Documentation](https://onsi.github.io/ginkgo/)
+- [Gomega Matchers](https://onsi.github.io/gomega/)
+- [kind Documentation](https://kind.sigs.k8s.io/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 10: Testing
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 10: Testing
+- [BDD Testing with Ginkgo](https://onsi.github.io/ginkgo/)
+
+### Related Topics
+- [Integration Testing Patterns](https://martinfowler.com/articles/practical-test-pyramid.html)
+- [Test Containers](https://www.testcontainers.org/)
+- [CI/CD Testing](https://kubernetes.io/docs/concepts/architecture/test/)
+
 ## Next Steps
 
 Now that you understand integration testing, let's learn about debugging and observability.

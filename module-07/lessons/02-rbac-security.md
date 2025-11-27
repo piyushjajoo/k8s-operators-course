@@ -6,6 +6,70 @@
 
 Operators need permissions to manage resources, but they should follow the **principle of least privilege** - only requesting the minimum permissions needed. This lesson covers RBAC (Role-Based Access Control) configuration and security best practices for operators.
 
+## Theory: RBAC and Security
+
+Security is critical for production operators - they have **significant permissions** in your cluster.
+
+### Why Security Matters
+
+**Attack Surface:**
+- Operators run with elevated permissions
+- Compromised operator = compromised cluster
+- Security breaches can be catastrophic
+- Compliance requirements
+
+**Principle of Least Privilege:**
+- Grant minimum permissions needed
+- Reduce attack surface
+- Limit blast radius
+- Follow security best practices
+
+**Defense in Depth:**
+- Multiple security layers
+- RBAC for authorization
+- Network policies for isolation
+- Security contexts for containers
+
+### RBAC Components
+
+**Service Account:**
+- Identity for operator pod
+- Used for authentication
+- Tied to RBAC permissions
+
+**Role/ClusterRole:**
+- Defines permissions
+- Role: Namespace-scoped
+- ClusterRole: Cluster-scoped
+
+**RoleBinding/ClusterRoleBinding:**
+- Binds role to service account
+- Grants permissions
+- RoleBinding: Namespace-scoped
+- ClusterRoleBinding: Cluster-scoped
+
+### Security Best Practices
+
+**Image Security:**
+- Use distroless images
+- Scan for vulnerabilities
+- Keep images updated
+- Minimal base images
+
+**Container Security:**
+- Run as non-root
+- Read-only root filesystem
+- Drop all capabilities
+- Use security contexts
+
+**Network Security:**
+- Network policies
+- Limit network access
+- Isolate operator traffic
+- Encrypt communication
+
+Understanding security helps you build secure, production-ready operators.
+
 ## RBAC Architecture
 
 Here's how RBAC works for operators:
@@ -208,6 +272,23 @@ When configuring RBAC and security:
 ## Related Lab
 
 - [Lab 7.2: Configuring RBAC](../labs/lab-02-rbac-security.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [RBAC Authorization](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [Service Accounts](https://kubernetes.io/docs/concepts/security/service-accounts/)
+- [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+
+### Further Reading
+- **Kubernetes Security** by Andrew Martin and Michael Hausenblas - Security best practices
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 13: Security
+- [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/)
+
+### Related Topics
+- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Security Contexts](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+- [Image Scanning Tools](https://kubernetes.io/docs/concepts/security/image-scanning/)
 
 ## Next Steps
 

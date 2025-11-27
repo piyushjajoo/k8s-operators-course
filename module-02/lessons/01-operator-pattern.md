@@ -6,6 +6,90 @@
 
 In [Module 1](../module-01/README.md), you learned about Kubernetes controllers, Custom Resources, and the reconciliation pattern. Operators are controllers that manage Custom Resources using domain-specific knowledge. This lesson explains what operators are, when to use them, and how they differ from other Kubernetes tools.
 
+## Theory: The Operator Pattern
+
+Operators extend Kubernetes by encoding **operational knowledge** into software. They follow the controller pattern but add domain-specific intelligence.
+
+### Core Philosophy
+
+**Operational Knowledge as Code:**
+- Operators encode how to deploy, configure, and manage applications
+- This knowledge is captured in code, not documentation
+- Makes operations repeatable and consistent
+
+**Self-Service Automation:**
+- Users declare what they want (Custom Resource)
+- Operator handles the complexity (deployment, scaling, backups, etc.)
+- Reduces operational burden on users
+
+**Kubernetes-Native:**
+- Operators use Kubernetes APIs and patterns
+- Feel like built-in Kubernetes features
+- Integrate with existing tooling (kubectl, Helm, etc.)
+
+### When to Use Operators
+
+**Good Use Cases:**
+- Complex stateful applications (databases, message queues)
+- Applications requiring domain-specific knowledge
+- Applications needing lifecycle management (backup, restore, upgrade)
+- Applications requiring coordination of multiple resources
+
+**Not Ideal For:**
+- Simple stateless applications (use Deployment)
+- One-time tasks (use Job)
+- Simple configuration (use ConfigMap)
+- Static content (use Deployment + ConfigMap)
+
+### Operator Capability Levels
+
+The Operator Capability Model (Level 1-5) helps understand operator sophistication:
+- **Level 1-2**: Basic deployment and upgrades
+- **Level 3**: Full lifecycle management
+- **Level 4-5**: Advanced automation and self-healing
+
+Most production operators aim for Level 3+, providing comprehensive lifecycle management.
+
+## Theory: The Operator Pattern
+
+Operators are a pattern for packaging, deploying, and managing Kubernetes applications using Custom Resources and controllers.
+
+### Core Concepts
+
+**Domain Knowledge Encoding:**
+- Operators encode operational knowledge (how to deploy, scale, backup, etc.)
+- This knowledge is embedded in the controller logic
+- Makes complex applications easier to manage
+
+**Declarative Application Management:**
+- Users declare desired application state
+- Operator figures out how to achieve it
+- Follows Kubernetes declarative model
+
+**Lifecycle Automation:**
+- Operators handle full application lifecycle
+- Installation, upgrades, backups, scaling
+- Reduces operational burden
+
+**Why Operators Matter:**
+- **Automation**: Reduces manual operational tasks
+- **Consistency**: Ensures correct application state
+- **Expertise**: Encodes best practices
+- **Kubernetes Native**: Uses Kubernetes patterns
+
+### Operator vs Other Tools
+
+**Operators vs Helm:**
+- Helm: Package manager, templating, installation
+- Operators: Lifecycle management, automation, intelligence
+- Often used together: Helm installs, Operator manages
+
+**Operators vs ConfigMaps:**
+- ConfigMaps: Static configuration
+- Operators: Dynamic, intelligent management
+
+Understanding when to use operators helps you make the right architectural decisions.
+
 ## What is an Operator?
 
 An operator is a Kubernetes controller that:
@@ -247,6 +331,23 @@ When building operators:
 ## Related Lab
 
 - [Lab 2.1: Exploring Existing Operators](../labs/lab-01-operator-pattern.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Kubernetes Operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+- [Operator Pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+- [Operator Capability Levels](https://operatorframework.io/operator-capabilities/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Complete guide to operators
+- **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 16: Operators
+- [Operator Framework](https://operatorframework.io/) - Tools and best practices
+
+### Related Topics
+- [Operator Best Practices](https://operatorframework.io/operator-capabilities/)
+- [Operator SDK](https://sdk.operatorframework.io/) - Alternative to Kubebuilder
+- [OLM (Operator Lifecycle Manager)](https://olm.operatorframework.io/) - Operator distribution
 
 ## Next Steps
 

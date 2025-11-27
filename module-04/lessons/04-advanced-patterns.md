@@ -356,6 +356,23 @@ When implementing advanced patterns:
 
 - [Lab 4.4: Multi-Phase Reconciliation](../labs/lab-04-advanced-patterns.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Controller Best Practices](https://kubernetes.io/docs/concepts/architecture/controller/)
+- [Idempotency](https://kubernetes.io/docs/concepts/architecture/controller/#idempotency)
+- [Reconciliation](https://kubernetes.io/docs/concepts/architecture/controller/#reconciliation)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 8: Advanced Patterns
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 8: Advanced Controller Patterns
+- [Controller Design Patterns](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/controllers.md)
+
+### Related Topics
+- [State Machine Pattern](https://en.wikipedia.org/wiki/Finite-state_machine)
+- [Idempotency in Distributed Systems](https://en.wikipedia.org/wiki/Idempotence)
+- [Retry Patterns](https://kubernetes.io/docs/concepts/architecture/controller/#retry)
+
 ## Next Steps
 
 Congratulations! You've completed Module 4. You now understand:

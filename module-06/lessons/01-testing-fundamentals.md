@@ -276,6 +276,23 @@ When testing operators:
 
 - [Lab 6.1: Setting Up Testing Environment](../labs/lab-01-testing-fundamentals.md) - Hands-on exercises for this lesson
 
+## References
+
+### Official Documentation
+- [Testing in Kubebuilder](https://book.kubebuilder.io/cronjob-tutorial/writing-tests.html)
+- [envtest](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest)
+- [Ginkgo Testing Framework](https://onsi.github.io/ginkgo/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 10: Testing
+- **Programming Kubernetes** by Michael Hausenblas and Stefan Schimanski - Chapter 10: Testing
+- [Go Testing Best Practices](https://golang.org/doc/effective_go#testing)
+
+### Related Topics
+- [Test-Driven Development](https://en.wikipedia.org/wiki/Test-driven_development)
+- [Table-Driven Tests in Go](https://github.com/golang/go/wiki/TableDrivenTests)
+- [Mocking in Go](https://github.com/golang/mock)
+
 ## Next Steps
 
 Now that you understand testing fundamentals, let's set up envtest and write unit tests.

@@ -6,6 +6,65 @@
 
 Before deploying operators to production, they need to be packaged and distributed. This lesson covers building container images, creating Helm charts, and packaging operators for distribution via OLM (Operator Lifecycle Manager).
 
+## Theory: Packaging and Distribution
+
+Packaging operators enables **reliable, repeatable deployments** across environments.
+
+### Why Packaging Matters
+
+**Reproducibility:**
+- Same operator version everywhere
+- Consistent deployments
+- Version control
+- Rollback capability
+
+**Distribution:**
+- Share operators with teams
+- Deploy to multiple clusters
+- Enable operator marketplace
+- Simplify installation
+
+**Deployment:**
+- Standard deployment methods
+- Helm charts for easy install
+- OLM for operator marketplace
+- Container images for portability
+
+### Packaging Strategies
+
+**Container Images:**
+- Standard format
+- Works everywhere
+- Versioned
+- Portable
+
+**Helm Charts:**
+- Package operator + dependencies
+- Parameterized configuration
+- Easy upgrades
+- Community standard
+
+**OLM Bundles:**
+- Operator marketplace format
+- Metadata and manifests
+- Version management
+- Dependency resolution
+
+### Versioning
+
+**Semantic Versioning:**
+- Major: Breaking changes
+- Minor: New features
+- Patch: Bug fixes
+
+**Version Tags:**
+- `latest`: Latest version
+- `v1.2.3`: Specific version
+- `v1.2`: Latest patch of minor version
+- `stable`: Stable release
+
+Understanding packaging helps you distribute operators effectively.
+
 ## Operator Packaging Flow
 
 Here's how operators are packaged and distributed:
@@ -262,6 +321,23 @@ When packaging operators:
 ## Related Lab
 
 - [Lab 7.1: Packaging Your Operator](../labs/lab-01-packaging-distribution.md) - Hands-on exercises for this lesson
+
+## References
+
+### Official Documentation
+- [Container Images](https://kubernetes.io/docs/concepts/containers/images/)
+- [Helm Documentation](https://helm.sh/docs/)
+- [OLM Documentation](https://olm.operatorframework.io/)
+
+### Further Reading
+- **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 12: Packaging
+- **Docker Deep Dive** by Nigel Poulton - Container image best practices
+- [Helm Best Practices](https://helm.sh/docs/chart_best_practices/)
+
+### Related Topics
+- [Multi-Stage Docker Builds](https://docs.docker.com/build/building/multi-stage/)
+- [Semantic Versioning](https://semver.org/)
+- [Operator Lifecycle Manager](https://olm.operatorframework.io/)
 
 ## Next Steps
 
