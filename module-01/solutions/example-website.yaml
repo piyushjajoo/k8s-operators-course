@@ -1,0 +1,12 @@
+# Solution: Example Website Custom Resource
+# Use this after creating the CRD
+
+apiVersion: example.com/v1
+kind: Website
+metadata:
+  name: my-blog
+spec:
+  url: https://example.com/blog
+  replicas: 3
+  environment: production
+

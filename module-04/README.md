@@ -84,6 +84,13 @@ Each lesson includes hands-on exercises that enhance your operator.
 - [Lab 4.3: Setting Up Watches and Indexes](labs/lab-03-watching-indexing.md)
 - [Lab 4.4: Multi-Phase Reconciliation](labs/lab-04-advanced-patterns.md)
 
+## Solutions
+
+Complete working solutions for all labs are available in the [solutions directory](solutions/):
+- [Lab 4.1 Solutions](solutions/conditions-helpers.go) - Condition helper functions
+- [Lab 4.2 Solutions](solutions/finalizer-handler.go) - Finalizer implementation
+- [Lab 4.3 Solutions](solutions/watch-setup.go) - Watch setup examples
+
 ## Additional Resources
 
 - [Module Summary](SUMMARY.md)

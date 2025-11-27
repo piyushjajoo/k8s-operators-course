@@ -271,6 +271,13 @@ In this lab, you:
 5. State transitions should be clear and observable
 6. Error handling is crucial in state machines
 
+## Solutions
+
+This lab combines concepts from previous labs. Refer to:
+- [Condition Helpers](../solutions/conditions-helpers.go) - For status management
+- [Finalizer Handler](../solutions/finalizer-handler.go) - For cleanup patterns
+- [Watch Setup](../solutions/watch-setup.go) - For watching patterns
+
 ## Congratulations!
 
 You've completed Module 4! You now understand:

@@ -86,6 +86,11 @@ By the end of this module, you'll have:
 - Ability to run operators locally for development
 - Foundation for building more complex operators in Module 3
 
+## Solutions
+
+Complete working solutions for all labs are available in the [solutions directory](solutions/):
+- [Lab 4.1 Solutions](solutions/) - Complete Hello World operator (main.go, controller, types)
+
 ## Additional Resources
 
 - [Module Summary](SUMMARY.md)

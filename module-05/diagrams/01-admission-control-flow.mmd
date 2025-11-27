@@ -1,0 +1,17 @@
+graph TB
+    REQUEST[API Request] --> ADMISSION[Admission Control]
+    
+    ADMISSION --> MUTATING[Mutating Webhooks]
+    ADMISSION --> VALIDATING[Validating Webhooks]
+    
+    MUTATING --> MUTATED[Mutated Resource]
+    MUTATED --> VALIDATING
+    VALIDATING --> ACCEPT[Accept]
+    VALIDATING --> REJECT[Reject]
+    
+    ACCEPT --> STORED[Stored in etcd]
+    REJECT --> ERROR[Return Error]
+    
+    style MUTATING fill:#90EE90
+    style VALIDATING fill:#FFB6C1
+

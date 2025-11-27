@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant User
+    participant API as API Server
+    participant Auth as AuthN/AuthZ
+    participant Mutating as Mutating Webhooks
+    participant Validating as Validating Webhooks
+    participant etcd as etcd
+    
+    User->>API: Create Resource
+    API->>Auth: Authenticate & Authorize
+    Auth-->>API: Authorized
+    API->>Mutating: Call Mutating Webhooks
+    Mutating-->>API: Mutated Resource
+    API->>Validating: Call Validating Webhooks
+    Validating-->>API: Validation Result
+    API->>etcd: Store Resource
+    etcd-->>API: Stored
+    API-->>User: Success
+    
+    Note over Validating: If validation fails,<br/>request is rejected
+

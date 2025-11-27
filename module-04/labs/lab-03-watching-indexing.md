@@ -261,6 +261,11 @@ In this lab, you:
 5. Watches make controllers reactive
 6. Proper watching improves performance
 
+## Solutions
+
+Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [Watch Setup](../solutions/watch-setup.go) - Examples of setting up watches for owned and non-owned resources
+
 ## Next Steps
 
 Now let's implement advanced patterns like multi-phase reconciliation!

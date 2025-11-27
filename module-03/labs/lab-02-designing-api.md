@@ -357,6 +357,11 @@ In this lab, you:
 5. Default values make APIs easier to use
 6. Proper versioning is important
 
+## Solutions
+
+The API design from this lab is used in the complete Database operator solution:
+- [Database Types](../solutions/database-types.go) - Complete API type definitions with validation markers
+
 ## Next Steps
 
 Now that you have a well-designed API, let's implement the reconciliation logic to make it work!

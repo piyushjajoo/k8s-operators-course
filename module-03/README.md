@@ -85,6 +85,11 @@ Each lesson includes hands-on exercises building toward a complete PostgreSQL op
 - [Lab 3.3: Building PostgreSQL Operator](labs/lab-03-reconciliation-logic.md)
 - [Lab 3.4: Advanced Client Operations](labs/lab-04-client-go.md)
 
+## Solutions
+
+Complete working solutions for all labs are available in the [solutions directory](solutions/):
+- [Lab 3.3 Solutions](solutions/) - Complete Database operator (types, controller with StatefulSet/Service)
+
 ## Additional Resources
 
 - [Module Summary](SUMMARY.md)

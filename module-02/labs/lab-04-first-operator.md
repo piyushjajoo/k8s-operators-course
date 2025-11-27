@@ -476,6 +476,13 @@ You've built your first operator! This demonstrates:
 - ✅ Status management
 - ✅ Owner references
 
+## Solutions
+
+Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [main.go](../solutions/hello-world-operator-main.go) - Complete operator entry point
+- [Controller](../solutions/hello-world-controller.go) - Complete controller implementation
+- [API Types](../solutions/hello-world-types.go) - Complete API type definitions
+
 ## Next Steps
 
 In Module 3, you'll learn to build more sophisticated controllers with advanced patterns!

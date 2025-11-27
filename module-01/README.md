@@ -59,6 +59,11 @@ Each lesson includes hands-on exercises. All labs use the kind cluster you set u
 - [Lab 1.3: Observing Controllers in Action](labs/lab-03-controller-pattern.md)
 - [Lab 1.4: Creating Your First CRD](labs/lab-04-custom-resources.md)
 
+## Solutions
+
+Complete working solutions for all labs are available in the [solutions directory](solutions/):
+- [Lab 1.4 Solutions](solutions/) - Website CRD and example resources
+
 ## Additional Resources
 
 - [Module Summary](SUMMARY.md)

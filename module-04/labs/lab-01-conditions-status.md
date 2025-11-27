@@ -222,6 +222,11 @@ In this lab, you:
 5. Conditions transition through states
 6. Standard condition types improve UX
 
+## Solutions
+
+Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [Condition Helpers](../solutions/conditions-helpers.go) - Helper functions for managing conditions
+
 ## Next Steps
 
 Now let's implement finalizers for graceful cleanup!

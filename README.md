@@ -38,10 +38,11 @@ The course is divided into 8 modules, each building on the previous:
    - [Watching and indexing](module-04/lessons/03-watching-indexing.md)
    - [Advanced patterns](module-04/lessons/04-advanced-patterns.md)
 
-5. **Module 5: Webhooks and Admission Control** (Coming Soon)
-   - Validating webhooks
-   - Mutating webhooks
-   - Certificate management
+5. **[Module 5: Webhooks and Admission Control](module-05/README.md)** ✅
+   - [Admission control](module-05/lessons/01-admission-control.md)
+   - [Validating webhooks](module-05/lessons/02-validating-webhooks.md)
+   - [Mutating webhooks](module-05/lessons/03-mutating-webhooks.md)
+   - [Webhook deployment](module-05/lessons/04-webhook-deployment.md)
 
 6. **Module 6: Testing and Debugging** (Coming Soon)
    - Unit testing
@@ -92,6 +93,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 4.3: Watching and Indexing](module-04/lessons/03-watching-indexing.md) | [Lab 4.3](module-04/labs/lab-03-watching-indexing.md)
 - [Lesson 4.4: Advanced Patterns](module-04/lessons/04-advanced-patterns.md) | [Lab 4.4](module-04/labs/lab-04-advanced-patterns.md)
 
+### Module 5: Webhooks and Admission Control ✅
+
+- [Module Overview](module-05/README.md)
+- [Lesson 5.1: Admission Control](module-05/lessons/01-admission-control.md) | [Lab 5.1](module-05/labs/lab-01-admission-control.md)
+- [Lesson 5.2: Validating Webhooks](module-05/lessons/02-validating-webhooks.md) | [Lab 5.2](module-05/labs/lab-02-validating-webhooks.md)
+- [Lesson 5.3: Mutating Webhooks](module-05/lessons/03-mutating-webhooks.md) | [Lab 5.3](module-05/labs/lab-03-mutating-webhooks.md)
+- [Lesson 5.4: Webhook Deployment](module-05/lessons/04-webhook-deployment.md) | [Lab 5.4](module-05/labs/lab-04-webhook-deployment.md)
+
 ## Getting Started
 
 ### Prerequisites
@@ -137,7 +146,8 @@ The course is divided into 8 modules, each building on the previous:
 - ✅ Module 2: Complete
 - ✅ Module 3: Complete
 - ✅ Module 4: Complete
-- 🚧 Module 5-8: In Progress
+- ✅ Module 5: Complete
+- 🚧 Module 6-8: In Progress
 
 ## Learning Approach
 
@@ -155,6 +165,22 @@ This is a course repository. If you find issues or have suggestions, please open
 ## License
 
 See [LICENSE](LICENSE) file for details.
+
+## Solutions
+
+Complete working solutions for all labs are available in each module's `solutions/` directory:
+
+- **Module 1**: [CRD examples](module-01/solutions/) - Website CRD and example resources
+- **Module 2**: [Hello World operator](module-02/solutions/) - Complete operator (main.go, controller, types)
+- **Module 3**: [Database operator](module-03/solutions/) - Complete Database operator (types, controller)
+- **Module 4**: [Advanced patterns](module-04/solutions/) - Condition helpers, finalizers, watch setup
+- **Module 5**: [Webhooks](module-05/solutions/) - Validating and mutating webhooks
+
+Each solution includes:
+- Complete, working code examples
+- Best practices from the lessons
+- README files with usage instructions
+- Ready to use as reference or starting point
 
 ## Resources
 

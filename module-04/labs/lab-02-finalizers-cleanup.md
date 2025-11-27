@@ -250,6 +250,11 @@ In this lab, you:
 5. Make cleanup idempotent
 6. Handle cleanup failures gracefully
 
+## Solutions
+
+Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [Finalizer Handler](../solutions/finalizer-handler.go) - Complete finalizer implementation with cleanup logic
+
 ## Next Steps
 
 Now let's set up watches and indexes for efficient controllers!

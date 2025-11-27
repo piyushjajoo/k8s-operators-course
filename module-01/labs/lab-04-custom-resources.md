@@ -473,5 +473,11 @@ In this lab, you:
 - No validation needed
 - No API semantics required
 
+## Solutions
+
+Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [Website CRD](../solutions/website-crd.yaml) - Complete CRD definition
+- [Example Website](../solutions/example-website.yaml) - Example Custom Resource
+
 **Navigation:** [← Previous Lab: Controller Pattern](lab-03-controller-pattern.md) | [Related Lesson](../lessons/04-custom-resources.md) | [Module Overview](../README.md)
 

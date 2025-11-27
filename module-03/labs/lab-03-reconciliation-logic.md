@@ -406,6 +406,12 @@ In this lab, you:
 5. Error handling is important
 6. Logging helps debugging
 
+## Solutions
+
+Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [Database Types](../solutions/database-types.go) - Complete Database API type definitions
+- [Database Controller](../solutions/database-controller.go) - Complete controller with StatefulSet/Service reconciliation
+
 ## Next Steps
 
 Now let's learn advanced client operations for more sophisticated controllers!
