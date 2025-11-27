@@ -1,0 +1,16 @@
+graph TB
+    subgraph "Kubernetes Cluster"
+        USER[User]
+        CR[Custom Resource]
+        OPERATOR[Operator Controller]
+        K8S[Kubernetes Resources]
+    end
+    
+    USER -->|Creates| CR
+    CR -->|Watched by| OPERATOR
+    OPERATOR -->|Reconciles| K8S
+    OPERATOR -->|Updates| CR
+    
+    style OPERATOR fill:#FFB6C1
+    style CR fill:#90EE90
+

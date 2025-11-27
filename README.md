@@ -20,10 +20,11 @@ The course is divided into 8 modules, each building on the previous:
    - [Controller pattern](module-01/lessons/03-controller-pattern.md)
    - [Custom Resources](module-01/lessons/04-custom-resources.md)
 
-2. **Module 2: Introduction to Operators** (Coming Soon)
-   - Operator pattern
-   - Kubebuilder setup
-   - Your first operator
+2. **[Module 2: Introduction to Operators](module-02/README.md)** ✅
+   - [Operator pattern](module-02/lessons/01-operator-pattern.md)
+   - [Kubebuilder fundamentals](module-02/lessons/02-kubebuilder-fundamentals.md)
+   - [Development environment](module-02/lessons/03-dev-environment.md)
+   - [Your first operator](module-02/lessons/04-first-operator.md)
 
 3. **Module 3: Building Custom Controllers** (Coming Soon)
    - Controller runtime
@@ -64,6 +65,14 @@ The course is divided into 8 modules, each building on the previous:
 - [Lesson 1.2: API Machinery](module-01/lessons/02-api-machinery.md) | [Lab 1.2](module-01/labs/lab-02-api-machinery.md)
 - [Lesson 1.3: Controller Pattern](module-01/lessons/03-controller-pattern.md) | [Lab 1.3](module-01/labs/lab-03-controller-pattern.md)
 - [Lesson 1.4: Custom Resources](module-01/lessons/04-custom-resources.md) | [Lab 1.4](module-01/labs/lab-04-custom-resources.md)
+
+### Module 2: Introduction to Operators ✅
+
+- [Module Overview](module-02/README.md)
+- [Lesson 2.1: Operator Pattern](module-02/lessons/01-operator-pattern.md) | [Lab 2.1](module-02/labs/lab-01-operator-pattern.md)
+- [Lesson 2.2: Kubebuilder Fundamentals](module-02/lessons/02-kubebuilder-fundamentals.md) | [Lab 2.2](module-02/labs/lab-02-kubebuilder-fundamentals.md)
+- [Lesson 2.3: Dev Environment](module-02/lessons/03-dev-environment.md) | [Lab 2.3](module-02/labs/lab-03-dev-environment.md)
+- [Lesson 2.4: First Operator](module-02/lessons/04-first-operator.md) | [Lab 2.4](module-02/labs/lab-04-first-operator.md)
 
 ## Getting Started
 
@@ -107,7 +116,8 @@ The course is divided into 8 modules, each building on the previous:
 ## Module Status
 
 - ✅ Module 1: Complete
-- 🚧 Module 2-8: In Progress
+- ✅ Module 2: Complete
+- 🚧 Module 3-8: In Progress
 
 ## Learning Approach
 
