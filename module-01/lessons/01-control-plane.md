@@ -216,7 +216,7 @@ kubectl get replicasets -l app=nginx
 ### Step 4: Trace a Request Flow
 
 ```bash
-# Enable verbose logging to see API calls
+# Create a pod to observe the request flow
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -228,7 +228,7 @@ spec:
     image: nginx:latest
 EOF
 
-# Watch events to see the flow
+# Watch events to see the flow (controller actions, scheduling, etc.)
 kubectl get events --sort-by='.lastTimestamp'
 ```
 
