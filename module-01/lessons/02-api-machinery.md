@@ -260,6 +260,9 @@ graph LR
 Some resources have subresources:
 
 ```bash
+# create nginx deployment
+kubectl create deployment nginx --image=nginx
+
 # Scale a deployment (uses scale subresource)
 kubectl scale deployment nginx --replicas=3
 
