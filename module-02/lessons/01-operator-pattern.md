@@ -101,7 +101,7 @@ graph TB
 
 ## Operator Philosophy
 
-Operators follow the same pattern you learned in [Lesson 1.3](../module-01/lessons/03-controller-pattern.md):
+Operators follow the same pattern you learned in [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md):
 
 1. **Watch** Custom Resources
 2. **Compare** desired state (spec) vs actual state
