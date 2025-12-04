@@ -8,7 +8,8 @@ This course teaches you how to build Kubernetes operators from the ground up. Yo
 
 **Duration:** 8 weeks (40-50 hours total)  
 **Level:** Intermediate to Advanced  
-**Prerequisites:** Basic Kubernetes knowledge, Go programming fundamentals, understanding of containerization
+**Prerequisites:** Basic Kubernetes knowledge, Go programming fundamentals, understanding of containerization  
+**License:** Free and open-source - See [LICENSE](LICENSE) for details
 
 ## Course Structure
 
@@ -162,11 +163,6 @@ The course is divided into 8 modules, each building on the previous:
    cat README.md
    ```
 
-## Course Materials
-
-- **Syllabus:** [k8s-operators-course-syllabus.md](k8s-operators-course-syllabus.md)
-- **Build Plan:** [COURSE_BUILD_PLAN.md](COURSE_BUILD_PLAN.md)
-
 ## Module Status
 
 - ✅ Module 1: Complete
@@ -193,7 +189,13 @@ This is a course repository. If you find issues or have suggestions, please open
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+This course is **free and open-source**, licensed under the [Creative Commons Attribution 4.0 International License](LICENSE). You are free to:
+
+- Use, share, and modify the course materials
+- Use for personal or commercial purposes
+- Adapt and build upon the content
+
+The only requirement is that you provide appropriate attribution. See the [LICENSE](LICENSE) file for full details.
 
 ## Solutions
 

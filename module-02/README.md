@@ -91,11 +91,6 @@ By the end of this module, you'll have:
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
 - [Lab 4.1 Solutions](solutions/) - Complete Hello World operator (main.go, controller, types)
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 

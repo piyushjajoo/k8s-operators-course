@@ -94,11 +94,6 @@ Complete working solutions for all labs are available in the [solutions director
 - [Lab 7.3 Solutions](solutions/) - Leader election and HA examples
 - [Lab 7.4 Solutions](solutions/) - Performance optimization examples
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 

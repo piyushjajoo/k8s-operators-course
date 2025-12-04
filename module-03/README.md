@@ -90,11 +90,6 @@ Each lesson includes hands-on exercises building toward a complete PostgreSQL op
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
 - [Lab 3.3 Solutions](solutions/) - Complete Database operator (types, controller with StatefulSet/Service)
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 

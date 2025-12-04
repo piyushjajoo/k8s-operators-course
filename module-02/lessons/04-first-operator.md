@@ -409,7 +409,7 @@ This is the foundation for all operators!
 
 ## Next Steps
 
-Congratulations! You've built your first operator. In [Module 3](../module-03/README.md), you'll learn to build more sophisticated controllers with advanced patterns.
+Congratulations! You've built your first operator. In [Module 3](../../module-03/README.md), you'll learn to build more sophisticated controllers with advanced patterns.
 
-**Navigation:** [← Previous: Dev Environment](03-dev-environment.md) | [Module Overview](../README.md) | [Next: Module 3 →](../module-03/README.md)
+**Navigation:** [← Previous: Dev Environment](03-dev-environment.md) | [Module Overview](../README.md) | [Next: Module 3 →](../../module-03/README.md)
 

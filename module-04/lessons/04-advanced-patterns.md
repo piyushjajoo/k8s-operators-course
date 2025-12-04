@@ -381,7 +381,7 @@ Congratulations! You've completed Module 4. You now understand:
 - Watching and indexing
 - Advanced reconciliation patterns
 
-In [Module 5](../module-05/README.md), you'll learn about webhooks for validation and mutation.
+In [Module 5](../../module-05/README.md), you'll learn about webhooks for validation and mutation.
 
-**Navigation:** [← Previous: Watching and Indexing](03-watching-indexing.md) | [Module Overview](../README.md) | [Next: Module 5 →](../module-05/README.md)
+**Navigation:** [← Previous: Watching and Indexing](03-watching-indexing.md) | [Module Overview](../README.md) | [Next: Module 5 →](../../module-05/README.md)
 

@@ -379,7 +379,7 @@ Congratulations! You've completed Module 5. You now understand:
 - Mutating webhooks for defaulting
 - Certificate management and deployment
 
-In [Module 6](../module-06/README.md), you'll learn about testing and debugging operators.
+In [Module 6](../../module-06/README.md), you'll learn about testing and debugging operators.
 
-**Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../module-06/README.md)
+**Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)
 

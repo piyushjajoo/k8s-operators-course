@@ -97,11 +97,6 @@ Complete working solutions for all labs are available in the [solutions director
 - [Lab 6.3 Solutions](solutions/integration_test.go) - Integration test examples
 - [Lab 6.4 Solutions](solutions/metrics.go, solutions/observability.go) - Observability examples
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 

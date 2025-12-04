@@ -64,11 +64,6 @@ Each lesson includes hands-on exercises. All labs use the kind cluster you set u
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
 - [Lab 1.4 Solutions](solutions/) - Website CRD and example resources
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 

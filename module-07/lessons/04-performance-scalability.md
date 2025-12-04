@@ -409,7 +409,7 @@ Congratulations! You've completed Module 7. You now understand:
 - High availability
 - Performance optimization
 
-In [Module 8](../module-08/README.md), you'll learn about advanced topics and real-world patterns.
+In [Module 8](../../module-08/README.md), you'll learn about advanced topics and real-world patterns.
 
-**Navigation:** [← Previous: High Availability](03-high-availability.md) | [Module Overview](../README.md) | [Next: Module 8 →](../module-08/README.md)
+**Navigation:** [← Previous: High Availability](03-high-availability.md) | [Module Overview](../README.md) | [Next: Module 8 →](../../module-08/README.md)
 

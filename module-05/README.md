@@ -90,11 +90,6 @@ Complete working solutions for all labs are available in the [solutions director
 - [Lab 5.2 Solutions](solutions/validating-webhook.go) - Complete validating webhook
 - [Lab 5.3 Solutions](solutions/mutating-webhook.go) - Complete mutating webhook
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 

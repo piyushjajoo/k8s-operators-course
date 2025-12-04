@@ -91,11 +91,6 @@ Complete working solutions for all labs are available in the [solutions director
 - [Lab 4.2 Solutions](solutions/finalizer-handler.go) - Finalizer implementation
 - [Lab 4.3 Solutions](solutions/watch-setup.go) - Watch setup examples
 
-## Additional Resources
-
-- [Module Summary](SUMMARY.md)
-- [Testing Guide](TESTING.md)
-- [Course Build Plan](../COURSE_BUILD_PLAN.md)
 
 ## Navigation
 
