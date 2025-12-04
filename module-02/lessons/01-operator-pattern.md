@@ -8,7 +8,7 @@ In [Module 1](../module-01/README.md), you learned about Kubernetes controllers,
 
 ## Theory: The Operator Pattern
 
-Operators extend Kubernetes by encoding **operational knowledge** into software. They follow the controller pattern but add domain-specific intelligence.
+Operators are a pattern for packaging, deploying, and managing Kubernetes applications using Custom Resources and controllers. They extend Kubernetes by encoding **operational knowledge** into software and follow the controller pattern while adding domain-specific intelligence.
 
 ### Core Philosophy
 
@@ -16,30 +16,25 @@ Operators extend Kubernetes by encoding **operational knowledge** into software.
 - Operators encode how to deploy, configure, and manage applications
 - This knowledge is captured in code, not documentation
 - Makes operations repeatable and consistent
+- Domain knowledge is embedded in the controller logic
 
 **Self-Service Automation:**
 - Users declare what they want (Custom Resource)
 - Operator handles the complexity (deployment, scaling, backups, etc.)
 - Reduces operational burden on users
+- Follows Kubernetes declarative model
 
 **Kubernetes-Native:**
 - Operators use Kubernetes APIs and patterns
 - Feel like built-in Kubernetes features
 - Integrate with existing tooling (kubectl, Helm, etc.)
 
-### When to Use Operators
+### Why Operators Matter
 
-**Good Use Cases:**
-- Complex stateful applications (databases, message queues)
-- Applications requiring domain-specific knowledge
-- Applications needing lifecycle management (backup, restore, upgrade)
-- Applications requiring coordination of multiple resources
-
-**Not Ideal For:**
-- Simple stateless applications (use Deployment)
-- One-time tasks (use Job)
-- Simple configuration (use ConfigMap)
-- Static content (use Deployment + ConfigMap)
+- **Automation**: Reduces manual operational tasks
+- **Consistency**: Ensures correct application state
+- **Expertise**: Encodes best practices
+- **Lifecycle Management**: Handles full application lifecycle (installation, upgrades, backups, scaling)
 
 ### Operator Capability Levels
 
@@ -50,32 +45,20 @@ The Operator Capability Model (Level 1-5) helps understand operator sophisticati
 
 Most production operators aim for Level 3+, providing comprehensive lifecycle management.
 
-## Theory: The Operator Pattern
+### When to Use Operators
 
-Operators are a pattern for packaging, deploying, and managing Kubernetes applications using Custom Resources and controllers.
+**Good Use Cases:**
+- Complex stateful applications (databases, message queues)
+- Applications requiring domain-specific knowledge
+- Applications needing lifecycle management (backup, restore, upgrade)
+- Applications requiring coordination of multiple resources
+- Need continuous management and monitoring
 
-### Core Concepts
-
-**Domain Knowledge Encoding:**
-- Operators encode operational knowledge (how to deploy, scale, backup, etc.)
-- This knowledge is embedded in the controller logic
-- Makes complex applications easier to manage
-
-**Declarative Application Management:**
-- Users declare desired application state
-- Operator figures out how to achieve it
-- Follows Kubernetes declarative model
-
-**Lifecycle Automation:**
-- Operators handle full application lifecycle
-- Installation, upgrades, backups, scaling
-- Reduces operational burden
-
-**Why Operators Matter:**
-- **Automation**: Reduces manual operational tasks
-- **Consistency**: Ensures correct application state
-- **Expertise**: Encodes best practices
-- **Kubernetes Native**: Uses Kubernetes patterns
+**Not Ideal For:**
+- Simple stateless applications (use Deployment)
+- One-time tasks (use Job)
+- Simple configuration (use ConfigMap)
+- Static content (use Deployment + ConfigMap)
 
 ### Operator vs Other Tools
 
