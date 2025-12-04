@@ -9,7 +9,7 @@ This course teaches you how to build Kubernetes operators from the ground up. Yo
 **Duration:** 8 weeks (40-50 hours total)  
 **Level:** Intermediate to Advanced  
 **Prerequisites:** Basic Kubernetes knowledge, Go programming fundamentals, understanding of containerization  
-**License:** Free and open-source - See [LICENSE](LICENSE) for details
+**License:** Free and open-source - Licensed under [MIT License](LICENSE)
 
 ## Course Structure
 
@@ -189,13 +189,13 @@ This is a course repository. If you find issues or have suggestions, please open
 
 ## License
 
-This course is **free and open-source**, licensed under the [Creative Commons Attribution 4.0 International License](LICENSE). You are free to:
+This course is **free and open-source**, licensed under the [MIT License](LICENSE). You are free to:
 
 - Use, share, and modify the course materials
 - Use for personal or commercial purposes
-- Adapt and build upon the content
+- Distribute and sublicense the materials
 
-The only requirement is that you provide appropriate attribution. See the [LICENSE](LICENSE) file for full details.
+The only requirement is that you include the original copyright notice and license text. See the [LICENSE](LICENSE) file for full details.
 
 ## Solutions
 
