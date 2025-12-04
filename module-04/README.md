@@ -96,5 +96,5 @@ Complete working solutions for all labs are available in the [solutions director
 
 - [← Previous: Module 3 - Building Custom Controllers](../module-03/README.md)
 - [Course Overview](../README.md)
-- [Next: Module 5 - Webhooks and Admission Control →](../module-05/README.md) (Coming Soon)
+- [Next: Module 5 - Webhooks and Admission Control →](../module-05/README.md)
 

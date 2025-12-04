@@ -102,5 +102,5 @@ Complete working solutions for all labs are available in the [solutions director
 
 - [← Previous: Module 5 - Webhooks and Admission Control](../module-05/README.md)
 - [Course Overview](../README.md)
-- [Next: Module 7 - Production Deployment →](../module-07/README.md) (Coming Soon)
+- [Next: Module 7 - Production Deployment →](../module-07/README.md)
 

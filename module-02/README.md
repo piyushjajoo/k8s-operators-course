@@ -96,5 +96,5 @@ Complete working solutions for all labs are available in the [solutions director
 
 - [← Previous: Module 1 - Kubernetes Architecture](../module-01/README.md)
 - [Course Overview](../README.md)
-- [Next: Module 3 - Building Custom Controllers →](../module-03/README.md) (Coming Soon)
+- [Next: Module 3 - Building Custom Controllers →](../module-03/README.md)
 

@@ -68,5 +68,5 @@ Complete working solutions for all labs are available in the [solutions director
 ## Navigation
 
 - [← Back to Course Overview](../README.md)
-- [Next: Module 2 →](../module-02/README.md) (Coming Soon)
+- [Next: Module 2 →](../module-02/README.md)
 

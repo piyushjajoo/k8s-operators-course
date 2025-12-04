@@ -99,5 +99,5 @@ Complete working solutions for all labs are available in the [solutions director
 
 - [← Previous: Module 6 - Testing and Debugging](../module-06/README.md)
 - [Course Overview](../README.md)
-- [Next: Module 8 - Advanced Topics →](../module-08/README.md) (Coming Soon)
+- [Next: Module 8 - Advanced Topics →](../module-08/README.md)
 

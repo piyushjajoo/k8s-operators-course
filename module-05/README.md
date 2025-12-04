@@ -95,5 +95,5 @@ Complete working solutions for all labs are available in the [solutions director
 
 - [← Previous: Module 4 - Advanced Reconciliation Patterns](../module-04/README.md)
 - [Course Overview](../README.md)
-- [Next: Module 6 - Testing and Debugging →](../module-06/README.md) (Coming Soon)
+- [Next: Module 6 - Testing and Debugging →](../module-06/README.md)
 
