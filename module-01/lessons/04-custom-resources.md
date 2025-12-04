@@ -467,7 +467,7 @@ Congratulations! You've completed Module 1. You now understand:
 - The controller pattern and reconciliation
 - Custom Resources and CRDs
 
-In [Module 2](../module-02/README.md), you'll build your first operator using Kubebuilder!
+In [Module 2](../../module-02/README.md), you'll build your first operator using Kubebuilder!
 
-**Navigation:** [← Previous: Controller Pattern](03-controller-pattern.md) | [Module Overview](../README.md) | [Next: Module 2 →](../module-02/README.md)
+**Navigation:** [← Previous: Controller Pattern](03-controller-pattern.md) | [Module Overview](../README.md) | [Next: Module 2 →](../../module-02/README.md)
 
