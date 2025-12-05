@@ -76,7 +76,7 @@ kubebuilder init --domain example.com --repo github.com/example/test-operator
 find . -type f | head -20
 
 # Examine main.go
-cat main.go
+cat ./cmd/main.go
 
 # Examine Makefile
 cat Makefile | head -30
