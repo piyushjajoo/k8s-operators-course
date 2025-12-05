@@ -214,7 +214,7 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
             return ctrl.Result{}, nil
         }
         // Error reading the object
-        log.Error(err, "Failed to get HelloWorld")
+        logger.Error(err, "Failed to get HelloWorld")
         return ctrl.Result{}, err
     }
     
