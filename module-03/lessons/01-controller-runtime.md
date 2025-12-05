@@ -4,7 +4,7 @@
 
 ## Introduction
 
-In [Module 2](../module-02/README.md), you built your first operator using kubebuilder. The operator used controller-runtime under the hood, but you didn't need to understand the details. Now, to build more sophisticated operators, you need to understand how controller-runtime works - the same library that powers Kubernetes itself.
+In [Module 2](../../module-02/README.md), you built your first operator using kubebuilder. The operator used controller-runtime under the hood, but you didn't need to understand the details. Now, to build more sophisticated operators, you need to understand how controller-runtime works - the same library that powers Kubernetes itself.
 
 ## Theory: Controller-Runtime Deep Dive
 
