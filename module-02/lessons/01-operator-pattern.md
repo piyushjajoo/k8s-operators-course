@@ -101,7 +101,7 @@ graph TB
 
 ## Operator Philosophy
 
-Operators follow the same pattern you learned in [Lesson 1.3](../module-01/lessons/03-controller-pattern.md):
+Operators follow the same pattern you learned in [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md):
 
 1. **Watch** Custom Resources
 2. **Compare** desired state (spec) vs actual state
@@ -263,8 +263,8 @@ graph TB
     style CRD fill:#90EE90
 ```
 
-1. **CRD**: Defines your Custom Resource (from [Lesson 1.4](../module-01/lessons/04-custom-resources.md))
-2. **Controller**: Reconciliation logic (from [Lesson 1.3](../module-01/lessons/03-controller-pattern.md))
+1. **CRD**: Defines your Custom Resource (from [Lesson 1.4](../../module-01/lessons/04-custom-resources.md))
+2. **Controller**: Reconciliation logic (from [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md))
 3. **RBAC**: Permissions for the operator
 
 ## Operator Workflow
@@ -293,7 +293,7 @@ sequenceDiagram
     Note over Operator,Cluster: Continuous reconciliation loop
 ```
 
-This is the same reconciliation pattern from [Lesson 1.3](../module-01/lessons/03-controller-pattern.md), but applied to your Custom Resources!
+This is the same reconciliation pattern from [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md), but applied to your Custom Resources!
 
 ## Key Takeaways
 
@@ -306,8 +306,8 @@ This is the same reconciliation pattern from [Lesson 1.3](../module-01/lessons/0
 ## Understanding for Building Operators
 
 When building operators:
-- You'll create CRDs (like in [Lesson 1.4](../module-01/lessons/04-custom-resources.md))
-- You'll implement controllers (using the pattern from [Lesson 1.3](../module-01/lessons/03-controller-pattern.md))
+- You'll create CRDs (like in [Lesson 1.4](../../module-01/lessons/04-custom-resources.md))
+- You'll implement controllers (using the pattern from [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md))
 - You'll encode operational knowledge in code
 - You'll reconcile desired vs actual state continuously
 
