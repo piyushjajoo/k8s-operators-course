@@ -154,9 +154,6 @@ sequenceDiagram
     KB->>Gen: Generate RBAC manifests
     KB->>Gen: Generate deepcopy methods
     Gen->>Dev: Ready to use
-    
-    style Markers fill:#FFE4B5
-    style Gen fill:#90EE90
 ```
 
 ### Common Markers
