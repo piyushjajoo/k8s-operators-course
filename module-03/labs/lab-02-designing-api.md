@@ -188,7 +188,7 @@ kubectl get crd databases.database.database.example.com
 ```bash
 # Create valid Database resource
 cat <<EOF | kubectl apply -f -
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: test-db
@@ -210,7 +210,7 @@ kubectl get database test-db
 ```bash
 # Test missing required field
 cat <<EOF | kubectl apply -f -
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: invalid-db
@@ -223,7 +223,7 @@ EOF
 
 # Test invalid replica count
 cat <<EOF | kubectl apply -f -
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: invalid-replicas
@@ -240,7 +240,7 @@ EOF
 
 # Test invalid storage size
 cat <<EOF | kubectl apply -f -
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: invalid-storage
@@ -262,7 +262,7 @@ EOF
 ```bash
 # Create a few databases
 kubectl apply -f - <<EOF
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: db1
@@ -274,7 +274,7 @@ spec:
   storage:
     size: 10Gi
 ---
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: db2
@@ -304,7 +304,7 @@ kubectl get databases
 ```bash
 # Create with only required fields
 cat <<EOF | kubectl apply -f -
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: minimal-db
