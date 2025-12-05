@@ -124,7 +124,7 @@ cat api/v1/testresource_types.go
 
 ```bash
 # Look at generated controller
-cat controllers/testresource_controller.go
+cat internal/controller/testresource_controller.go
 ```
 
 **Key Observations:**
@@ -242,16 +242,16 @@ Create a mental map of the project:
 
 ```
 project-root/
-├── api/              # API type definitions
-│   └── v1/           # API version
-├── controllers/      # Controller implementations
-├── config/           # Generated manifests
-│   ├── crd/          # CRD definitions
-│   ├── rbac/         # RBAC rules
-│   └── manager/      # Manager deployment
-├── main.go           # Entry point
-├── Makefile          # Build targets
-└── go.mod            # Go dependencies
+├── api/                      # API type definitions
+│   └── v1/                   # API version
+├── internal/controller/      # Controller implementations
+├── config/                   # Generated manifests
+│   ├── crd/                  # CRD definitions
+│   ├── rbac/                 # RBAC rules
+│   └── manager/              # Manager deployment
+├── main.go                   # Entry point
+├── Makefile                  # Build targets
+└── go.mod                    # Go dependencies
 ```
 
 ### Task 7.2: Understand Each Component
@@ -259,7 +259,7 @@ project-root/
 For each directory, understand its purpose:
 
 - **api/**: Your Custom Resource type definitions
-- **controllers/**: Your reconciliation logic
+- **internal/controller/**: Your reconciliation logic
 - **config/crd/**: Generated CRD YAML files
 - **config/rbac/**: Generated RBAC manifests
 - **main.go**: Sets up and starts the manager
