@@ -89,7 +89,7 @@ When prompted:
 
 This generates:
 - API types in `api/v1/`
-- Controller in `controllers/`
+- Controller in `internal/controller/`
 - CRD manifests in `config/crd/`
 
 ## Step 3: Define API Types
