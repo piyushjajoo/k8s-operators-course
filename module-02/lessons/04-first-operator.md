@@ -354,7 +354,7 @@ hello-world-operator/
 │   └── v1/
 │       ├── helloworld_types.go
 │       └── groupversion_info.go
-├── controllers/
+├── internal/controller/
 │   └── helloworld_controller.go
 ├── config/
 │   ├── crd/
