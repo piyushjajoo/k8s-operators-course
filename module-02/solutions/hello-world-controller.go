@@ -31,7 +31,7 @@ type HelloWorldReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop
 func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// Fetch the HelloWorld instance
 	helloWorld := &hellov1.HelloWorld{}
@@ -70,7 +70,7 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if err != nil && errors.IsNotFound(err) {
 		// ConfigMap doesn't exist, create it
-		log.Info("Creating ConfigMap", "name", configMap.Name)
+		logger.Info("Creating ConfigMap", "name", configMap.Name)
 		if err := r.Create(ctx, configMap); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -80,7 +80,7 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// ConfigMap exists, update it if needed
 		if existingConfigMap.Data["message"] != configMap.Data["message"] ||
 			existingConfigMap.Data["count"] != configMap.Data["count"] {
-			log.Info("Updating ConfigMap", "name", configMap.Name)
+			logger.Info("Updating ConfigMap", "name", configMap.Name)
 			existingConfigMap.Data = configMap.Data
 			if err := r.Update(ctx, existingConfigMap); err != nil {
 				return ctrl.Result{}, err
