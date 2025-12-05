@@ -165,7 +165,7 @@ This creates:
 
 ## Step 5: Implement Controller
 
-Edit `controllers/helloworld_controller.go`:
+Edit `internal/controller/helloworld_controller.go`:
 
 ```go
 package controllers
