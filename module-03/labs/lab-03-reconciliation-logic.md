@@ -56,7 +56,7 @@ type DatabaseReconciler struct {
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     
     // Read Database resource
     db := &databasev1.Database{}
@@ -67,7 +67,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
         return ctrl.Result{}, err
     }
     
-    log.Info("Reconciling Database", "name", db.Name)
+    logger.Info("Reconciling Database", "name", db.Name)
     
     // Reconcile StatefulSet
     if err := r.reconcileStatefulSet(ctx, db); err != nil {
