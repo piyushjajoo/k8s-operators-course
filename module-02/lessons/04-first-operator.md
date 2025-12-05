@@ -393,7 +393,7 @@ This is the foundation for all operators!
 ## References
 
 ### Official Documentation
-- [Kubebuilder Tutorial](https://book.kubebuilder.io/cronjob-tutorial/tutorial.html)
+- [Kubebuilder Tutorial](https://book.kubebuilder.io/quick-start)
 - [Creating a New Project](https://book.kubebuilder.io/quick-start.html#create-a-project)
 - [Implementing a Controller](https://book.kubebuilder.io/cronjob-tutorial/controller-implementation.html)
 
@@ -404,8 +404,8 @@ This is the foundation for all operators!
 
 ### Related Topics
 - [Controller Runtime Patterns](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg)
-- [Reconciliation Best Practices](https://book.kubebuilder.io/reference/controller-tips.html)
-- [Generated Code Explanation](https://book.kubebuilder.io/quick-start.html#what-was-created)
+- [Reconciliation Best Practices](https://book.kubebuilder.io/reference/good-practices)
+- [Generated Code Explanation](https://book.kubebuilder.io/cronjob-tutorial/basic-project)
 
 ## Next Steps
 
