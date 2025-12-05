@@ -111,6 +111,7 @@ This course emphasizes:
 - [Kubebuilder Documentation](https://book.kubebuilder.io/)
 - [Kubernetes API Documentation](https://kubernetes.io/docs/reference/kubernetes-api/)
 - [Operator Pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+- [Hello World Operator Full Code](https://github.com/piyushjajoo/hello-world-operator) built following this course
 
 ## Contributing
 
