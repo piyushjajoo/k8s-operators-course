@@ -329,7 +329,7 @@ kubectl get configmap hello-example-config -o yaml
 
 ### Reconcile Function
 
-The `Reconcile` function implements the pattern from [Lesson 1.3](../module-01/lessons/03-controller-pattern.md):
+The `Reconcile` function implements the pattern from [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md):
 
 1. **Read** the Custom Resource
 2. **Compare** desired vs actual state
