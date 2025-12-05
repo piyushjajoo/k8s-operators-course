@@ -53,7 +53,7 @@ graph TB
 
 ## Spec vs Status Separation
 
-Remember from [Module 1](../module-01/lessons/04-custom-resources.md) and [Module 2](../module-02/lessons/04-first-operator.md): **Spec** is desired state, **Status** is actual state.
+Remember from [Module 1](../../module-01/lessons/04-custom-resources.md) and [Module 2](../../module-02/lessons/04-first-operator.md): **Spec** is desired state, **Status** is actual state.
 
 ```mermaid
 graph LR
