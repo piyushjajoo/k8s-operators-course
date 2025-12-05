@@ -74,7 +74,7 @@ When prompted:
 cat api/v1/helloworld_types.go
 
 # Check controller
-cat controllers/helloworld_controller.go
+cat internal/controller/helloworld_controller.go
 ```
 
 ## Exercise 3: Define API Types
@@ -167,10 +167,10 @@ cat config/crd/bases/hello.example.com_helloworlds.yaml | head -50
 
 ### Task 4.1: Edit Controller
 
-Edit `controllers/helloworld_controller.go`:
+Edit `internal/controller/helloworld_controller.go`:
 
 ```go
-package controllers
+package controller
 
 import (
     "context"
