@@ -180,7 +180,7 @@ cat config/crd/bases/database.database.example.com_databases.yaml | head -100
 make install
 
 # Verify
-kubectl get crd databases.database.example.com
+kubectl get crd databases.database.database.example.com
 ```
 
 ### Task 4.2: Test Valid Resource
