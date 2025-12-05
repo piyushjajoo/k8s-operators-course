@@ -127,11 +127,11 @@ graph TB
 Kubebuilder generates RBAC from markers:
 
 ```go
-//+kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=database.example.com,resources=databases/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=database.example.com,resources=databases/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 ```
 
 ### RBAC Marker Format

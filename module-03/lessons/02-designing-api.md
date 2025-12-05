@@ -315,10 +315,10 @@ type DatabaseStatus struct {
 Add print columns for better `kubectl get` output:
 
 ```go
-//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
-//+kubebuilder:printcolumn:name="Replicas",type="integer",JSONPath=".spec.replicas"
-//+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Replicas",type="integer",JSONPath=".spec.replicas"
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type Database struct {
     // ...
 }

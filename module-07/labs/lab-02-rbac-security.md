@@ -50,10 +50,10 @@ Review your controller code and remove unnecessary RBAC markers:
 
 ```go
 // Remove if not needed
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
 
 // Keep only what you use
-//+kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
 ```
 
 ### Task 2.2: Regenerate RBAC

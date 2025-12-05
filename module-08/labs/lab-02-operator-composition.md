@@ -29,8 +29,8 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 type Backup struct {
     metav1.TypeMeta   `json:",inline"`
@@ -54,7 +54,7 @@ type BackupStatus struct {
 
 ### Task 1.2: Create Backup Controller
 
-Create `controllers/backup_controller.go`:
+Create `internal/controller/backup_controller.go`:
 
 ```go
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

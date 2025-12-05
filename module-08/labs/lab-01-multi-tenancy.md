@@ -45,8 +45,8 @@ spec:
 Update your API types to remove namespace requirement:
 
 ```go
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
 
 type Database struct {
     metav1.TypeMeta   `json:",inline"`

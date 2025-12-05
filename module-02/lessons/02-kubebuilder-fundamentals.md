@@ -109,7 +109,7 @@ When you scaffold a project, Kubebuilder creates this structure:
 ```mermaid
 graph TB
     ROOT[Project Root] --> API[api/]
-    ROOT --> CONTROLLERS[controllers/]
+    ROOT --> CONTROLLERS[internal/controller/]
     ROOT --> CONFIG[config/]
     ROOT --> MAIN[main.go]
     
@@ -130,7 +130,7 @@ graph TB
 ### Key Directories
 
 - **`api/`**: Your API definitions (CRD types)
-- **`controllers/`**: Your controller logic
+- **`internal/controller/`**: Your controller logic
 - **`config/`**: Kubernetes manifests (CRDs, RBAC, etc.)
 - **`main.go`**: Entry point that sets up the manager
 
@@ -147,7 +147,7 @@ sequenceDiagram
     participant Gen as Generated Code
     
     Dev->>Code: Write types with markers
-    Code->>Markers: //+kubebuilder:...
+    Code->>Markers: // +kubebuilder:...
     Dev->>KB: Run kubebuilder generate
     KB->>Markers: Read markers
     KB->>Gen: Generate CRD YAML
@@ -158,10 +158,10 @@ sequenceDiagram
 
 ### Common Markers
 
-- `//+kubebuilder:object:root=true` - Marks root type
-- `//+kubebuilder:subresource:status` - Enables status subresource
-- `//+kubebuilder:resource:path=...` - Defines resource path
-- `//+kubebuilder:validation:...` - Adds validation rules
+- `// +kubebuilder:object:root=true` - Marks root type
+- `// +kubebuilder:subresource:status` - Enables status subresource
+- `// +kubebuilder:resource:path=...` - Defines resource path
+- `// +kubebuilder:validation:...` - Adds validation rules
 
 ## Kubebuilder CLI Commands
 
@@ -250,7 +250,7 @@ When Kubebuilder generates code, it creates:
    - Spec and Status definitions
    - Deep copy methods
 
-2. **Controller** (`controllers/`):
+2. **Controller** (`internal/controller/`):
    - Reconciler struct
    - Reconcile function skeleton
    - Setup with manager

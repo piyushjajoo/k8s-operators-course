@@ -64,7 +64,7 @@ dlv version
 cd ~/postgres-operator
 
 # Create test directory structure
-mkdir -p controllers/suite_test
+mkdir -p internal/controller/suite_test
 ```
 
 ### Task 2.2: Initialize Ginkgo Suite
@@ -77,7 +77,7 @@ ginkgo bootstrap
 
 ### Task 2.3: Create Suite Test File
 
-Create `controllers/suite_test/suite_test.go`:
+Create `internal/controller/suite_test/suite_test.go`:
 
 ```go
 package suite_test
@@ -136,7 +136,7 @@ var _ = AfterSuite(func() {
 
 ### Task 3.1: Create Database Controller Test
 
-Create `controllers/database_controller_test.go`:
+Create `internal/controller/database_controller_test.go`:
 
 ```go
 package controller
@@ -207,10 +207,10 @@ var _ = Describe("DatabaseReconciler", func() {
 
 ```bash
 # Run all tests
-go test ./controllers/...
+go test ./internal/controller/...
 
 # Run with Ginkgo
-ginkgo -v ./controllers
+ginkgo -v ./internal/controller
 
 # Run specific test
 ginkgo -v -focus="DatabaseReconciler" ./controllers
@@ -220,10 +220,10 @@ ginkgo -v -focus="DatabaseReconciler" ./controllers
 
 ```bash
 # Run with coverage
-go test -cover ./controllers/...
+go test -cover ./internal/controller/...
 
 # Generate coverage report
-go test -coverprofile=coverage.out ./controllers/...
+go test -coverprofile=coverage.out ./internal/controller/...
 go tool cover -html=coverage.out
 ```
 

@@ -39,7 +39,7 @@ func main() {
 
 ### Task 1.2: Add Structured Logs to Controller
 
-Update `controllers/database_controller.go`:
+Update `internal/controller/database_controller.go`:
 
 ```go
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -87,7 +87,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 ### Task 2.1: Define Metrics
 
-Create `controllers/metrics.go`:
+Create `internal/controller/metrics.go`:
 
 ```go
 package controller
@@ -189,7 +189,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 dlv debug ./cmd/manager/main.go
 
 # In Delve:
-# (dlv) break controllers/database_controller.go:50
+# (dlv) break internal/controller/database_controller.go:50
 # (dlv) continue
 # (dlv) print db
 # (dlv) step

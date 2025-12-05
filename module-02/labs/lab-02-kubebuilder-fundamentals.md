@@ -118,7 +118,7 @@ cat api/v1/testresource_types.go
 **Key Observations:**
 - Spec structure
 - Status structure
-- Kubebuilder markers (comments starting with `//+kubebuilder:`)
+- Kubebuilder markers (comments starting with `// +kubebuilder:`)
 
 ### Task 3.2: Examine Controller
 

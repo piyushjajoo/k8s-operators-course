@@ -21,7 +21,7 @@
 
 ### Task 1.1: Test StatefulSet Creation
 
-Add to `controllers/database_controller_test.go`:
+Add to `internal/controller/database_controller_test.go`:
 
 ```go
 Context("When reconciling a Database", func() {
@@ -212,7 +212,7 @@ Describe("Database validation", func() {
 
 ```bash
 # Run tests with coverage
-go test -coverprofile=coverage.out ./controllers/...
+go test -coverprofile=coverage.out ./internal/controller/...
 
 # View coverage
 go tool cover -func=coverage.out

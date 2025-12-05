@@ -57,7 +57,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 
 ```bash
 # Look at your controller
-cat controllers/helloworld_controller.go
+cat internal/controller/helloworld_controller.go
 ```
 
 **Observe:**

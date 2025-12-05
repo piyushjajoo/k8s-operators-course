@@ -53,7 +53,7 @@ final-operator/
 │   └── v1/
 │       ├── groupversion_info.go
 │       └── <resource>_types.go
-├── controllers/
+├── internal/controller/
 │   └── <resource>_controller.go
 ├── config/
 │   ├── crd/

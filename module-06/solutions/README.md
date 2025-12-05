@@ -22,9 +22,9 @@ These solutions can be used as:
 To use these solutions in your operator:
 
 1. **For unit tests:**
-   - Copy `suite_test.go` to `controllers/suite_test/suite_test.go`
-   - Copy test examples to `controllers/database_controller_test.go`
-   - Run: `ginkgo -v ./controllers`
+   - Copy `suite_test.go` to `internal/controller/suite_test/suite_test.go`
+   - Copy test examples to `internal/controller/database_controller_test.go`
+   - Run: `ginkgo -v ./internal/controller`
 
 2. **For integration tests:**
    - Copy `integration_test.go` to `test/integration/database_test.go`
@@ -32,7 +32,7 @@ To use these solutions in your operator:
    - Run: `ginkgo -v ./test/integration`
 
 3. **For observability:**
-   - Copy metrics code to `controllers/metrics.go`
+   - Copy metrics code to `internal/controller/metrics.go`
    - Add event recorder to your controller struct
    - Update Reconcile function with logging and events
    - Metrics will be exposed at `/metrics` endpoint

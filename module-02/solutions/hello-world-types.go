@@ -25,8 +25,8 @@ type HelloWorldStatus struct {
 	ConfigMapCreated bool `json:"configMapCreated,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // HelloWorld is the Schema for the helloworlds API
 type HelloWorld struct {
@@ -37,7 +37,7 @@ type HelloWorld struct {
 	Status HelloWorldStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // HelloWorldList contains a list of HelloWorld
 type HelloWorldList struct {

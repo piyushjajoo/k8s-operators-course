@@ -121,8 +121,8 @@ type HelloWorldStatus struct {
     ConfigMapCreated bool `json:"configMapCreated,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // HelloWorld is the Schema for the helloworlds API
 type HelloWorld struct {
@@ -133,7 +133,7 @@ type HelloWorld struct {
     Status HelloWorldStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // HelloWorldList contains a list of HelloWorld
 type HelloWorldList struct {
@@ -191,10 +191,10 @@ type HelloWorldReconciler struct {
     Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=hello.example.com,resources=helloworlds,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=hello.example.com,resources=helloworlds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop
 func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

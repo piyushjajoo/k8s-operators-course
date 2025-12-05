@@ -22,7 +22,7 @@ func (r *Database) SetupWebhookWithManager(mgr ctrl.Manager) error {
         Complete()
 }
 
-//+kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase.kb.io
+// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase.kb.io
 
 var _ webhook.Validator = &Database{}
 

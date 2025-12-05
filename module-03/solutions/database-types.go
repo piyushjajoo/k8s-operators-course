@@ -60,12 +60,12 @@ type DatabaseStatus struct {
 	Endpoint string `json:"endpoint,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
-//+kubebuilder:printcolumn:name="Replicas",type="integer",JSONPath=".spec.replicas"
-//+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Replicas",type="integer",JSONPath=".spec.replicas"
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Database is the Schema for the databases API
 type Database struct {
@@ -76,7 +76,7 @@ type Database struct {
 	Status DatabaseStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // DatabaseList contains a list of Database
 type DatabaseList struct {

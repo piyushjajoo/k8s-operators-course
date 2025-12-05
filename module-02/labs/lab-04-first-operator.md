@@ -114,11 +114,11 @@ type HelloWorldStatus struct {
     LastUpdated *metav1.Time `json:"lastUpdated,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
-//+kubebuilder:printcolumn:name="Message",type="string",JSONPath=".spec.message"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".spec.message"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // HelloWorld is the Schema for the helloworlds API
 type HelloWorld struct {
@@ -129,7 +129,7 @@ type HelloWorld struct {
     Status HelloWorldStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // HelloWorldList contains a list of HelloWorld
 type HelloWorldList struct {
@@ -194,23 +194,23 @@ type HelloWorldReconciler struct {
     Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=hello.example.com,resources=helloworlds,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=hello.example.com,resources=helloworlds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=hello.example.com,resources=helloworlds/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop
 func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     
-    log.Info("Reconciling HelloWorld", "name", req.NamespacedName)
+    logger.Info("Reconciling HelloWorld", "name", req.NamespacedName)
     
     // Fetch the HelloWorld instance
     helloWorld := &hellov1.HelloWorld{}
     if err := r.Get(ctx, req.NamespacedName, helloWorld); err != nil {
         if errors.IsNotFound(err) {
             // Object not found, return
-            log.Info("HelloWorld not found, ignoring", "name", req.NamespacedName)
+            logger.Info("HelloWorld not found, ignoring", "name", req.NamespacedName)
             return ctrl.Result{}, nil
         }
         // Error reading the object
@@ -233,7 +233,7 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
     
     // Set owner reference
     if err := ctrl.SetControllerReference(helloWorld, configMap, r.Scheme); err != nil {
-        log.Error(err, "Failed to set controller reference")
+        logger.Error(err, "Failed to set controller reference")
         return ctrl.Result{}, err
     }
     
@@ -246,22 +246,22 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
     
     if err != nil && errors.IsNotFound(err) {
         // ConfigMap doesn't exist, create it
-        log.Info("Creating ConfigMap", "name", configMap.Name)
+        logger.Info("Creating ConfigMap", "name", configMap.Name)
         if err := r.Create(ctx, configMap); err != nil {
-            log.Error(err, "Failed to create ConfigMap")
+            logger.Error(err, "Failed to create ConfigMap")
             return ctrl.Result{}, err
         }
     } else if err != nil {
-        log.Error(err, "Failed to get ConfigMap")
+        logger.Error(err, "Failed to get ConfigMap")
         return ctrl.Result{}, err
     } else {
         // ConfigMap exists, update it if needed
         if existingConfigMap.Data["message"] != configMap.Data["message"] ||
            existingConfigMap.Data["count"] != configMap.Data["count"] {
-            log.Info("Updating ConfigMap", "name", configMap.Name)
+            logger.Info("Updating ConfigMap", "name", configMap.Name)
             existingConfigMap.Data = configMap.Data
             if err := r.Update(ctx, existingConfigMap); err != nil {
-                log.Error(err, "Failed to update ConfigMap")
+                logger.Error(err, "Failed to update ConfigMap")
                 return ctrl.Result{}, err
             }
         }
@@ -274,11 +274,11 @@ func (r *HelloWorldReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
     helloWorld.Status.LastUpdated = &now
     
     if err := r.Status().Update(ctx, helloWorld); err != nil {
-        log.Error(err, "Failed to update status")
+        logger.Error(err, "Failed to update status")
         return ctrl.Result{}, err
     }
     
-    log.Info("Successfully reconciled HelloWorld", "name", req.NamespacedName)
+    logger.Info("Successfully reconciled HelloWorld", "name", req.NamespacedName)
     return ctrl.Result{}, nil
 }
 

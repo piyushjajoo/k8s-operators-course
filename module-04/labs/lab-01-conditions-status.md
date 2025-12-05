@@ -54,7 +54,7 @@ make manifests
 
 ### Task 2.1: Add Helper Functions
 
-Add to `controllers/database_controller.go`:
+Add to `internal/controller/database_controller.go`:
 
 ```go
 import (
