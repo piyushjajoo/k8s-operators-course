@@ -163,7 +163,7 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},
-						Resources: corev1.ResourceRequirements{
+						Resources: corev1.VolumeResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse(db.Spec.Storage.Size),
 							},
@@ -175,14 +175,8 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 	}
 }
 
-func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev1.Database) error {
-	service := &corev1.Service{}
-	err := r.Get(ctx, client.ObjectKey{
-		Name:      db.Name,
-		Namespace: db.Namespace,
-	}, service)
-
-	desiredService := &corev1.Service{
+func (r *DatabaseReconciler) buildService(db *databasev1.Database) *corev1.Service {
+	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      db.Name,
 			Namespace: db.Namespace,
@@ -200,6 +194,16 @@ func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev
 			},
 		},
 	}
+}
+
+func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev1.Database) error {
+	service := &corev1.Service{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      db.Name,
+		Namespace: db.Namespace,
+	}, service)
+
+	desiredService := r.buildService(db)
 
 	if errors.IsNotFound(err) {
 		if err := ctrl.SetControllerReference(db, desiredService, r.Scheme); err != nil {
@@ -210,6 +214,7 @@ func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev
 		return err
 	}
 
+	// Service updates are less common, but handle if needed
 	return nil
 }
 
