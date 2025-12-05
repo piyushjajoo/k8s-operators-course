@@ -66,7 +66,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	statefulSet := &appsv1.StatefulSet{}
 	err := r.Get(ctx, client.ObjectKey{
@@ -81,7 +81,7 @@ func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *datab
 		if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
 			return err
 		}
-		log.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
+		logger.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
 		return r.Create(ctx, desiredStatefulSet)
 	} else if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *datab
 	if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas ||
 		statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
 		statefulSet.Spec = desiredStatefulSet.Spec
-		log.Info("Updating StatefulSet", "name", statefulSet.Name)
+		logger.Info("Updating StatefulSet", "name", statefulSet.Name)
 		return r.Update(ctx, statefulSet)
 	}
 
