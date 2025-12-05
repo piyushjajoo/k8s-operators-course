@@ -383,7 +383,7 @@ When implementing reconciliation:
 
 ### Related Topics
 - [Idempotency Patterns](https://kubernetes.io/docs/concepts/architecture/controller/#reconciliation)
-- [Resource Lifecycle](https://kubernetes.io/docs/concepts/overview/working-with-objects/object-lifecycle/)
+- [Resource Lifecycle](https://kubernetes.io/docs/concepts/overview/working-with-objects/)
 - [Finalizers](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/)
 
 ## Next Steps
