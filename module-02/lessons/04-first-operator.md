@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Now you're ready to build your first operator! We'll create a "Hello World" operator that manages a simple Custom Resource. This operator will demonstrate all the concepts from [Module 1](../module-01/README.md): CRDs, controllers, and reconciliation.
+Now you're ready to build your first operator! We'll create a "Hello World" operator that manages a simple Custom Resource. This operator will demonstrate all the concepts from [Module 1](../../module-01/README.md): CRDs, controllers, and reconciliation.
 
 ## Theory: Your First Operator
 
@@ -338,11 +338,11 @@ The `Reconcile` function implements the pattern from [Lesson 1.3](../module-01/l
 
 ### Owner References
 
-We set an owner reference (from [Lesson 1.3](../module-01/lessons/03-controller-pattern.md)) so the ConfigMap is automatically deleted when HelloWorld is deleted.
+We set an owner reference (from [Lesson 1.3](../../module-01/lessons/03-controller-pattern.md)) so the ConfigMap is automatically deleted when HelloWorld is deleted.
 
 ### Status Updates
 
-We update the status subresource (from [Lesson 1.4](../module-01/lessons/04-custom-resources.md)) to reflect the current state.
+We update the status subresource (from [Lesson 1.4](../../module-01/lessons/04-custom-resources.md)) to reflect the current state.
 
 ## Project Structure
 
