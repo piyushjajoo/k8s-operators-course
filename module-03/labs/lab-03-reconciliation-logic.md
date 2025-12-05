@@ -177,36 +177,36 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 
 ```go
 func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
-    log := log.FromContext(ctx)
-    
-    statefulSet := &appsv1.StatefulSet{}
-    err := r.Get(ctx, client.ObjectKey{
-        Name:      db.Name,
-        Namespace: db.Namespace,
-    }, statefulSet)
-    
-    desiredStatefulSet := r.buildStatefulSet(db)
-    
-    if errors.IsNotFound(err) {
-        // Set owner reference
-        if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
-            return err
-        }
-        log.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
-        return r.Create(ctx, desiredStatefulSet)
-    } else if err != nil {
-        return err
-    }
-    
-    // Update if needed
-    if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas ||
-       statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
-        statefulSet.Spec = desiredStatefulSet.Spec
-        log.Info("Updating StatefulSet", "name", statefulSet.Name)
-        return r.Update(ctx, statefulSet)
-    }
-    
-    return nil
+	logger := log.FromContext(ctx)
+
+	statefulSet := &appsv1.StatefulSet{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      db.Name,
+		Namespace: db.Namespace,
+	}, statefulSet)
+
+	desiredStatefulSet := r.buildStatefulSet(db)
+
+	if errors.IsNotFound(err) {
+		// Set owner reference
+		if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
+			return err
+		}
+		logger.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
+		return r.Create(ctx, desiredStatefulSet)
+	} else if err != nil {
+		return err
+	}
+
+	// Update if needed
+	if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas ||
+		statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
+		statefulSet.Spec = desiredStatefulSet.Spec
+		logger.Info("Updating StatefulSet", "name", statefulSet.Name)
+		return r.Update(ctx, statefulSet)
+	}
+
+	return nil
 }
 ```
 
@@ -311,7 +311,7 @@ make run
 ```bash
 # Create Database resource
 kubectl apply -f - <<EOF
-apiVersion: database.example.com/v1
+apiVersion: database.database.example.com/v1
 kind: Database
 metadata:
   name: my-database
