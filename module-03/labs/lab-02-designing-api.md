@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 2](../module-02/README.md)
+- Completion of [Module 2](../../module-02/README.md)
 - Understanding of API design principles
 - kubebuilder installed
 
