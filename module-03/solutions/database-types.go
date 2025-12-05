@@ -12,7 +12,7 @@ import (
 type DatabaseSpec struct {
 	// Image is the PostgreSQL image to use
 	// +kubebuilder:validation:Required
-	// +kubebuilder:default=postgres:14
+	// +kubebuilder:default="postgres:14"
 	Image string `json:"image"`
 
 	// Replicas is the number of database replicas

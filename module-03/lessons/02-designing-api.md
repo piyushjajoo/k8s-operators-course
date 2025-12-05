@@ -254,7 +254,7 @@ func (r *Database) Default() {
 
 **With markers:**
 ```go
-// +kubebuilder:default=postgres:14
+// +kubebuilder:default="postgres:14"
 Image string `json:"image,omitempty"`
 ```
 
@@ -267,7 +267,7 @@ Let's design an API for a PostgreSQL operator:
 type DatabaseSpec struct {
     // Image is the PostgreSQL image to use
     // +kubebuilder:validation:Required
-    // +kubebuilder:default=postgres:14
+    // +kubebuilder:default="postgres:14"
     Image string `json:"image"`
     
     // Replicas is the number of database replicas
