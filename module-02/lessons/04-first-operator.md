@@ -168,7 +168,7 @@ This creates:
 Edit `internal/controller/helloworld_controller.go`:
 
 ```go
-package controllers
+package controller
 
 import (
     "context"
