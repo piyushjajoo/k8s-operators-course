@@ -162,11 +162,8 @@ make manifests
 ### Task 3.2: Examine Generated CRD
 
 ```bash
-# Check CRD was generated
+# Check CRD was generated and verify validation rules
 cat config/crd/bases/database.database.example.com_databases.yaml | head -100
-
-# Verify validation rules
-cat config/crd/bases/database.database.example.com_databases.yaml | grep -A 5 validation
 ```
 
 **Questions:**
