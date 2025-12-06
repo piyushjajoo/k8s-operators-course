@@ -90,7 +90,7 @@ Modify your `Reconcile` function:
 
 ```go
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     
     db := &databasev1.Database{}
     if err := r.Get(ctx, req.NamespacedName, db); err != nil {
