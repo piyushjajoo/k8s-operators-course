@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -133,39 +134,6 @@ func (r *DatabaseReconciler) reconcileSecret(ctx context.Context, db *databasev1
 	return nil
 }
 
-func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
-	logger := log.FromContext(ctx)
-
-	statefulSet := &appsv1.StatefulSet{}
-	err := r.Get(ctx, client.ObjectKey{
-		Name:      db.Name,
-		Namespace: db.Namespace,
-	}, statefulSet)
-
-	desiredStatefulSet := r.buildStatefulSet(db)
-
-	if errors.IsNotFound(err) {
-		// Set owner reference
-		if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
-			return err
-		}
-		logger.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
-		return r.Create(ctx, desiredStatefulSet)
-	} else if err != nil {
-		return err
-	}
-
-	// Update if needed
-	if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas ||
-		statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
-		statefulSet.Spec = desiredStatefulSet.Spec
-		logger.Info("Updating StatefulSet", "name", statefulSet.Name)
-		return r.Update(ctx, statefulSet)
-	}
-
-	return nil
-}
-
 func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.StatefulSet {
 	replicas := int32(1)
 	if db.Spec.Replicas != nil {
@@ -267,6 +235,44 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 	}
 }
 
+func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
+	logger := log.FromContext(ctx)
+
+	statefulSet := &appsv1.StatefulSet{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      db.Name,
+		Namespace: db.Namespace,
+	}, statefulSet)
+
+	desiredStatefulSet := r.buildStatefulSet(db)
+
+	if errors.IsNotFound(err) {
+		// Set owner reference
+		if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
+			return err
+		}
+		logger.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
+		return r.Create(ctx, desiredStatefulSet)
+	} else if err != nil {
+		return err
+	}
+
+	if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas {
+		return r.patchStatefulSetReplicas(ctx, statefulSet, *desiredStatefulSet.Spec.Replicas)
+	}
+
+	// Update if needed
+	if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas ||
+		statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
+		statefulSet.Spec = desiredStatefulSet.Spec
+		logger.Info("Updating StatefulSet", "name", statefulSet.Name)
+		// Use retry logic for updates
+		return r.updateWithRetry(ctx, statefulSet, 3)
+	}
+
+	return nil
+}
+
 func (r *DatabaseReconciler) buildService(db *databasev1.Database) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -336,6 +342,54 @@ func (r *DatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.Da
 	}
 
 	return r.Status().Update(ctx, db)
+}
+
+func (r *DatabaseReconciler) listDatabasesInNamespace(ctx context.Context, namespace string) (*databasev1.DatabaseList, error) {
+	list := &databasev1.DatabaseList{}
+	err := r.List(ctx, list, client.InNamespace(namespace))
+	return list, err
+}
+
+func (r *DatabaseReconciler) listDatabasesByLabel(ctx context.Context, labels map[string]string) (*databasev1.DatabaseList, error) {
+	list := &databasev1.DatabaseList{}
+	err := r.List(ctx, list, client.MatchingLabels(labels))
+	return list, err
+}
+
+func (r *DatabaseReconciler) findDatabasesByOwner(ctx context.Context, ownerName string) (*databasev1.DatabaseList, error) {
+	list := &databasev1.DatabaseList{}
+	err := r.List(ctx, list, client.MatchingFields{
+		".metadata.ownerReferences[0].name": ownerName,
+	})
+	return list, err
+}
+
+func (r *DatabaseReconciler) patchStatefulSetReplicas(ctx context.Context, statefulSet *appsv1.StatefulSet, replicas int32) error {
+	patch := client.MergeFrom(statefulSet.DeepCopy())
+	statefulSet.Spec.Replicas = &replicas
+	return r.Patch(ctx, statefulSet, patch)
+}
+
+func (r *DatabaseReconciler) updateWithRetry(ctx context.Context, obj client.Object, maxRetries int) error {
+	for i := 0; i < maxRetries; i++ {
+		err := r.Update(ctx, obj)
+		if err == nil {
+			return nil
+		}
+
+		if !errors.IsConflict(err) {
+			return err
+		}
+
+		// Conflict - get fresh version and retry
+		key := client.ObjectKeyFromObject(obj)
+		if err := r.Get(ctx, key, obj); err != nil {
+			return err
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+	return fmt.Errorf("max retries exceeded")
 }
 
 // SetupWithManager sets up the controller with the Manager.
