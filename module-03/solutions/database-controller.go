@@ -5,6 +5,8 @@ package controller
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -47,6 +49,11 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	logger.Info("Reconciling Database", "name", db.Name)
 
+	// Reconcile Secret (must be done before StatefulSet)
+	if err := r.reconcileSecret(ctx, db); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// Reconcile StatefulSet
 	if err := r.reconcileStatefulSet(ctx, db); err != nil {
 		return ctrl.Result{}, err
@@ -63,6 +70,67 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// secretName returns the name of the Secret for this Database
+func (r *DatabaseReconciler) secretName(db *databasev1.Database) string {
+	return fmt.Sprintf("%s-credentials", db.Name)
+}
+
+// generatePassword generates a random password
+func generatePassword(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes)[:length], nil
+}
+
+// reconcileSecret ensures the credentials Secret exists
+func (r *DatabaseReconciler) reconcileSecret(ctx context.Context, db *databasev1.Database) error {
+	logger := log.FromContext(ctx)
+	secretName := r.secretName(db)
+
+	secret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      secretName,
+		Namespace: db.Namespace,
+	}, secret)
+
+	if errors.IsNotFound(err) {
+		// Generate random password
+		password, err := generatePassword(16)
+		if err != nil {
+			return fmt.Errorf("failed to generate password: %w", err)
+		}
+
+		// Create new secret
+		secret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: db.Namespace,
+			},
+			Type: corev1.SecretTypeOpaque,
+			StringData: map[string]string{
+				"username": db.Spec.Username,
+				"password": password,
+				"database": db.Spec.DatabaseName,
+			},
+		}
+
+		// Set owner reference
+		if err := ctrl.SetControllerReference(db, secret, r.Scheme); err != nil {
+			return err
+		}
+
+		logger.Info("Creating Secret", "name", secretName)
+		return r.Create(ctx, secret)
+	} else if err != nil {
+		return err
+	}
+
+	// Secret already exists, don't update password
+	return nil
 }
 
 func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
@@ -109,6 +177,8 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 		image = "postgres:14"
 	}
 
+	secretName := r.secretName(db)
+
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      db.Name,
@@ -140,8 +210,30 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 									Value: db.Spec.DatabaseName,
 								},
 								{
-									Name:  "POSTGRES_USER",
-									Value: db.Spec.Username,
+									Name: "POSTGRES_USER",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: secretName,
+											},
+											Key: "username",
+										},
+									},
+								},
+								{
+									Name: "POSTGRES_PASSWORD",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: secretName,
+											},
+											Key: "password",
+										},
+									},
+								},
+								{
+									Name:  "PGDATA",
+									Value: "/var/lib/postgresql/data/pgdata",
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
@@ -219,6 +311,9 @@ func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev
 }
 
 func (r *DatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.Database) error {
+	// Set the secret name in status
+	db.Status.SecretName = r.secretName(db)
+
 	// Check StatefulSet status
 	statefulSet := &appsv1.StatefulSet{}
 	err := r.Get(ctx, client.ObjectKey{

@@ -58,6 +58,9 @@ type DatabaseStatus struct {
 
 	// Endpoint is the database endpoint
 	Endpoint string `json:"endpoint,omitempty"`
+
+	// SecretName is the name of the Secret containing database credentials
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // +kubebuilder:object:root=true

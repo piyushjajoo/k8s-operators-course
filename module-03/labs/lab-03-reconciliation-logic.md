@@ -8,6 +8,7 @@
 - Implement reconciliation logic for PostgreSQL operator
 - Handle resource creation and updates
 - Use owner references
+- Manage Secrets for database credentials
 - Test idempotency
 
 ## Prerequisites
@@ -27,6 +28,8 @@ package controller
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -69,6 +72,11 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
     
     logger.Info("Reconciling Database", "name", db.Name)
     
+    // Reconcile Secret (must be done before StatefulSet)
+    if err := r.reconcileSecret(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+    
     // Reconcile StatefulSet
     if err := r.reconcileStatefulSet(ctx, db); err != nil {
         return ctrl.Result{}, err
@@ -88,11 +96,87 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 ```
 
-## Exercise 2: Implement StatefulSet Reconciliation
+## Exercise 2: Implement Secret Management
 
-### Task 2.1: Build StatefulSet
+The controller automatically generates a random password and stores it in a Kubernetes Secret.
+This is more secure than requiring users to specify passwords in plain text.
 
-Add helper function to build StatefulSet:
+### Task 2.1: Helper Functions
+
+Add helper functions for Secret management:
+
+```go
+// secretName returns the name of the Secret for this Database
+func (r *DatabaseReconciler) secretName(db *databasev1.Database) string {
+	return fmt.Sprintf("%s-credentials", db.Name)
+}
+
+// generatePassword generates a random password
+func generatePassword(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes)[:length], nil
+}
+```
+
+### Task 2.2: Reconcile Secret
+
+```go
+// reconcileSecret ensures the credentials Secret exists
+func (r *DatabaseReconciler) reconcileSecret(ctx context.Context, db *databasev1.Database) error {
+	logger := log.FromContext(ctx)
+	secretName := r.secretName(db)
+
+	secret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      secretName,
+		Namespace: db.Namespace,
+	}, secret)
+
+	if errors.IsNotFound(err) {
+		// Generate random password
+		password, err := generatePassword(16)
+		if err != nil {
+			return fmt.Errorf("failed to generate password: %w", err)
+		}
+
+		// Create new secret
+		secret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: db.Namespace,
+			},
+			Type: corev1.SecretTypeOpaque,
+			StringData: map[string]string{
+				"username": db.Spec.Username,
+				"password": password,
+				"database": db.Spec.DatabaseName,
+			},
+		}
+
+		// Set owner reference
+		if err := ctrl.SetControllerReference(db, secret, r.Scheme); err != nil {
+			return err
+		}
+
+		logger.Info("Creating Secret", "name", secretName)
+		return r.Create(ctx, secret)
+	} else if err != nil {
+		return err
+	}
+
+	// Secret already exists, don't update password
+	return nil
+}
+```
+
+## Exercise 3: Implement StatefulSet Reconciliation
+
+### Task 3.1: Build StatefulSet
+
+Add helper function to build StatefulSet. Note how we reference the password from the Secret:
 
 ```go
 func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.StatefulSet {
@@ -105,6 +189,8 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 	if image == "" {
 		image = "postgres:14"
 	}
+
+	secretName := r.secretName(db)
 
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -137,8 +223,30 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 									Value: db.Spec.DatabaseName,
 								},
 								{
-									Name:  "POSTGRES_USER",
-									Value: db.Spec.Username,
+									Name: "POSTGRES_USER",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: secretName,
+											},
+											Key: "username",
+										},
+									},
+								},
+								{
+									Name: "POSTGRES_PASSWORD",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: secretName,
+											},
+											Key: "password",
+										},
+									},
+								},
+								{
+									Name:  "PGDATA",
+									Value: "/var/lib/postgresql/data/pgdata",
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
@@ -173,7 +281,7 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 }
 ```
 
-### Task 2.2: Reconcile StatefulSet
+### Task 3.2: Reconcile StatefulSet
 
 ```go
 func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
@@ -210,9 +318,9 @@ func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *datab
 }
 ```
 
-## Exercise 3: Implement Service Reconciliation
+## Exercise 4: Implement Service Reconciliation
 
-### Task 3.1: Build Service
+### Task 4.1: Build Service
 
 ```go
 func (r *DatabaseReconciler) buildService(db *databasev1.Database) *corev1.Service {
@@ -237,7 +345,7 @@ func (r *DatabaseReconciler) buildService(db *databasev1.Database) *corev1.Servi
 }
 ```
 
-### Task 3.2: Reconcile Service
+### Task 4.2: Reconcile Service
 
 ```go
 func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev1.Database) error {
@@ -263,12 +371,17 @@ func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev
 }
 ```
 
-## Exercise 4: Update Status
+## Exercise 5: Update Status
 
-### Task 4.1: Implement Status Update
+### Task 5.1: Implement Status Update
+
+The status includes the Secret name so users know where to find credentials:
 
 ```go
 func (r *DatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.Database) error {
+    // Set the secret name in status
+    db.Status.SecretName = r.secretName(db)
+
     // Check StatefulSet status
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
@@ -294,9 +407,9 @@ func (r *DatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.Da
 }
 ```
 
-## Exercise 5: Test the Operator
+## Exercise 6: Test the Operator
 
-### Task 5.1: Install and Run
+### Task 6.1: Install and Run
 
 ```bash
 # Install CRD
@@ -306,10 +419,10 @@ make install
 make run
 ```
 
-### Task 5.2: Create Database
+### Task 6.2: Create Database
 
 ```bash
-# Create Database resource
+# Create Database resource (no password needed - it's auto-generated!)
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -325,7 +438,7 @@ spec:
 EOF
 ```
 
-### Task 5.3: Observe Reconciliation
+### Task 6.3: Observe Reconciliation
 
 ```bash
 # Watch Database status
@@ -337,12 +450,18 @@ kubectl get statefulset my-database
 # Check Service
 kubectl get service my-database
 
+# Check the auto-generated Secret
+kubectl get secret my-database-credentials
+
+# View the generated password (base64 decoded)
+kubectl get secret my-database-credentials -o jsonpath='{.data.password}' | base64 -d
+
 # Check operator logs
 ```
 
-## Exercise 6: Test Idempotency
+## Exercise 7: Test Idempotency
 
-### Task 6.1: Apply Multiple Times
+### Task 7.1: Apply Multiple Times
 
 ```bash
 # Apply the same resource multiple times
@@ -355,7 +474,7 @@ done
 kubectl get statefulsets | grep my-database
 ```
 
-### Task 6.2: Test Updates
+### Task 7.2: Test Updates
 
 ```bash
 # Update replicas
@@ -368,21 +487,23 @@ kubectl get statefulset my-database -o jsonpath='{.spec.replicas}'
 ## Cleanup
 
 ```bash
-# Delete Database (should cascade delete StatefulSet and Service)
+# Delete Database (should cascade delete StatefulSet, Service, and Secret)
 kubectl delete database my-database
 
 # Verify resources were deleted
 kubectl get statefulset my-database
 kubectl get service my-database
+kubectl get secret my-database-credentials
 ```
 
 ## Lab Summary
 
 In this lab, you:
 - Implemented complete reconciliation logic
+- Created Secret with auto-generated password
 - Created StatefulSet and Service
-- Used owner references
-- Updated status
+- Used owner references for all resources
+- Updated status with Secret name
 - Tested idempotency
 - Verified cascade deletion
 
@@ -391,19 +512,19 @@ In this lab, you:
 1. Reconciliation follows: read, compare, create/update, status
 2. Owner references ensure cascade deletion
 3. Idempotency is crucial
-4. Status updates reflect actual state
-5. Error handling is important
-6. Logging helps debugging
+4. Secrets should be auto-generated, not user-provided in plain text
+5. Status updates reflect actual state and provide useful info (like Secret name)
+6. Error handling is important
+7. Logging helps debugging
 
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
 - [Database Types](../solutions/database-types.go) - Complete Database API type definitions
-- [Database Controller](../solutions/database-controller.go) - Complete controller with StatefulSet/Service reconciliation
+- [Database Controller](../solutions/database-controller.go) - Complete controller with Secret/StatefulSet/Service reconciliation
 
 ## Next Steps
 
 Now let's learn advanced client operations for more sophisticated controllers!
 
 **Navigation:** [← Previous Lab: Designing API](lab-02-designing-api.md) | [Related Lesson](../lessons/03-reconciliation-logic.md) | [Next Lab: Client-Go →](lab-04-client-go.md)
-
