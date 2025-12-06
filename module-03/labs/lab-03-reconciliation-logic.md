@@ -311,7 +311,7 @@ make run
 ```bash
 # Create Database resource
 kubectl apply -f - <<EOF
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: my-database

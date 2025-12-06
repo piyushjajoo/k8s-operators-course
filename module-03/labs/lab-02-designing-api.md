@@ -26,7 +26,7 @@ mkdir -p ~/postgres-operator
 cd ~/postgres-operator
 
 # Initialize kubebuilder project
-kubebuilder init --domain database.example.com --repo github.com/example/postgres-operator
+kubebuilder init --domain example.com --repo github.com/example/postgres-operator
 ```
 
 ### Task 1.2: Create Database API
@@ -163,7 +163,7 @@ make manifests
 
 ```bash
 # Check CRD was generated and verify validation rules
-cat config/crd/bases/database.database.example.com_databases.yaml | head -100
+cat config/crd/bases/database.example.com_databases.yaml | head -100
 ```
 
 **Questions:**
@@ -180,7 +180,7 @@ cat config/crd/bases/database.database.example.com_databases.yaml | head -100
 make install
 
 # Verify
-kubectl get crd databases.database.database.example.com
+kubectl get crd databases.database.example.com
 ```
 
 ### Task 4.2: Test Valid Resource
@@ -188,7 +188,7 @@ kubectl get crd databases.database.database.example.com
 ```bash
 # Create valid Database resource
 cat <<EOF | kubectl apply -f -
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: test-db
@@ -210,7 +210,7 @@ kubectl get database test-db
 ```bash
 # Test missing required field
 cat <<EOF | kubectl apply -f -
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: invalid-db
@@ -223,7 +223,7 @@ EOF
 
 # Test invalid replica count
 cat <<EOF | kubectl apply -f -
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: invalid-replicas
@@ -240,7 +240,7 @@ EOF
 
 # Test invalid storage size
 cat <<EOF | kubectl apply -f -
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: invalid-storage
@@ -262,7 +262,7 @@ EOF
 ```bash
 # Create a few databases
 kubectl apply -f - <<EOF
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: db1
@@ -274,7 +274,7 @@ spec:
   storage:
     size: 10Gi
 ---
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: db2
@@ -304,7 +304,7 @@ kubectl get databases
 ```bash
 # Create with only required fields
 cat <<EOF | kubectl apply -f -
-apiVersion: database.database.example.com/v1
+apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: minimal-db
