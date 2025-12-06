@@ -407,9 +407,37 @@ func (r *DatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.Da
 }
 ```
 
-## Exercise 6: Test the Operator
+## Exercise 6: Set Up the Controller Manager
 
-### Task 6.1: Install and Run
+For the controller to receive events when owned resources change (e.g., when StatefulSet becomes ready), we must tell the manager to watch those resources.
+
+### Task 6.1: Configure Watches
+
+Add the `SetupWithManager` function at the end of your controller:
+
+```go
+// SetupWithManager sets up the controller with the Manager.
+func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&databasev1.Database{}).
+		Owns(&appsv1.StatefulSet{}).
+		Owns(&corev1.Service{}).
+		Owns(&corev1.Secret{}).
+		Complete(r)
+}
+```
+
+**Key Points:**
+- `For(&databasev1.Database{})` - Watch Database resources (primary resource)
+- `Owns(&appsv1.StatefulSet{})` - Watch StatefulSets owned by Database (via owner reference)
+- `Owns(&corev1.Service{})` - Watch Services owned by Database
+- `Owns(&corev1.Secret{})` - Watch Secrets owned by Database
+
+This ensures that when a StatefulSet's status changes (pods become ready), the controller is notified and reconciles the parent Database to update its status.
+
+## Exercise 7: Test the Operator
+
+### Task 7.1: Install and Run
 
 ```bash
 # Install CRD
@@ -419,7 +447,7 @@ make install
 make run
 ```
 
-### Task 6.2: Create Database
+### Task 7.2: Create Database
 
 ```bash
 # Create Database resource (no password needed - it's auto-generated!)
@@ -438,7 +466,7 @@ spec:
 EOF
 ```
 
-### Task 6.3: Observe Reconciliation
+### Task 7.3: Observe Reconciliation
 
 ```bash
 # Watch Database status
@@ -459,9 +487,9 @@ kubectl get secret my-database-credentials -o jsonpath='{.data.password}' | base
 # Check operator logs
 ```
 
-## Exercise 7: Test Idempotency
+## Exercise 8: Test Idempotency
 
-### Task 7.1: Apply Multiple Times
+### Task 8.1: Apply Multiple Times
 
 ```bash
 # Apply the same resource multiple times
@@ -474,7 +502,7 @@ done
 kubectl get statefulsets | grep my-database
 ```
 
-### Task 7.2: Test Updates
+### Task 8.2: Test Updates
 
 ```bash
 # Update replicas
@@ -503,6 +531,7 @@ In this lab, you:
 - Created Secret with auto-generated password
 - Created StatefulSet and Service
 - Used owner references for all resources
+- Configured watches with `Owns()` to react to owned resource changes
 - Updated status with Secret name
 - Tested idempotency
 - Verified cascade deletion
@@ -511,11 +540,12 @@ In this lab, you:
 
 1. Reconciliation follows: read, compare, create/update, status
 2. Owner references ensure cascade deletion
-3. Idempotency is crucial
-4. Secrets should be auto-generated, not user-provided in plain text
-5. Status updates reflect actual state and provide useful info (like Secret name)
-6. Error handling is important
-7. Logging helps debugging
+3. **Use `Owns()` to watch owned resources** - without this, the controller won't be notified when StatefulSet/Service/Secret status changes
+4. Idempotency is crucial
+5. Secrets should be auto-generated, not user-provided in plain text
+6. Status updates reflect actual state and provide useful info (like Secret name)
+7. Error handling is important
+8. Logging helps debugging
 
 ## Solutions
 
