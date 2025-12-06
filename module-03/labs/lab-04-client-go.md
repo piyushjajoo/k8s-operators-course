@@ -145,22 +145,33 @@ func (r *DatabaseReconciler) findDatabasesByOwner(ctx context.Context, ownerName
 
 ```bash
 # Create database
-kubectl apply -f database.yaml
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: my-database
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
 
 # Update replicas using patch (simulate)
+kubectl patch database test --type merge -p '{"spec":{"replicas":2}}'
+
 # Watch operator logs to see patch in action
 ```
 
 ### Task 6.2: Test Conflict Handling
 
 ```bash
-# Create database
-kubectl apply -f database.yaml
-
 # Quickly update multiple times to trigger conflicts
-kubectl patch database test --type merge -p '{"spec":{"replicas":2}}'
 kubectl patch database test --type merge -p '{"spec":{"replicas":3}}'
 kubectl patch database test --type merge -p '{"spec":{"replicas":4}}'
+kubectl patch database test --type merge -p '{"spec":{"replicas":5}}'
 
 # Observe how operator handles conflicts
 ```
@@ -168,9 +179,6 @@ kubectl patch database test --type merge -p '{"spec":{"replicas":4}}'
 ### Task 6.3: Test Watch
 
 ```bash
-# Create database
-kubectl apply -f database.yaml
-
 # Manually delete StatefulSet
 kubectl delete statefulset my-database
 
