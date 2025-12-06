@@ -160,20 +160,28 @@ spec:
 EOF
 
 # Update replicas using patch (simulate)
-kubectl patch database test --type merge -p '{"spec":{"replicas":2}}'
+kubectl patch database my-database --type merge -p '{"spec":{"replicas":2}}'
 
 # Watch operator logs to see patch in action
+
+# Validate 2 replicas are available
+kubectl get database my-database -o jsonpath='{.spec.replicas}'
+kubectl get statefulset my-database
 ```
 
 ### Task 6.2: Test Conflict Handling
 
 ```bash
 # Quickly update multiple times to trigger conflicts
-kubectl patch database test --type merge -p '{"spec":{"replicas":3}}'
-kubectl patch database test --type merge -p '{"spec":{"replicas":4}}'
-kubectl patch database test --type merge -p '{"spec":{"replicas":5}}'
+kubectl patch database my-database --type merge -p '{"spec":{"replicas":3}}'
+kubectl patch database my-database --type merge -p '{"spec":{"replicas":4}}'
+kubectl patch database my-database --type merge -p '{"spec":{"replicas":5}}'
 
 # Observe how operator handles conflicts
+
+# Validate 5 replicas are eventually available
+kubectl get database my-database -o jsonpath='{.spec.replicas}'
+kubectl get statefulset my-database
 ```
 
 ### Task 6.3: Test Watch
@@ -183,6 +191,7 @@ kubectl patch database test --type merge -p '{"spec":{"replicas":5}}'
 kubectl delete statefulset my-database
 
 # Watch operator logs - should detect and recreate
+kubectl get statefulset my-database
 ```
 
 ## Cleanup
@@ -190,6 +199,12 @@ kubectl delete statefulset my-database
 ```bash
 # Delete test resources
 kubectl delete databases --all
+
+# Validate that all the resources are gone
+kubectl get databases my-database
+kubectl get statefulset my-database
+kubectl get service my-database
+kubectl get secret my-database-credentials
 ```
 
 ## Lab Summary
