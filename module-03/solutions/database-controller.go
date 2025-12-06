@@ -34,7 +34,7 @@ type DatabaseReconciler struct {
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// Read Database resource
 	db := &databasev1.Database{}
@@ -45,7 +45,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Reconciling Database", "name", db.Name)
+	logger.Info("Reconciling Database", "name", db.Name)
 
 	// Reconcile StatefulSet
 	if err := r.reconcileStatefulSet(ctx, db); err != nil {
@@ -66,7 +66,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	statefulSet := &appsv1.StatefulSet{}
 	err := r.Get(ctx, client.ObjectKey{
@@ -81,7 +81,7 @@ func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *datab
 		if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
 			return err
 		}
-		log.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
+		logger.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
 		return r.Create(ctx, desiredStatefulSet)
 	} else if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *datab
 	if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas ||
 		statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
 		statefulSet.Spec = desiredStatefulSet.Spec
-		log.Info("Updating StatefulSet", "name", statefulSet.Name)
+		logger.Info("Updating StatefulSet", "name", statefulSet.Name)
 		return r.Update(ctx, statefulSet)
 	}
 
@@ -163,7 +163,7 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},
-						Resources: corev1.ResourceRequirements{
+						Resources: corev1.VolumeResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse(db.Spec.Storage.Size),
 							},
@@ -175,14 +175,8 @@ func (r *DatabaseReconciler) buildStatefulSet(db *databasev1.Database) *appsv1.S
 	}
 }
 
-func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev1.Database) error {
-	service := &corev1.Service{}
-	err := r.Get(ctx, client.ObjectKey{
-		Name:      db.Name,
-		Namespace: db.Namespace,
-	}, service)
-
-	desiredService := &corev1.Service{
+func (r *DatabaseReconciler) buildService(db *databasev1.Database) *corev1.Service {
+	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      db.Name,
 			Namespace: db.Namespace,
@@ -200,6 +194,16 @@ func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev
 			},
 		},
 	}
+}
+
+func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev1.Database) error {
+	service := &corev1.Service{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      db.Name,
+		Namespace: db.Namespace,
+	}, service)
+
+	desiredService := r.buildService(db)
 
 	if errors.IsNotFound(err) {
 		if err := ctrl.SetControllerReference(db, desiredService, r.Scheme); err != nil {
@@ -210,6 +214,7 @@ func (r *DatabaseReconciler) reconcileService(ctx context.Context, db *databasev
 		return err
 	}
 
+	// Service updates are less common, but handle if needed
 	return nil
 }
 

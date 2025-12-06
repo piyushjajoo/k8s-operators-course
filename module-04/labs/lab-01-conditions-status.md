@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 3](../module-03/README.md)
+- Completion of [Module 3](../../module-03/README.md)
 - PostgreSQL operator from Module 3
 - Understanding of status management
 
@@ -90,7 +90,7 @@ Modify your `Reconcile` function:
 
 ```go
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     
     db := &databasev1.Database{}
     if err := r.Get(ctx, req.NamespacedName, db); err != nil {

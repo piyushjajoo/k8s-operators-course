@@ -65,7 +65,7 @@ graph LR
 
 ## Status Subresource
 
-Remember from [Module 1](../module-01/lessons/04-custom-resources.md) and [Module 3](../module-03/lessons/02-designing-api.md): status is a subresource.
+Remember from [Module 1](../../module-01/lessons/04-custom-resources.md) and [Module 3](../../module-03/lessons/02-designing-api.md): status is a subresource.
 
 ```mermaid
 graph LR
