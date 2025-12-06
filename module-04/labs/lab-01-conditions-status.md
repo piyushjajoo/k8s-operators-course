@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 3](../module-03/README.md)
+- Completion of [Module 3](../../module-03/README.md)
 - PostgreSQL operator from Module 3
 - Understanding of status management
 
