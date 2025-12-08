@@ -214,24 +214,51 @@ cat config/webhook/manifests.yaml | grep -A 20 "ValidatingWebhookConfiguration"
 
 ## Exercise 4: Test Validating Webhook
 
-### Task 4.1: Generate Certificates
+Webhooks require TLS certificates. Kubebuilder uses cert-manager for certificate management.
+
+> **Note:** If you used the course's `scripts/setup-kind-cluster.sh` script to create your cluster, cert-manager is already installed. You can verify with:
+> ```bash
+> kubectl get pods -n cert-manager
+> ```
+
+### Task 4.1: Ensure Cert-Manager is Installed
+
+If cert-manager is not installed, install it:
 
 ```bash
-# Generate certificates for local development
-make certs
+# Install cert-manager in your cluster
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
 
-# Install certificates
-make install-cert
+# Wait for cert-manager to be ready
+kubectl wait --for=condition=Available deployment/cert-manager -n cert-manager --timeout=120s
+kubectl wait --for=condition=Available deployment/cert-manager-webhook -n cert-manager --timeout=120s
+kubectl wait --for=condition=Available deployment/cert-manager-cainjector -n cert-manager --timeout=120s
 ```
 
-### Task 4.2: Run Operator with Webhook
+### Task 4.2: Build and Deploy Operator with Webhooks
 
 ```bash
-# Run operator (webhook runs in same process)
-make run
+# Build and deploy operator with webhooks
+make docker-build IMG=postgres-operator:latest
+kind load docker-image postgres-operator:latest --name k8s-operators-course  # Load into kind cluster
+
+# Deploy to cluster (includes webhook configuration)
+make deploy IMG=postgres-operator:latest
 ```
 
-### Task 4.3: Test Valid Resource
+### Task 4.3: Verify Webhook is Registered
+
+```bash
+# Check webhook configuration
+kubectl get validatingwebhookconfigurations
+
+# Check webhook pods are running
+kubectl get pods -n postgres-operator-system
+```
+
+> **Note:** If you want to test controller logic without webhooks, you can run `make run` locally. However, webhooks won't be invoked because they require TLS certificates and a reachable HTTPS endpoint from the API server.
+
+### Task 4.4: Test Valid Resource
 
 ```bash
 # Create valid Database
@@ -253,7 +280,7 @@ EOF
 kubectl get database valid-db
 ```
 
-### Task 4.4: Test Invalid Resources
+### Task 4.5: Test Invalid Resources
 
 ```bash
 # Test invalid image
@@ -291,7 +318,7 @@ EOF
 # Should fail with validation error
 ```
 
-### Task 4.5: Test Update Validation
+### Task 4.6: Test Update Validation
 
 ```bash
 # Create database

@@ -84,6 +84,21 @@ kubectl wait --namespace ingress-nginx \
     --selector=app.kubernetes.io/component=controller \
     --timeout=300s
 
+# Install cert-manager (required for webhooks)
+echo "Installing cert-manager..."
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+
+echo "Waiting for cert-manager to be ready..."
+kubectl wait --namespace cert-manager \
+    --for=condition=Available deployment/cert-manager \
+    --timeout=120s
+kubectl wait --namespace cert-manager \
+    --for=condition=Available deployment/cert-manager-webhook \
+    --timeout=120s
+kubectl wait --namespace cert-manager \
+    --for=condition=Available deployment/cert-manager-cainjector \
+    --timeout=120s
+
 # Set kubectl context
 kubectl cluster-info --context "kind-${CLUSTER_NAME}"
 
@@ -92,6 +107,10 @@ echo "✅ Cluster setup complete!"
 echo ""
 echo "Cluster name: ${CLUSTER_NAME}"
 echo "Context: kind-${CLUSTER_NAME}"
+echo ""
+echo "Installed components:"
+echo "  - ingress-nginx"
+echo "  - cert-manager (for webhook TLS certificates)"
 echo ""
 echo "To use this cluster:"
 echo "  kubectl cluster-info --context kind-${CLUSTER_NAME}"
