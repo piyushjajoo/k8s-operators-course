@@ -21,11 +21,19 @@
 ### Task 1.1: List Admission Controllers
 
 ```bash
-# Check API server admission controllers
-kubectl get --raw /api/v1 | jq '.serverAddressByClientCIDRs'
+# Check API server admission plugins enabled
+# Note: Modern Kubernetes clusters have many default admission controllers enabled
+# automatically (NamespaceLifecycle, LimitRanger, ServiceAccount, ResourceQuota,
+# MutatingAdmissionWebhook, ValidatingAdmissionWebhook, etc.)
 
-# For kind cluster, check API server args
+# For kind cluster, check API server args for admission plugins
 kubectl get pod -n kube-system -l component=kube-apiserver -o yaml | grep -A 10 "admission"
+
+# Alternative: Check the kube-apiserver manifest directly (kind-specific)
+docker exec kind-control-plane cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep -i admission
+
+# If no --enable-admission-plugins flag is shown, the cluster uses the default set
+# See: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#which-plugins-are-enabled-by-default
 ```
 
 ### Task 1.2: Test ResourceQuota Admission
