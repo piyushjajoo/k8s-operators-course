@@ -88,7 +88,7 @@ if !db.DeletionTimestamp.IsZero() {
 
 ```go
 func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     finalizerName := "database.example.com/finalizer"
     
     // Check if finalizer exists
@@ -97,11 +97,11 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
         return ctrl.Result{}, nil
     }
     
-    log.Info("Handling deletion", "name", db.Name)
+    logger.Info("Handling deletion", "name", db.Name)
     
     // Perform cleanup operations
     if err := r.cleanupExternalResources(ctx, db); err != nil {
-        log.Error(err, "Failed to cleanup external resources")
+        logger.Error(err, "Failed to cleanup external resources")
         // Return error to retry
         return ctrl.Result{RequeueAfter: 10 * time.Second}, err
     }
@@ -112,7 +112,7 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
         return ctrl.Result{}, err
     }
     
-    log.Info("Finalizer removed, resource will be deleted")
+    logger.Info("Finalizer removed, resource will be deleted")
     return ctrl.Result{}, nil
 }
 ```
