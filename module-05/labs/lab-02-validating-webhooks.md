@@ -44,10 +44,10 @@ kubebuilder create webhook \
 
 ```bash
 # Check API types file
-cat api/v1/database_types.go | grep -A 20 "webhook"
+cat internal/webhook/v1/database_webhook.go | grep -A 20 "webhook"
 
 # Check webhook markers
-cat api/v1/database_types.go | grep "kubebuilder:webhook"
+cat internal/webhook/v1/database_webhook.go | grep "kubebuilder:webhook"
 ```
 
 ## Exercise 2: Implement Validation Logic
