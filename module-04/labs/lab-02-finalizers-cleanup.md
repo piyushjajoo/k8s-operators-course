@@ -208,10 +208,10 @@ kubectl get database test-db -o jsonpath='{.metadata.finalizers}'
 # Delete Database
 kubectl delete database test-db
 
-# Check deletion timestamp
+# Check deletion timestamp, note you may or may not see it, as deletion is pretty quick but you can track the log messages in the terminal you have run the operator
 kubectl get database test-db -o jsonpath='{.metadata.deletionTimestamp}'
 
-# Resource should still exist (has finalizer)
+# Resource should still exist (has finalizer), it may or may not exist, as deletion is pretty quick
 kubectl get database test-db
 
 # Watch operator logs - should see cleanup
@@ -239,19 +239,45 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
 }
 ```
 
+Re-run following commands to use the simulated failure code -
+
+```bash
+# Install CRD
+make install
+
+# Run operator
+make run
+```
+
 ### Task 4.2: Test Behavior
 
 ```bash
 # Create and delete Database
-kubectl apply -f database.yaml
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: test-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
+
+# the delete command should hang as finalizer cannot be removed
 kubectl delete database test-db
 
 # Resource should remain (cleanup failing)
 kubectl get database test-db
 
-# Check conditions
-kubectl get database test-db -o jsonpath='{.status.conditions}'
+# Check conditions, run 
+kubectl get database test-db -o jsonpath='{.status.conditions}' | jq .
 ```
+
+** Revert the simulated failure code and re-run the operator, the database should get cleaned up properly. **
 
 ## Exercise 5: Test Idempotent Cleanup
 
