@@ -239,14 +239,19 @@ func (r *DatabaseReconciler) findDatabasesForNamespace(ctx context.Context, name
 
 Handle different event types with predicates to filter which events trigger reconciliation:
 
+> **Important:** When filtering StatefulSet updates, include both spec changes (Generation) AND status changes (ReadyReplicas). Otherwise your controller won't react to pods becoming ready!
+
 ```go
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
         Owns(&appsv1.StatefulSet{}, builder.WithPredicates(predicate.Funcs{
             UpdateFunc: func(e event.UpdateEvent) bool {
-                // Only reconcile on spec changes (generation change)
-                return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+                oldSS := e.ObjectOld.(*appsv1.StatefulSet)
+                newSS := e.ObjectNew.(*appsv1.StatefulSet)
+                // Reconcile on spec changes OR status changes
+                return oldSS.Generation != newSS.Generation ||
+                    oldSS.Status.ReadyReplicas != newSS.Status.ReadyReplicas
             },
             CreateFunc: func(e event.CreateEvent) bool {
                 return true

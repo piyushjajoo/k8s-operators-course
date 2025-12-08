@@ -260,10 +260,13 @@ EOF
 
 ### Task 4.1: Add Predicates
 
-Filter events to only reconcile on important changes:
+Filter events to only reconcile on important changes. 
+
+> **Important:** When filtering StatefulSet updates, you must include **both** spec changes (Generation) AND status changes (ReadyReplicas). Otherwise, the Database will never become Ready because status updates will be filtered out!
 
 ```go
 import (
+    "sigs.k8s.io/controller-runtime/pkg/builder"
     "sigs.k8s.io/controller-runtime/pkg/predicate"
     "sigs.k8s.io/controller-runtime/pkg/event"
 )
@@ -273,10 +276,12 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
         For(&databasev1.Database{}).
         Owns(&appsv1.StatefulSet{}, builder.WithPredicates(predicate.Funcs{
             UpdateFunc: func(e event.UpdateEvent) bool {
-                // Only reconcile on spec changes
                 oldSS := e.ObjectOld.(*appsv1.StatefulSet)
                 newSS := e.ObjectNew.(*appsv1.StatefulSet)
-                return oldSS.Generation != newSS.Generation
+                // Reconcile on spec changes (Generation) OR status changes (ReadyReplicas)
+                // Without checking ReadyReplicas, Database status would never update to Ready!
+                return oldSS.Generation != newSS.Generation ||
+                    oldSS.Status.ReadyReplicas != newSS.Status.ReadyReplicas
             },
             CreateFunc: func(e event.CreateEvent) bool {
                 return true
@@ -285,11 +290,11 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
                 return true
             },
         })).
-		Owns(&corev1.Service{}).
-		Watches(
-			&corev1.Secret{},
-			handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
-		).
+        Owns(&corev1.Service{}).
+        Watches(
+            &corev1.Secret{},
+            handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
+        ).
         Complete(r)
 }
 ```
