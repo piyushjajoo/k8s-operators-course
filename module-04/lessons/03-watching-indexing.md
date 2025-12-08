@@ -4,7 +4,7 @@
 
 ## Introduction
 
-In [Module 3](../module-03/README.md), you learned basic reconciliation. Now let's optimize controllers by watching dependent resources and using indexes for efficient lookups. This makes controllers more reactive and performant.
+In [Module 3](../../module-03/README.md), you learned basic reconciliation. Now let's optimize controllers by watching dependent resources and using indexes for efficient lookups. This makes controllers more reactive and performant.
 
 ## Watching Dependent Resources
 
