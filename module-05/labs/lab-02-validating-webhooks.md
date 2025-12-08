@@ -68,6 +68,7 @@ package v1
 import (
     "context"
     "fmt"
+    "strconv"
     "strings"
 
     "k8s.io/apimachinery/pkg/runtime"
@@ -158,15 +159,15 @@ func (v *DatabaseCustomValidator) ValidateUpdate(ctx context.Context, oldObj, ne
     return nil, nil
 }
 
-// Helper function
+// Helper function to parse storage size (e.g., "10Gi" -> 10)
 func parseStorageSize(size string) int64 {
-    // Simple parser for "10Gi" format
-    // In production, use proper parsing
     if strings.HasSuffix(size, "Gi") {
         num := strings.TrimSuffix(size, "Gi")
-        // Parse and convert to bytes (simplified)
-        _ = num // Implement proper parsing
-        return 0
+        val, err := strconv.ParseInt(num, 10, 64)
+        if err != nil {
+            return 0
+        }
+        return val
     }
     return 0
 }

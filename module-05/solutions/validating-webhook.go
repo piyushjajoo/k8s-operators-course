@@ -7,6 +7,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -120,15 +121,24 @@ func (v *DatabaseCustomValidator) ValidateDelete(ctx context.Context, obj runtim
 	return nil, nil
 }
 
-// Helper function to parse storage size (simplified)
+// Helper function to parse storage size (e.g., "10Gi" -> 10)
 func parseStorageSize(size string) int64 {
-	// In production, use proper parsing with resource.Quantity
-	// This is a simplified example
 	if strings.HasSuffix(size, "Gi") {
 		num := strings.TrimSuffix(size, "Gi")
-		// Parse number and convert
-		_ = num // Implement proper parsing
-		return 0
+		val, err := strconv.ParseInt(num, 10, 64)
+		if err != nil {
+			return 0
+		}
+		return val
+	}
+	if strings.HasSuffix(size, "Mi") {
+		num := strings.TrimSuffix(size, "Mi")
+		val, err := strconv.ParseInt(num, 10, 64)
+		if err != nil {
+			return 0
+		}
+		// Convert Mi to Gi equivalent (1/1024)
+		return val / 1024
 	}
 	return 0
 }
