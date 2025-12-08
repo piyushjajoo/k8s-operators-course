@@ -140,6 +140,9 @@ func (r *DatabaseReconciler) reconcileWithStateMachine(ctx context.Context, db *
 
 // transitionToProvisioning moves from Pending to Provisioning
 func (r *DatabaseReconciler) transitionToProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("STATE TRANSITION: Pending -> Provisioning", "database", db.Name)
+
 	db.Status.Phase = string(StateProvisioning)
 	db.Status.Ready = false
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "Provisioning", "Starting provisioning")
@@ -147,13 +150,16 @@ func (r *DatabaseReconciler) transitionToProvisioning(ctx context.Context, db *d
 	if err := r.Status().Update(ctx, db); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
 	// Delay to visualize state transition (remove in production)
-	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+	return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 }
 
 // handleProvisioning creates the Secret and StatefulSet
 func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Info("Handling Provisioning phase", "database", db.Name)
 
 	// Ensure Secret exists first (StatefulSet needs it for credentials)
 	if err := r.reconcileSecret(ctx, db); err != nil {
@@ -170,6 +176,7 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
 
 	if errors.IsNotFound(err) {
 		// Create StatefulSet
+		logger.Info("Creating StatefulSet", "database", db.Name)
 		if err := r.reconcileStatefulSet(ctx, db); err != nil {
 			logger.Error(err, "Failed to create StatefulSet")
 			return r.transitionToFailed(ctx, db, "StatefulSetCreationFailed", err.Error())
@@ -181,21 +188,25 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
 	}
 
 	// StatefulSet exists, move to next phase
-	logger.Info("StatefulSet exists, transitioning to Configuring")
+	logger.Info("STATE TRANSITION: Provisioning -> Configuring", "database", db.Name)
 	db.Status.Phase = string(StateConfiguring)
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "Configuring", "StatefulSet created, configuring")
 	if err := r.Status().Update(ctx, db); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
 	// Delay to visualize state transition (remove in production)
-	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+	return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 }
 
 // handleConfiguring creates the Service and performs configuration
 func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Info("Handling Configuring phase", "database", db.Name)
 
 	// Ensure Service exists
+	logger.Info("Creating Service", "database", db.Name)
 	if err := r.reconcileService(ctx, db); err != nil {
 		logger.Error(err, "Failed to reconcile Service")
 		return r.transitionToFailed(ctx, db, "ServiceCreationFailed", err.Error())
@@ -208,19 +219,22 @@ func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *database
 	// - Create database users
 	// - Set up replication
 
-	logger.Info("Configuration complete, transitioning to Deploying")
+	logger.Info("STATE TRANSITION: Configuring -> Deploying", "database", db.Name)
 	db.Status.Phase = string(StateDeploying)
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "Deploying", "Configuration complete, deploying")
 	if err := r.Status().Update(ctx, db); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
 	// Delay to visualize state transition (remove in production)
-	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+	return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 }
 
 // handleDeploying waits for the StatefulSet to be ready
 func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Info("Handling Deploying phase", "database", db.Name)
 
 	// Check if StatefulSet is ready
 	statefulSet := &appsv1.StatefulSet{}
@@ -244,20 +258,23 @@ func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1
 	}
 
 	if statefulSet.Status.ReadyReplicas >= desiredReplicas {
-		logger.Info("All replicas ready, transitioning to Verifying")
+		logger.Info("STATE TRANSITION: Deploying -> Verifying", "database", db.Name)
 		db.Status.Phase = string(StateVerifying)
 		r.setCondition(db, "Progressing", metav1.ConditionTrue, "Verifying", "Deployment complete, verifying")
 		if err := r.Status().Update(ctx, db); err != nil {
 			return ctrl.Result{}, err
 		}
+
+		logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
 		// Delay to visualize state transition (remove in production)
-		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 
 	// Not ready yet - update condition with progress
-	logger.Info("Waiting for replicas",
-		"ready", statefulSet.Status.ReadyReplicas,
-		"desired", desiredReplicas)
+	logger.Info("Waiting for StatefulSet replicas to be ready",
+		"database", db.Name,
+		"readyReplicas", statefulSet.Status.ReadyReplicas,
+		"desiredReplicas", desiredReplicas)
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "WaitingForReplicas",
 		fmt.Sprintf("Waiting for replicas: %d/%d ready", statefulSet.Status.ReadyReplicas, desiredReplicas))
 	if err := r.Status().Update(ctx, db); err != nil {
@@ -269,6 +286,7 @@ func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1
 // handleVerifying performs health checks before marking as Ready
 func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Info("Handling Verifying phase", "database", db.Name)
 
 	// Verify database is working
 	// In a real operator, you might:
@@ -278,7 +296,7 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
 	// - Verify backups are configured
 
 	// For this example, we assume verification passes
-	logger.Info("Verification complete, transitioning to Ready")
+	logger.Info("STATE TRANSITION: Verifying -> Ready", "database", db.Name)
 
 	db.Status.Phase = string(StateReady)
 	db.Status.Ready = true
@@ -287,6 +305,8 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
 
 	r.setCondition(db, "Ready", metav1.ConditionTrue, "AllChecksPassed", "Database is ready")
 	r.setCondition(db, "Progressing", metav1.ConditionFalse, "ReconciliationComplete", "Reconciliation complete")
+
+	logger.Info("Database is now READY!", "database", db.Name, "endpoint", db.Status.Endpoint)
 
 	return ctrl.Result{}, r.Status().Update(ctx, db)
 }

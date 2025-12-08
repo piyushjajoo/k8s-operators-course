@@ -142,17 +142,25 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 ```go
 func (r *DatabaseReconciler) transitionToProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    logger.Info("STATE TRANSITION: Pending -> Provisioning", "database", db.Name)
+
     db.Status.Phase = string(StateProvisioning)
     db.Status.Ready = false
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Provisioning", "Starting provisioning")
     if err := r.Status().Update(ctx, db); err != nil {
         return ctrl.Result{}, err
     }
+
+    logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
     // Delay to visualize state transition (remove in production)
-    return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+    return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    logger.Info("Handling Provisioning phase", "database", db.Name)
+
     // Ensure Secret exists first (StatefulSet needs it for credentials)
     if err := r.reconcileSecret(ctx, db); err != nil {
         return ctrl.Result{}, err
@@ -167,6 +175,7 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
     
     if errors.IsNotFound(err) {
         // Create StatefulSet
+        logger.Info("Creating StatefulSet", "database", db.Name)
         if err := r.reconcileStatefulSet(ctx, db); err != nil {
             return ctrl.Result{}, err
         }
@@ -174,33 +183,46 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
     }
     
     // StatefulSet exists, move to next phase
+    logger.Info("STATE TRANSITION: Provisioning -> Configuring", "database", db.Name)
     db.Status.Phase = string(StateConfiguring)
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Configuring", "StatefulSet created, configuring")
     if err := r.Status().Update(ctx, db); err != nil {
         return ctrl.Result{}, err
     }
+
+    logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
     // Delay to visualize state transition (remove in production)
-    return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+    return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    logger.Info("Handling Configuring phase", "database", db.Name)
+
     // Ensure Service exists
+    logger.Info("Creating Service", "database", db.Name)
     if err := r.reconcileService(ctx, db); err != nil {
         return ctrl.Result{}, err
     }
 
     // Configure database (create users, databases, etc.)
     // For now, just move to next phase
+    logger.Info("STATE TRANSITION: Configuring -> Deploying", "database", db.Name)
     db.Status.Phase = string(StateDeploying)
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Deploying", "Configuration complete, deploying")
     if err := r.Status().Update(ctx, db); err != nil {
         return ctrl.Result{}, err
     }
+
+    logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
     // Delay to visualize state transition (remove in production)
-    return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+    return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    logger.Info("Handling Deploying phase", "database", db.Name)
+
     // Check if StatefulSet is ready
     statefulSet := &appsv1.StatefulSet{}
     if err := r.Get(ctx, client.ObjectKey{
@@ -211,28 +233,41 @@ func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1
     }
     
     if statefulSet.Status.ReadyReplicas == *statefulSet.Spec.Replicas {
+        logger.Info("STATE TRANSITION: Deploying -> Verifying", "database", db.Name)
         db.Status.Phase = string(StateVerifying)
         r.setCondition(db, "Progressing", metav1.ConditionTrue, "Verifying", "Deployment complete, verifying")
         if err := r.Status().Update(ctx, db); err != nil {
             return ctrl.Result{}, err
         }
+
+        logger.Info("Waiting 15 seconds before next reconciliation (for visualization)", "currentPhase", db.Status.Phase)
         // Delay to visualize state transition (remove in production)
-        return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+        return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
     }
     
     // Not ready yet
+    logger.Info("Waiting for StatefulSet replicas to be ready",
+        "database", db.Name,
+        "readyReplicas", statefulSet.Status.ReadyReplicas,
+        "desiredReplicas", *statefulSet.Spec.Replicas)
     return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    logger.Info("Handling Verifying phase", "database", db.Name)
+
     // Verify database is working (connect, run test query, etc.)
     // For now, assume it's ready
+    logger.Info("STATE TRANSITION: Verifying -> Ready", "database", db.Name)
     db.Status.Phase = string(StateReady)
     db.Status.Ready = true
     db.Status.SecretName = r.secretName(db)
     db.Status.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:5432", db.Name, db.Namespace)
     r.setCondition(db, "Ready", metav1.ConditionTrue, "AllChecksPassed", "Database is ready")
     r.setCondition(db, "Progressing", metav1.ConditionFalse, "ReconciliationComplete", "Reconciliation complete")
+
+    logger.Info("Database is now READY!", "database", db.Name, "endpoint", db.Status.Endpoint)
     return ctrl.Result{}, r.Status().Update(ctx, db)
 }
 
@@ -249,7 +284,7 @@ func (r *DatabaseReconciler) handleFailed(ctx context.Context, db *databasev1.Da
 }
 ```
 
-> **Note:** The `RequeueAfter: 3 * time.Second` delays are added to help visualize state transitions during development. In production, you would remove these delays to speed up reconciliation.
+> **Note:** The `RequeueAfter: 15 * time.Second` delays and `logger.Info()` calls are added to help visualize state transitions during development. Watch both the operator logs and the Database status to see each transition. In production, you would remove these delays and reduce logging verbosity.
 
 ## Exercise 3: Test State Machine
 
@@ -287,12 +322,41 @@ watch -n 1 'kubectl get database test-db -o jsonpath="{.status.phase}"'
 
 ### Task 3.3: Observe State Transitions
 
-```bash
-# Watch conditions to see state progression
-kubectl get database test-db -o jsonpath='{.status.conditions}' | jq '.'
+Open **two terminals** to observe the state machine in action:
 
-# Should see transitions:
-# Pending -> Provisioning -> Configuring -> Deploying -> Verifying -> Ready
+**Terminal 1 - Watch the operator logs:**
+```bash
+# The operator logs will show STATE TRANSITION messages like:
+# STATE TRANSITION: Pending -> Provisioning
+# STATE TRANSITION: Provisioning -> Configuring
+# etc.
+
+# If running with `make run`, logs appear in that terminal
+# Look for lines containing "STATE TRANSITION" and "Waiting 15 seconds"
+```
+
+**Terminal 2 - Watch the Database status:**
+```bash
+# Watch phase transitions (updates every second)
+watch -n 1 'kubectl get database test-db -o jsonpath="{.status.phase}"'
+
+# Or watch the full status including conditions
+kubectl get database test-db -o jsonpath='{.status.conditions}' | jq '.'
+```
+
+**Expected state progression (each phase visible for ~15 seconds):**
+```
+Pending -> Provisioning -> Configuring -> Deploying -> Verifying -> Ready
+```
+
+**Expected log output:**
+```
+INFO    STATE TRANSITION: Pending -> Provisioning    {"database": "test-db"}
+INFO    Waiting 15 seconds before next reconciliation (for visualization)    {"currentPhase": "Provisioning"}
+INFO    Handling Provisioning phase    {"database": "test-db"}
+INFO    STATE TRANSITION: Provisioning -> Configuring    {"database": "test-db"}
+...
+INFO    Database is now READY!    {"database": "test-db", "endpoint": "test-db.default.svc.cluster.local:5432"}
 ```
 
 ## Exercise 4: Handle External Dependencies
