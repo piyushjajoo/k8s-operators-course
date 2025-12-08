@@ -62,6 +62,9 @@ kubectl delete statefulset test-db
 
 # Validate the deleted statefulset appears
 kubectl get statefulset test-db
+
+# Delete the database
+kubectl delete database test-db
 ```
 
 ## Exercise 2: Watch Non-Owned Resources
@@ -115,6 +118,10 @@ func (r *DatabaseReconciler) findDatabasesForSecret(ctx context.Context, secret 
 ### Task 2.2: Test Secret Watch
 
 ```bash
+# Install and run operator
+make install
+make run
+
 # Create Database
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
@@ -165,6 +172,12 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
+        Owns(&appsv1.StatefulSet{}).
+		Owns(&corev1.Service{}).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
+		).
         Complete(r)
 }
 ```
