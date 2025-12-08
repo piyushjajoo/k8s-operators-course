@@ -359,9 +359,9 @@ When implementing advanced patterns:
 ## References
 
 ### Official Documentation
-- [Controller Best Practices](https://kubernetes.io/docs/concepts/architecture/controller/)
-- [Idempotency](https://kubernetes.io/docs/concepts/architecture/controller/#idempotency)
-- [Reconciliation](https://kubernetes.io/docs/concepts/architecture/controller/#reconciliation)
+- [Kubernetes Controller Concepts](https://kubernetes.io/docs/concepts/architecture/controller/)
+- [Kubebuilder: Designing APIs](https://book.kubebuilder.io/cronjob-tutorial/api-design)
+- [Controller Runtime: Reconciler Interface](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/reconcile)
 
 ### Further Reading
 - **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 8: Advanced Patterns
@@ -371,7 +371,7 @@ When implementing advanced patterns:
 ### Related Topics
 - [State Machine Pattern](https://en.wikipedia.org/wiki/Finite-state_machine)
 - [Idempotency in Distributed Systems](https://en.wikipedia.org/wiki/Idempotence)
-- [Retry Patterns](https://kubernetes.io/docs/concepts/architecture/controller/#retry)
+- [Circuit Breaker Pattern](https://en.wikipedia.org/wiki/Circuit_breaker_design_pattern)
 
 ## Next Steps
 
