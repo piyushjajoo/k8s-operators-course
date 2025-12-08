@@ -20,7 +20,7 @@
 
 ### Task 1.1: Define States
 
-Add state constants in `api/v1/database_types.go`:
+Add state constants in `internal/controller/database_controller.go`:
 
 ```go
 type DatabaseState string
