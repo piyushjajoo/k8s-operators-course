@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 3](../module-03/README.md) or [Module 4](../module-04/README.md)
+- Completion of [Module 3](../../module-03/README.md) or [Module 4](../../module-04/README.md)
 - Database operator project
 - Understanding of validation requirements
 
@@ -54,7 +54,7 @@ cat api/v1/database_types.go | grep "kubebuilder:webhook"
 
 ### Task 2.1: Add ValidateCreate
 
-Edit `api/v1/database_webhook.go`:
+Edit `internal/webhook/v1/database_webhook.go`:
 
 ```go
 package v1
