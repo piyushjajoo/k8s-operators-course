@@ -44,7 +44,7 @@ kubectl create namespace quota-test
 kubectl create quota test-quota --namespace=quota-test --hard=cpu=1,memory=1Gi
 
 # Try to create pod that exceeds quota
-kubectl run test-pod --image=nginx:latest --namespace=quota-test --requests=cpu=2,memory=2Gi
+kubectl run test-pod --image=nginx:latest --namespace=quota-test --overrides='{"spec":{"containers":[{"name":"test-pod","image":"nginx:latest","resources":{"requests":{"cpu":"2","memory":"2Gi"}}}]}}'
 
 # Should be rejected by ResourceQuota admission controller
 ```
