@@ -279,30 +279,40 @@ make deploy IMG=postgres-operator:latest
 
 > **Using Podman instead of Docker?**
 > 
-> The Makefile uses `CONTAINER_TOOL` variable (defaults to `docker`). To use Podman:
+> The Makefile uses `CONTAINER_TOOL` variable (defaults to `docker`). Podman prefixes images with `localhost/`, so use:
 > ```bash
-> # Build with podman
+> # Build with podman (note: image will be localhost/postgres-operator:latest)
 > make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 > 
 > # Load image into kind (save to tarball, then load)
-> podman save postgres-operator:latest -o /tmp/postgres-operator.tar
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
 > kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
 > rm /tmp/postgres-operator.tar
 > 
-> # Deploy operator with webhooks to cluster
-> make deploy IMG=postgres-operator:latest
+> # Deploy operator - use localhost/ prefix to match the loaded image
+> make deploy IMG=localhost/postgres-operator:latest
 > ```
 
 > **Getting `ErrImagePull` or `ImagePullBackOff`?**
 > 
-> This means Kubernetes is trying to pull from Docker Hub instead of using the local image. Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml`:
-> ```yaml
-> containers:
-> - name: manager
->   image: controller:latest
->   imagePullPolicy: IfNotPresent  # Add this line
-> ```
-> Then redeploy with `make deploy IMG=postgres-operator:latest`
+> This means Kubernetes is trying to pull from Docker Hub instead of using the local image.
+> 
+> 1. Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml`:
+>    ```yaml
+>    containers:
+>    - name: manager
+>      image: controller:latest
+>      imagePullPolicy: IfNotPresent  # Add this line
+>    ```
+> 
+> 2. **Podman users:** Check the actual image name loaded in kind:
+>    ```bash
+>    podman exec k8s-operators-course-control-plane crictl images | grep postgres
+>    ```
+>    If it shows `localhost/postgres-operator`, use that name when deploying:
+>    ```bash
+>    make deploy IMG=localhost/postgres-operator:latest
+>    ```
 
 > **Tip:** For day-to-day controller development, you can still use `make install && make run`. Only deploy to cluster when you need to test webhook behavior.
 
