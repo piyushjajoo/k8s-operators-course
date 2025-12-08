@@ -214,16 +214,25 @@ cat config/webhook/manifests.yaml | grep -A 20 "ValidatingWebhookConfiguration"
 
 ## Exercise 4: Test Validating Webhook
 
-Webhooks require TLS certificates. Kubebuilder uses cert-manager for certificate management.
+### Understanding Webhook Testing
 
-> **Note:** If you used the course's `scripts/setup-kind-cluster.sh` script to create your cluster, cert-manager is already installed. You can verify with:
-> ```bash
-> kubectl get pods -n cert-manager
-> ```
+Unlike controller logic, webhooks cannot be easily tested with `make run` because:
+- Webhooks require TLS certificates
+- The Kubernetes API server (inside the cluster) needs to reach the webhook endpoint
+- When running locally, the API server cannot call back to your localhost
+
+**Two approaches for development:**
+
+| Approach | Command | Webhooks Work? | Use When |
+|----------|---------|----------------|----------|
+| Local development | `make install && make run` | ❌ No | Testing controller/reconciliation logic |
+| In-cluster deployment | `make deploy` | ✅ Yes | Testing webhook validation |
+
+> **Note:** If you used the course's `scripts/setup-kind-cluster.sh` script to create your cluster, cert-manager is already installed. Verify with: `kubectl get pods -n cert-manager`
 
 ### Task 4.1: Ensure Cert-Manager is Installed
 
-If cert-manager is not installed, install it:
+If cert-manager is not installed:
 
 ```bash
 # Install cert-manager in your cluster
@@ -235,28 +244,50 @@ kubectl wait --for=condition=Available deployment/cert-manager-webhook -n cert-m
 kubectl wait --for=condition=Available deployment/cert-manager-cainjector -n cert-manager --timeout=120s
 ```
 
-### Task 4.2: Build and Deploy Operator with Webhooks
+### Task 4.2: Deploy Operator to Cluster
+
+Since webhooks need to run inside the cluster, we need to build and deploy:
 
 ```bash
-# Build and deploy operator with webhooks
+# Build the container image
 make docker-build IMG=postgres-operator:latest
-kind load docker-image postgres-operator:latest --name k8s-operators-course  # Load into kind cluster
 
-# Deploy to cluster (includes webhook configuration)
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# Deploy operator with webhooks to cluster
 make deploy IMG=postgres-operator:latest
 ```
+
+> **Using Podman instead of Docker?**
+> 
+> The Makefile uses `CONTAINER_TOOL` variable (defaults to `docker`). To use Podman:
+> ```bash
+> # Option 1: Set for single command
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Option 2: Export for session
+> export CONTAINER_TOOL=podman
+> make docker-build IMG=postgres-operator:latest
+> 
+> # Load image into kind (kind works with podman too)
+> kind load docker-image postgres-operator:latest --name k8s-operators-course
+> ```
+
+> **Tip:** For day-to-day controller development, you can still use `make install && make run`. Only deploy to cluster when you need to test webhook behavior.
 
 ### Task 4.3: Verify Webhook is Registered
 
 ```bash
-# Check webhook configuration
+# Check webhook configuration was created
 kubectl get validatingwebhookconfigurations
 
-# Check webhook pods are running
+# Check operator pods are running
 kubectl get pods -n postgres-operator-system
-```
 
-> **Note:** If you want to test controller logic without webhooks, you can run `make run` locally. However, webhooks won't be invoked because they require TLS certificates and a reachable HTTPS endpoint from the API server.
+# Check logs if needed
+kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager
+```
 
 ### Task 4.4: Test Valid Resource
 
