@@ -51,7 +51,7 @@ grep "kubebuilder:webhook" internal/webhook/v1/database_webhook.go
 ```
 
 **Observe the structure:**
-- Webhook code is in `internal/webhook/v1/` directory (not in `api/v1/`)
+- Webhook code is in `internal/webhook/v1/` directory
 - Uses `DatabaseCustomValidator` struct
 - Implements `webhook.CustomValidator` interface
 - Methods take `context.Context` as first parameter
