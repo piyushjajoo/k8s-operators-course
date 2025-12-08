@@ -263,15 +263,16 @@ make deploy IMG=postgres-operator:latest
 > 
 > The Makefile uses `CONTAINER_TOOL` variable (defaults to `docker`). To use Podman:
 > ```bash
-> # Option 1: Set for single command
+> # Build with podman
 > make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 > 
-> # Option 2: Export for session
-> export CONTAINER_TOOL=podman
-> make docker-build IMG=postgres-operator:latest
+> # Load image into kind - Option 1: Use KIND_EXPERIMENTAL_PROVIDER
+> KIND_EXPERIMENTAL_PROVIDER=podman kind load docker-image postgres-operator:latest --name k8s-operators-course
 > 
-> # Load image into kind (kind works with podman too)
-> kind load docker-image postgres-operator:latest --name k8s-operators-course
+> # Load image into kind - Option 2: Save and load via tarball
+> podman save postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
 > ```
 
 > **Tip:** For day-to-day controller development, you can still use `make install && make run`. Only deploy to cluster when you need to test webhook behavior.
