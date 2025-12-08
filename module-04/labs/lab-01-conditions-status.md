@@ -201,7 +201,7 @@ kubectl get database test-db -o jsonpath='{.status.conditions[?(@.type=="Progres
 kubectl get database test-db -o jsonpath='{.metadata.generation}'
 
 # Get observed generation
-kubectl get database test-db -o jsonpath='{.status.observedGeneration}'
+kubectl get database test-db -o jsonpath='{.status.conditions[0].observedGeneration}'
 
 # They should match when reconciliation is complete
 ```
