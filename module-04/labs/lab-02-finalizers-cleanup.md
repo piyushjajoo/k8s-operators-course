@@ -111,7 +111,7 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
     
     if err == nil {
         // StatefulSet exists, delete it
-        log.Info("Deleting StatefulSet", "name", statefulSet.Name)
+        logger.Info("Deleting StatefulSet", "name", statefulSet.Name)
         if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
             return fmt.Errorf("failed to delete StatefulSet: %w", err)
         }
@@ -130,7 +130,7 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
     }, service)
     
     if err == nil {
-        log.Info("Deleting Service", "name", service.Name)
+        logger.Info("Deleting Service", "name", service.Name)
         if err := r.Delete(ctx, service); err != nil && !errors.IsNotFound(err) {
             return fmt.Errorf("failed to delete Service: %w", err)
         }
@@ -147,7 +147,7 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
     }, secret)
     
     if err == nil {
-        log.Info("Deleting Secret", "name", secret.Name)
+        logger.Info("Deleting Secret", "name", secret.Name)
         if err := r.Delete(ctx, secret); err != nil && !errors.IsNotFound(err) {
             return fmt.Errorf("failed to delete Secret: %w", err)
         }
