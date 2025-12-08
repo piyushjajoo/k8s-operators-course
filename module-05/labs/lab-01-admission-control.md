@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 4](../module-04/README.md)
+- Completion of [Module 4](../../module-04/README.md)
 - Kind cluster running
 - Understanding of admission control concepts
 
