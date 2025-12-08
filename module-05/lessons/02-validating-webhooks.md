@@ -42,48 +42,110 @@ This generates:
 
 ## Webhook Handler Structure
 
-The generated webhook handler looks like this:
+The generated webhook handler in `internal/webhook/v1/database_webhook.go` looks like this:
 
 ```go
-// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase.kb.io
+package v1
 
-var _ webhook.Validator = &Database{}
+import (
+    "context"
+    "fmt"
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Database) ValidateCreate() (admission.Warnings, error) {
+    "k8s.io/apimachinery/pkg/runtime"
+    ctrl "sigs.k8s.io/controller-runtime"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
+    "sigs.k8s.io/controller-runtime/pkg/webhook"
+    "sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+    databasev1 "github.com/example/postgres-operator/api/v1"
+)
+
+var databaselog = logf.Log.WithName("database-resource")
+
+// SetupDatabaseWebhookWithManager registers the webhook for Database in the manager.
+func SetupDatabaseWebhookWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewWebhookManagedBy(mgr).For(&databasev1.Database{}).
+        WithValidator(&DatabaseCustomValidator{}).
+        Complete()
+}
+
+// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase-v1.kb.io,admissionReviewVersions=v1
+
+// DatabaseCustomValidator struct is responsible for validating the Database resource
+// when it is created, updated, or deleted.
+type DatabaseCustomValidator struct {
+    // Add more fields as needed for validation
+}
+
+var _ webhook.CustomValidator = &DatabaseCustomValidator{}
+
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Database.
+func (v *DatabaseCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Validation for Database upon creation", "name", database.GetName())
+
     // Validation logic for CREATE
     return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Database) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Database.
+func (v *DatabaseCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+    database, ok := newObj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object for the newObj but got %T", newObj)
+    }
+    databaselog.Info("Validation for Database upon update", "name", database.GetName())
+
     // Validation logic for UPDATE
     return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Database) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Database.
+func (v *DatabaseCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Validation for Database upon deletion", "name", database.GetName())
+
     // Validation logic for DELETE
     return nil, nil
 }
 ```
+
+**Key points about the structure:**
+- Webhook code is in `internal/webhook/v1/` directory, not in `api/v1/`
+- Uses a separate `DatabaseCustomValidator` struct (not methods on Database type)
+- Implements `webhook.CustomValidator` interface
+- All methods receive `context.Context` as first parameter
+- `ValidateUpdate` receives both `oldObj` and `newObj` as `runtime.Object`
+- Objects must be type-asserted to the actual Database type
 
 ## Implementing Validation Logic
 
 ### Example: Cross-Field Validation
 
 ```go
-func (r *Database) ValidateCreate() (admission.Warnings, error) {
+func (v *DatabaseCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Validation for Database upon creation", "name", database.GetName())
+
     // Example: Validate that replicas match storage size
-    if r.Spec.Replicas != nil && *r.Spec.Replicas > 5 {
-        if r.Spec.Storage.Size == "10Gi" {
-            return nil, fmt.Errorf("replicas > 5 requires storage >= 50Gi, got %s", r.Spec.Storage.Size)
+    if database.Spec.Replicas != nil && *database.Spec.Replicas > 5 {
+        if database.Spec.Storage.Size == "10Gi" {
+            return nil, fmt.Errorf("replicas > 5 requires storage >= 50Gi, got %s", database.Spec.Storage.Size)
         }
     }
     
     // Example: Validate image version
-    if !strings.Contains(r.Spec.Image, "postgres:") {
-        return nil, fmt.Errorf("image must be a PostgreSQL image, got %s", r.Spec.Image)
+    if !strings.Contains(database.Spec.Image, "postgres") {
+        return nil, fmt.Errorf("image must be a PostgreSQL image, got %s", database.Spec.Image)
     }
     
     return nil, nil
@@ -93,23 +155,31 @@ func (r *Database) ValidateCreate() (admission.Warnings, error) {
 ### Example: Update Validation
 
 ```go
-func (r *Database) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-    oldDB := old.(*Database)
+func (v *DatabaseCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+    database, ok := newObj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object for the newObj but got %T", newObj)
+    }
+    oldDB, ok := oldObj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object for the oldObj but got %T", oldObj)
+    }
+    databaselog.Info("Validation for Database upon update", "name", database.GetName())
     
     // Prevent downgrading image version
     oldVersion := extractVersion(oldDB.Spec.Image)
-    newVersion := extractVersion(r.Spec.Image)
+    newVersion := extractVersion(database.Spec.Image)
     
     if compareVersions(oldVersion, newVersion) < 0 {
-        return nil, fmt.Errorf("cannot downgrade from %s to %s", oldDB.Spec.Image, r.Spec.Image)
+        return nil, fmt.Errorf("cannot downgrade from %s to %s", oldDB.Spec.Image, database.Spec.Image)
     }
     
     // Prevent reducing storage size
     oldSize := parseSize(oldDB.Spec.Storage.Size)
-    newSize := parseSize(r.Spec.Storage.Size)
+    newSize := parseSize(database.Spec.Storage.Size)
     
     if newSize < oldSize {
-        return nil, fmt.Errorf("cannot reduce storage from %s to %s", oldDB.Spec.Storage.Size, r.Spec.Storage.Size)
+        return nil, fmt.Errorf("cannot reduce storage from %s to %s", oldDB.Spec.Storage.Size, database.Spec.Storage.Size)
     }
     
     return nil, nil
@@ -139,17 +209,22 @@ flowchart TD
 Provide clear, actionable error messages:
 
 ```go
-func (r *Database) ValidateCreate() (admission.Warnings, error) {
+func (v *DatabaseCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
+    }
+
     // Bad: Generic error
     // return nil, fmt.Errorf("invalid")
     
     // Good: Specific error with context
-    if r.Spec.Replicas != nil && *r.Spec.Replicas < 1 {
-        return nil, fmt.Errorf("spec.replicas must be >= 1, got %d", *r.Spec.Replicas)
+    if database.Spec.Replicas != nil && *database.Spec.Replicas < 1 {
+        return nil, fmt.Errorf("spec.replicas must be >= 1, got %d", *database.Spec.Replicas)
     }
     
     // Good: Error with field path
-    if r.Spec.DatabaseName == "" {
+    if database.Spec.DatabaseName == "" {
         return nil, fmt.Errorf("spec.databaseName is required")
     }
     
@@ -197,7 +272,7 @@ graph TB
 Kubebuilder uses markers to configure webhooks:
 
 ```go
-// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase.kb.io
+// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase-v1.kb.io,admissionReviewVersions=v1
 ```
 
 **Parameters:**
@@ -206,6 +281,8 @@ Kubebuilder uses markers to configure webhooks:
 - `failurePolicy`: fail or ignore
 - `sideEffects`: None, NoneOnDryRun, or Some
 - `groups`, `resources`, `verbs`, `versions`: What to validate
+- `name`: Unique webhook name (format: `vdatabase-v1.kb.io`)
+- `admissionReviewVersions`: API versions for admission review (e.g., `v1`)
 
 ## Failure Policies
 
@@ -234,7 +311,10 @@ graph TB
 
 - **Validating webhooks** check resources and accept/reject
 - Use kubebuilder to **scaffold webhooks** easily
-- Implement **ValidateCreate**, **ValidateUpdate**, **ValidateDelete**
+- Implement `webhook.CustomValidator` interface with a separate validator struct
+- Methods receive `context.Context` as first parameter
+- `ValidateUpdate` receives both old and new objects as `runtime.Object`
+- Type-assert `runtime.Object` to your actual resource type
 - Provide **clear error messages** for users
 - Use for **complex validation** beyond CRD schema
 - Choose appropriate **failure policy** (fail vs ignore)
@@ -243,6 +323,9 @@ graph TB
 ## Understanding for Building Operators
 
 When implementing validating webhooks:
+- Use a separate validator struct implementing `webhook.CustomValidator`
+- Webhook code goes in `internal/webhook/v1/` directory
+- Type-assert `runtime.Object` parameters to your actual resource type
 - Use for complex validation logic
 - Provide clear, actionable error messages
 - Handle all operations (create, update, delete)

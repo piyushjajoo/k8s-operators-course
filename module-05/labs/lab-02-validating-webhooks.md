@@ -43,12 +43,18 @@ kubebuilder create webhook \
 ### Task 1.3: Examine Generated Code
 
 ```bash
-# Check API types file
-cat api/v1/database_types.go | grep -A 20 "webhook"
+# Check the generated webhook file
+cat internal/webhook/v1/database_webhook.go
 
 # Check webhook markers
-cat api/v1/database_types.go | grep "kubebuilder:webhook"
+grep "kubebuilder:webhook" internal/webhook/v1/database_webhook.go
 ```
+
+**Observe the structure:**
+- Webhook code is in `internal/webhook/v1/` directory (not in `api/v1/`)
+- Uses `DatabaseCustomValidator` struct
+- Implements `webhook.CustomValidator` interface
+- Methods take `context.Context` as first parameter
 
 ## Exercise 2: Implement Validation Logic
 
@@ -60,50 +66,63 @@ Edit `internal/webhook/v1/database_webhook.go`:
 package v1
 
 import (
+    "context"
     "fmt"
     "strings"
-    
+
     "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/apimachinery/pkg/runtime/schema"
     ctrl "sigs.k8s.io/controller-runtime"
     logf "sigs.k8s.io/controller-runtime/pkg/log"
     "sigs.k8s.io/controller-runtime/pkg/webhook"
     "sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+    databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
-var databaseLog = logf.Log.WithName("database-resource")
+var databaselog = logf.Log.WithName("database-resource")
 
-func (r *Database) SetupWebhookWithManager(mgr ctrl.Manager) error {
-    return ctrl.NewWebhookManager().
-        For(r).
+// SetupDatabaseWebhookWithManager registers the webhook for Database in the manager.
+func SetupDatabaseWebhookWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewWebhookManagedBy(mgr).For(&databasev1.Database{}).
+        WithValidator(&DatabaseCustomValidator{}).
         Complete()
 }
 
-// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase.kb.io
+// +kubebuilder:webhook:path=/validate-database-example-com-v1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=vdatabase-v1.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Database{}
+// DatabaseCustomValidator struct is responsible for validating the Database resource
+// when it is created, updated, or deleted.
+type DatabaseCustomValidator struct {
+    // Add more fields as needed for validation
+}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Database) ValidateCreate() (admission.Warnings, error) {
-    databaseLog.Info("validate create", "name", r.Name)
-    
-    // Validate image is PostgreSQL
-    if !strings.Contains(r.Spec.Image, "postgres") {
-        return nil, fmt.Errorf("spec.image must be a PostgreSQL image, got %s", r.Spec.Image)
+var _ webhook.CustomValidator = &DatabaseCustomValidator{}
+
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Database.
+func (v *DatabaseCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
     }
-    
+    databaselog.Info("Validation for Database upon creation", "name", database.GetName())
+
+    // Validate image is PostgreSQL
+    if !strings.Contains(database.Spec.Image, "postgres") {
+        return nil, fmt.Errorf("spec.image must be a PostgreSQL image, got %s", database.Spec.Image)
+    }
+
     // Validate replicas and storage relationship
-    if r.Spec.Replicas != nil && *r.Spec.Replicas > 5 {
-        if r.Spec.Storage.Size == "10Gi" {
-            return nil, fmt.Errorf("replicas > 5 requires storage >= 50Gi, got %s", r.Spec.Storage.Size)
+    if database.Spec.Replicas != nil && *database.Spec.Replicas > 5 {
+        if database.Spec.Storage.Size == "10Gi" {
+            return nil, fmt.Errorf("replicas > 5 requires storage >= 50Gi, got %s", database.Spec.Storage.Size)
         }
     }
-    
+
     // Validate database name format
-    if len(r.Spec.DatabaseName) > 63 {
-        return nil, fmt.Errorf("spec.databaseName must be <= 63 characters, got %d", len(r.Spec.DatabaseName))
+    if len(database.Spec.DatabaseName) > 63 {
+        return nil, fmt.Errorf("spec.databaseName must be <= 63 characters, got %d", len(database.Spec.DatabaseName))
     }
-    
+
     return nil, nil
 }
 ```
@@ -111,25 +130,31 @@ func (r *Database) ValidateCreate() (admission.Warnings, error) {
 ### Task 2.2: Add ValidateUpdate
 
 ```go
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Database) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-    databaseLog.Info("validate update", "name", r.Name)
-    
-    oldDB := old.(*Database)
-    
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Database.
+func (v *DatabaseCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+    database, ok := newObj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object for the newObj but got %T", newObj)
+    }
+    oldDB, ok := oldObj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object for the oldObj but got %T", oldObj)
+    }
+    databaselog.Info("Validation for Database upon update", "name", database.GetName())
+
     // Prevent reducing storage size
     oldSize := parseStorageSize(oldDB.Spec.Storage.Size)
-    newSize := parseStorageSize(r.Spec.Storage.Size)
-    
+    newSize := parseStorageSize(database.Spec.Storage.Size)
+
     if newSize < oldSize {
-        return nil, fmt.Errorf("cannot reduce storage from %s to %s", oldDB.Spec.Storage.Size, r.Spec.Storage.Size)
+        return nil, fmt.Errorf("cannot reduce storage from %s to %s", oldDB.Spec.Storage.Size, database.Spec.Storage.Size)
     }
-    
+
     // Prevent changing database name
-    if oldDB.Spec.DatabaseName != r.Spec.DatabaseName {
-        return nil, fmt.Errorf("cannot change spec.databaseName from %s to %s", oldDB.Spec.DatabaseName, r.Spec.DatabaseName)
+    if oldDB.Spec.DatabaseName != database.Spec.DatabaseName {
+        return nil, fmt.Errorf("cannot change spec.databaseName from %s to %s", oldDB.Spec.DatabaseName, database.Spec.DatabaseName)
     }
-    
+
     return nil, nil
 }
 
@@ -140,7 +165,8 @@ func parseStorageSize(size string) int64 {
     if strings.HasSuffix(size, "Gi") {
         num := strings.TrimSuffix(size, "Gi")
         // Parse and convert to bytes (simplified)
-        return 0 // Implement proper parsing
+        _ = num // Implement proper parsing
+        return 0
     }
     return 0
 }
@@ -149,13 +175,17 @@ func parseStorageSize(size string) int64 {
 ### Task 2.3: Add ValidateDelete (Optional)
 
 ```go
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Database) ValidateDelete() (admission.Warnings, error) {
-    databaseLog.Info("validate delete", "name", r.Name)
-    
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Database.
+func (v *DatabaseCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Validation for Database upon deletion", "name", database.GetName())
+
     // Add any deletion validation logic
     // For example, prevent deletion if database has important data
-    
+
     return nil, nil
 }
 ```
@@ -297,25 +327,31 @@ kubectl patch database update-test --type merge -p '{"spec":{"databaseName":"new
 Enhance error messages:
 
 ```go
-func (r *Database) ValidateCreate() (admission.Warnings, error) {
-    var errors []string
-    
-    // Validate image
-    if !strings.Contains(r.Spec.Image, "postgres") {
-        errors = append(errors, fmt.Sprintf("spec.image: must be a PostgreSQL image, got '%s'. Valid examples: postgres:14, postgres:13", r.Spec.Image))
+func (v *DatabaseCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return nil, fmt.Errorf("expected a Database object but got %T", obj)
     }
-    
+    databaselog.Info("Validation for Database upon creation", "name", database.GetName())
+
+    var errors []string
+
+    // Validate image
+    if !strings.Contains(database.Spec.Image, "postgres") {
+        errors = append(errors, fmt.Sprintf("spec.image: must be a PostgreSQL image, got '%s'. Valid examples: postgres:14, postgres:13", database.Spec.Image))
+    }
+
     // Validate storage
-    if r.Spec.Replicas != nil && *r.Spec.Replicas > 5 {
-        if r.Spec.Storage.Size == "10Gi" {
-            errors = append(errors, fmt.Sprintf("spec.storage.size: when replicas > 5, storage must be >= 50Gi, got '%s'", r.Spec.Storage.Size))
+    if database.Spec.Replicas != nil && *database.Spec.Replicas > 5 {
+        if database.Spec.Storage.Size == "10Gi" {
+            errors = append(errors, fmt.Sprintf("spec.storage.size: when replicas > 5, storage must be >= 50Gi, got '%s'", database.Spec.Storage.Size))
         }
     }
-    
+
     if len(errors) > 0 {
         return nil, fmt.Errorf("validation failed: %s", strings.Join(errors, "; "))
     }
-    
+
     return nil, nil
 }
 ```
@@ -340,12 +376,15 @@ In this lab, you:
 
 ## Key Learnings
 
-1. Kubebuilder scaffolds webhooks easily
-2. ValidateCreate, ValidateUpdate, ValidateDelete methods
-3. Provide clear, actionable error messages
-4. Test with both valid and invalid resources
-5. Webhooks run after CRD schema validation
-6. Error messages help users fix issues
+1. Kubebuilder scaffolds webhooks easily in `internal/webhook/v1/`
+2. Uses `DatabaseCustomValidator` struct implementing `webhook.CustomValidator`
+3. Methods receive `context.Context` as first parameter
+4. `ValidateUpdate` receives both old and new objects as `runtime.Object`
+5. Type-assert `runtime.Object` to your actual resource type
+6. Provide clear, actionable error messages
+7. Test with both valid and invalid resources
+8. Webhooks run after CRD schema validation
+9. Error messages help users fix issues
 
 ## Solutions
 
