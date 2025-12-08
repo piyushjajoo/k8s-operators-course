@@ -135,20 +135,31 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
 }
 ```
 
-### Pattern 2: Wait for Dependencies
+### Pattern 2: Delete Child Resources Explicitly
+
+> **Critical:** When using finalizers, you must **explicitly delete** child resources. Owner references only cascade deletes when the parent is deleted, but finalizers prevent the parent from being deleted until cleanup completes - creating a deadlock if you only wait for resources to disappear.
 
 ```go
 func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *databasev1.Database) error {
-    // Wait for StatefulSet to be fully deleted
+    log := log.FromContext(ctx)
+    
+    // Delete StatefulSet if it exists
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Name,
         Namespace: db.Namespace,
     }, statefulSet)
     
-    if !errors.IsNotFound(err) {
-        // Still exists, wait
-        return fmt.Errorf("StatefulSet still exists, waiting")
+    if err == nil {
+        // StatefulSet exists, delete it explicitly
+        log.Info("Deleting StatefulSet", "name", statefulSet.Name)
+        if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete StatefulSet: %w", err)
+        }
+        // Requeue to wait for deletion to complete
+        return fmt.Errorf("waiting for StatefulSet to be deleted")
+    } else if !errors.IsNotFound(err) {
+        return fmt.Errorf("failed to get StatefulSet: %w", err)
     }
     
     // StatefulSet deleted, continue cleanup
@@ -181,16 +192,28 @@ graph TB
     DEADLOCK --> CAUSE2[Cleanup always fails]
     DEADLOCK --> CAUSE3[Circular dependencies]
     DEADLOCK --> CAUSE4[External system down]
+    DEADLOCK --> CAUSE5[Waiting for owner-ref cascade]
     
     style DEADLOCK fill:#FFB6C1
 ```
 
+### Common Pitfall: Owner Reference + Finalizer Deadlock
+
+A very common deadlock occurs when:
+1. Parent resource has a finalizer
+2. Cleanup code waits for child resources to be deleted via owner references
+3. Owner reference cascade only works when the parent is deleted
+4. Parent can't be deleted because finalizer is waiting for children to disappear
+
+**Solution:** Always explicitly delete child resources during cleanup - don't rely on owner reference cascade.
+
 ### Prevention Strategies
 
-1. **Idempotent Cleanup**: Cleanup should be safe to retry
-2. **Timeout**: Set maximum time for cleanup
-3. **Force Removal**: Allow manual finalizer removal in emergencies
-4. **Health Checks**: Ensure controller is running before cleanup
+1. **Explicit Deletion**: Delete child resources explicitly, don't wait for owner reference cascade
+2. **Idempotent Cleanup**: Cleanup should be safe to retry
+3. **Timeout**: Set maximum time for cleanup
+4. **Force Removal**: Allow manual finalizer removal in emergencies
+5. **Health Checks**: Ensure controller is running before cleanup
 
 ### Example: Timeout Protection
 
@@ -224,6 +247,7 @@ controllerutil.AddFinalizer(db, "backup.example.com/finalizer")
 - **Finalizers** prevent deletion until cleanup is complete
 - Add finalizer on **resource creation**
 - Check **DeletionTimestamp** to detect deletion
+- **Explicitly delete child resources** - don't rely on owner reference cascade (causes deadlock)
 - Perform **cleanup operations** before removing finalizer
 - Remove finalizer **only after cleanup succeeds**
 - Make cleanup **idempotent** (safe to retry)

@@ -102,17 +102,58 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
 func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *databasev1.Database) error {
     logger := log.FromContext(ctx)
     
-    // Example: Wait for StatefulSet to be deleted
+    // Delete StatefulSet if it exists
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Name,
         Namespace: db.Namespace,
     }, statefulSet)
     
-    if !errors.IsNotFound(err) {
-        // StatefulSet still exists, wait for owner reference to delete it
-        logger.Info("Waiting for StatefulSet to be deleted")
-        return fmt.Errorf("StatefulSet still exists")
+    if err == nil {
+        // StatefulSet exists, delete it
+        log.Info("Deleting StatefulSet", "name", statefulSet.Name)
+        if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete StatefulSet: %w", err)
+        }
+        // Requeue to wait for deletion to complete
+        return fmt.Errorf("waiting for StatefulSet to be deleted")
+    } else if !errors.IsNotFound(err) {
+        // Some other error occurred
+        return fmt.Errorf("failed to get StatefulSet: %w", err)
+    }
+    
+    // StatefulSet is gone, now cleanup Service
+    service := &corev1.Service{}
+    err = r.Get(ctx, client.ObjectKey{
+        Name:      db.Name,
+        Namespace: db.Namespace,
+    }, service)
+    
+    if err == nil {
+        log.Info("Deleting Service", "name", service.Name)
+        if err := r.Delete(ctx, service); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete Service: %w", err)
+        }
+        return fmt.Errorf("waiting for Service to be deleted")
+    } else if !errors.IsNotFound(err) {
+        return fmt.Errorf("failed to get Service: %w", err)
+    }
+    
+    // Cleanup Secret
+    secret := &corev1.Secret{}
+    err = r.Get(ctx, client.ObjectKey{
+        Name:      r.secretName(db),
+        Namespace: db.Namespace,
+    }, secret)
+    
+    if err == nil {
+        log.Info("Deleting Secret", "name", secret.Name)
+        if err := r.Delete(ctx, secret); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete Secret: %w", err)
+        }
+        return fmt.Errorf("waiting for Secret to be deleted")
+    } else if !errors.IsNotFound(err) {
+        return fmt.Errorf("failed to get Secret: %w", err)
     }
     
     // Example: Delete backup in external system
@@ -124,6 +165,8 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
     return nil
 }
 ```
+
+> **Important:** The cleanup function must **explicitly delete** child resources. While owner references enable automatic garbage collection when a parent is deleted, finalizers prevent the parent from being deleted until cleanup completes. This creates a deadlock if you only wait for resources to disappear - you must actively delete them.
 
 ## Exercise 3: Test Finalizers
 
@@ -247,9 +290,10 @@ In this lab, you:
 1. Finalizers prevent deletion until cleanup is complete
 2. Add finalizer early in reconciliation
 3. Check DeletionTimestamp to detect deletion
-4. Perform cleanup before removing finalizer
-5. Make cleanup idempotent
-6. Handle cleanup failures gracefully
+4. **Explicitly delete child resources** - don't rely on owner reference cascade during finalizer cleanup (this causes a deadlock)
+5. Perform cleanup before removing finalizer
+6. Make cleanup idempotent
+7. Handle cleanup failures gracefully
 
 ## Solutions
 

@@ -1,5 +1,10 @@
 // Solution: Finalizer Handler from Module 4
 // This implements graceful cleanup with finalizers
+//
+// Key concept: When using finalizers, you must EXPLICITLY delete child resources.
+// Owner references only cascade deletes AFTER the parent is deleted, but finalizers
+// prevent the parent from being deleted until cleanup completes - causing a deadlock
+// if you only wait for resources to disappear.
 
 package controller
 
@@ -77,23 +82,42 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
 }
 
 // cleanupExternalResources performs actual cleanup
+// Important: We must explicitly delete child resources. While owner references
+// enable automatic garbage collection when a parent is deleted, finalizers
+// prevent the parent from being deleted until cleanup completes. This creates
+// a deadlock if you only wait for resources to disappear - you must actively
+// delete them.
 func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *databasev1.Database) error {
     logger := log.FromContext(ctx)
 
-    // Wait for StatefulSet to be deleted (owner reference handles it)
+    // Delete StatefulSet if it exists
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Name,
         Namespace: db.Namespace,
     }, statefulSet)
 
+<<<<<<< Updated upstream
     if !errors.IsNotFound(err) {
         // StatefulSet still exists, wait for owner reference to delete it
         logger.Info("Waiting for StatefulSet to be deleted")
         return fmt.Errorf("StatefulSet still exists")
+=======
+    if err == nil {
+        // StatefulSet exists, delete it explicitly
+        log.Info("Deleting StatefulSet", "name", statefulSet.Name)
+        if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete StatefulSet: %w", err)
+        }
+        // Requeue to wait for deletion to complete
+        return fmt.Errorf("waiting for StatefulSet to be deleted")
+    } else if !errors.IsNotFound(err) {
+        return fmt.Errorf("failed to get StatefulSet: %w", err)
+>>>>>>> Stashed changes
     }
 
     // Add other cleanup operations here:
+    // - Delete Services, Secrets, ConfigMaps
     // - Delete backups in external system
     // - Notify external services
     // - Clean up external resources
