@@ -20,7 +20,7 @@
 
 ### Task 1.1: Define States
 
-Add state constants:
+Add state constants in `api/v1/database_types.go`:
 
 ```go
 type DatabaseState string
@@ -45,8 +45,8 @@ func (r *DatabaseReconciler) reconcileWithStateMachine(ctx context.Context, db *
         currentState = StatePending
     }
     
-    log := log.FromContext(ctx)
-    log.Info("Reconciling", "state", currentState)
+    logger := log.FromContext(ctx)
+    logger.Info("Reconciling", "state", currentState)
     
     switch currentState {
     case StatePending:
@@ -222,7 +222,19 @@ make run
 
 ```bash
 # Create Database
-kubectl apply -f database.yaml
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: test-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
 
 # Watch phase transitions
 watch -n 1 'kubectl get database test-db -o jsonpath="{.status.phase}"'
