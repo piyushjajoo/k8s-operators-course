@@ -179,7 +179,7 @@ EOF
 kubectl apply -f /tmp/pod.yaml
 
 # Check what was added (mutations)
-kubectl get pod test-mutation -o yaml | grep -A 5 "metadata:"
+kubectl get pod test-mutation -o yaml | grep -A 10 "metadata:"
 
 # Built-in admission controllers may add:
 # - Default service account
