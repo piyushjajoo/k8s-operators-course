@@ -266,9 +266,6 @@ make deploy IMG=postgres-operator:latest
 > # Build with podman
 > make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 > 
-> # Load image into kind - Option 1: Use KIND_EXPERIMENTAL_PROVIDER
-> KIND_EXPERIMENTAL_PROVIDER=podman kind load docker-image postgres-operator:latest --name k8s-operators-course
-> 
 > # Load image into kind - Option 2: Save and load via tarball
 > podman save postgres-operator:latest -o /tmp/postgres-operator.tar
 > kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
