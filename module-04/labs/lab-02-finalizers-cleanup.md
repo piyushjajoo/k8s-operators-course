@@ -277,7 +277,7 @@ kubectl get database test-db
 kubectl get database test-db -o jsonpath='{.status.conditions}' | jq .
 ```
 
-** Revert the simulated failure code and re-run the operator, the database should get cleaned up properly. **
+**Revert the simulated failure code and re-run the operator, the database should get cleaned up properly.**
 
 ## Exercise 5: Test Idempotent Cleanup
 
