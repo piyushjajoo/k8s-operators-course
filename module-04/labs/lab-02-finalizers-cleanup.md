@@ -279,21 +279,106 @@ kubectl get database test-db -o jsonpath='{.status.conditions}' | jq .
 
 **Revert the simulated failure code and re-run the operator, the database should get cleaned up properly.**
 
-## Exercise 5: Test Idempotent Cleanup
+## Exercise 5: Understand Idempotent Cleanup
 
-### Task 5.1: Make Cleanup Idempotent
+**Idempotent** means the cleanup can be called multiple times with the same result - it won't fail or cause issues if resources are already deleted.
+
+### Task 5.1: Review the Idempotent Patterns
+
+Our `cleanupExternalResources` function from Task 2.2 is already idempotent! Here's why:
 
 ```go
 func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *databasev1.Database) error {
-    // Check if already cleaned up
-    if r.isAlreadyCleanedUp(ctx, db) {
-        return nil  // Already cleaned up, idempotent
+    logger := log.FromContext(ctx)
+    
+    // Pattern 1: Check existence before deleting
+    statefulSet := &appsv1.StatefulSet{}
+    err := r.Get(ctx, client.ObjectKey{
+        Name:      db.Name,
+        Namespace: db.Namespace,
+    }, statefulSet)
+    
+    if err == nil {
+        // Only delete if it exists
+        logger.Info("Deleting StatefulSet", "name", statefulSet.Name)
+        // Pattern 2: Ignore "not found" errors on delete
+        if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete StatefulSet: %w", err)
+        }
+        return fmt.Errorf("waiting for StatefulSet to be deleted")
+    } else if !errors.IsNotFound(err) {
+        // Only fail on unexpected errors, not "not found"
+        return fmt.Errorf("failed to get StatefulSet: %w", err)
     }
     
-    // Perform cleanup
-    return r.performCleanup(ctx, db)
+    // Pattern 3: If we reach here, resource is already gone - that's OK!
+    // ... continue with next resource ...
+    
+    logger.Info("Cleanup completed")
+    return nil
 }
 ```
+
+**Key idempotency patterns used:**
+
+1. **Check before delete**: Use `Get()` to check if resource exists before attempting delete
+2. **Ignore NotFound on delete**: `!errors.IsNotFound(err)` - if already deleted, that's fine
+3. **Treat NotFound as success**: If resource doesn't exist, cleanup for that resource is complete
+
+### Task 5.2: Test Idempotency
+
+Run the cleanup multiple times to verify idempotency:
+
+```bash
+# Create a Database
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: idempotent-test
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
+
+# Wait for it to be ready
+kubectl wait --for=condition=Ready database/idempotent-test --timeout=60s
+
+# Delete the Database
+kubectl delete database idempotent-test
+
+# Watch operator logs - cleanup should succeed even if called multiple times
+# You'll see logs like "Cleanup completed" without errors
+```
+
+### Task 5.3: Non-Idempotent Anti-Pattern (Don't Do This!)
+
+Here's what a **non-idempotent** cleanup looks like - avoid this:
+
+```go
+// BAD: Non-idempotent cleanup - will fail on second call
+func (r *DatabaseReconciler) badCleanup(ctx context.Context, db *databasev1.Database) error {
+    statefulSet := &appsv1.StatefulSet{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      db.Name,
+            Namespace: db.Namespace,
+        },
+    }
+    
+    // BAD: This will return an error if StatefulSet doesn't exist
+    if err := r.Delete(ctx, statefulSet); err != nil {
+        return err  // Fails on "not found" - not idempotent!
+    }
+    
+    return nil
+}
+```
+
+The problem: If the controller restarts mid-cleanup or the reconcile loop runs again, this will fail because the StatefulSet is already deleted.
 
 ## Cleanup
 
