@@ -64,7 +64,7 @@ make deploy IMG=localhost/postgres-operator:latest
 
 ## Notes
 
-- Webhook code goes in `internal/webhook/v1/` directory (not `api/v1/`)
+- Webhook code goes in `internal/webhook/v1/` directory
 - Uses `webhook.CustomValidator` interface with a separate validator struct
 - Methods receive `context.Context` as first parameter
 - `ValidateUpdate` receives both old and new objects as `runtime.Object`
