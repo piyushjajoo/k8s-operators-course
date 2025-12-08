@@ -145,24 +145,26 @@ kubectl patch secret test-db-credentials --type merge -p '{"data":{"password":"n
 
 ## Exercise 3: Create Indexes
 
+Indexes allow efficient lookups of resources by field values without scanning all objects.
+
 ### Task 3.1: Set Up Index
 
-Add index for Secret name:
+Add an index for the `image` field to quickly find all Databases using a specific PostgreSQL version:
 
 ```go
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-    // Create index for Secret name
+    // Create index for image field
     if err := mgr.GetFieldIndexer().IndexField(
         context.Background(),
         &databasev1.Database{},
-        "spec.secretName",
+        "spec.image",
         func(obj client.Object) []string {
             db, ok := obj.(*databasev1.Database)
             if !ok {
                 return nil
             }
-            if db.Spec.SecretName != "" {
-                return []string{db.Spec.SecretName}
+            if db.Spec.Image != "" {
+                return []string{db.Spec.Image}
             }
             return nil
         },
@@ -173,43 +175,82 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
         Owns(&appsv1.StatefulSet{}).
-		Owns(&corev1.Service{}).
-		Watches(
-			&corev1.Secret{},
-			handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
-		).
+        Owns(&corev1.Service{}).
+        Watches(
+            &corev1.Secret{},
+            handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
+        ).
         Complete(r)
 }
 ```
 
 ### Task 3.2: Use Index in Query
 
+Use the index to efficiently find all Databases using a specific image:
+
 ```go
-// Find all Databases that use a specific Secret
-func (r *DatabaseReconciler) findDatabasesForSecret(secret client.Object) []reconcile.Request {
+// findDatabasesByImage finds all Databases using a specific PostgreSQL image
+func (r *DatabaseReconciler) findDatabasesByImage(ctx context.Context, image string) ([]databasev1.Database, error) {
     databases := &databasev1.DatabaseList{}
-    err := r.List(context.Background(), databases, client.MatchingFields{
-        "spec.secretName": secret.GetName(),
+    err := r.List(ctx, databases, client.MatchingFields{
+        "spec.image": image,
     })
     
     if err != nil {
-        return nil
+        return nil, err
     }
     
-    var requests []reconcile.Request
-    for _, db := range databases.Items {
-        if db.Namespace == secret.GetNamespace() {
-            requests = append(requests, reconcile.Request{
-                NamespacedName: types.NamespacedName{
-                    Name:      db.Name,
-                    Namespace: db.Namespace,
-                },
-            })
-        }
-    }
-    return requests
+    return databases.Items, nil
 }
 ```
+
+### Task 3.3: Test Index Usage
+
+```bash
+# Create databases with different images
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: db-postgres14
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+---
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: db-postgres15
+spec:
+  image: postgres:15
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+---
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: db-postgres14-2
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: testdb
+  username: admin
+  storage:
+    size: 5Gi
+EOF
+
+# The index allows efficient lookup - finding all postgres:14 databases
+# doesn't require scanning every Database object
+```
+
+> **Note:** Indexes are particularly useful when you have many resources and need to find subsets quickly. Without an index, `List()` with field matching would need to scan all objects.
 
 ## Exercise 4: Event Predicates
 

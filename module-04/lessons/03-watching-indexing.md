@@ -75,20 +75,27 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
         Watches(
-            &source.Kind{Type: &corev1.Secret{}},
+            &corev1.Secret{},
             handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
         ).
         Complete(r)
 }
 
-func (r *DatabaseReconciler) findDatabasesForSecret(secret client.Object) []reconcile.Request {
-    // Find all Databases that reference this Secret
+// secretName returns the generated Secret name for a Database
+func (r *DatabaseReconciler) secretName(db *databasev1.Database) string {
+    return fmt.Sprintf("%s-credentials", db.Name)
+}
+
+func (r *DatabaseReconciler) findDatabasesForSecret(ctx context.Context, secret client.Object) []reconcile.Request {
+    // Find all Databases that use this Secret
+    // Secret name is derived from Database name: {db-name}-credentials
     databases := &databasev1.DatabaseList{}
-    r.List(context.Background(), databases)
+    r.List(ctx, databases)
     
     var requests []reconcile.Request
     for _, db := range databases.Items {
-        if db.Spec.SecretName == secret.GetName() {
+        if r.secretName(&db) == secret.GetName() &&
+            db.Namespace == secret.GetNamespace() {
             requests = append(requests, reconcile.Request{
                 NamespacedName: types.NamespacedName{
                     Name:      db.Name,
@@ -123,18 +130,22 @@ graph TB
 
 ## Setting Up Indexes
 
+Indexes allow efficient lookups by field values without scanning all objects.
+
 ### Step 1: Define Index Function
 
 ```go
-// Index function: map Secret to Databases that use it
-func indexSecretName(obj client.Object) []string {
-    secret, ok := obj.(*corev1.Secret)
+// Index function: extract the image field from Database objects
+func indexDatabaseImage(obj client.Object) []string {
+    db, ok := obj.(*databasev1.Database)
     if !ok {
         return nil
     }
     
-    // Return the secret name as index key
-    return []string{secret.Name}
+    if db.Spec.Image != "" {
+        return []string{db.Spec.Image}
+    }
+    return nil
 }
 ```
 
@@ -142,12 +153,12 @@ func indexSecretName(obj client.Object) []string {
 
 ```go
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-    // Create index for Secret name
+    // Create index for image field - find all Databases by PostgreSQL version
     if err := mgr.GetFieldIndexer().IndexField(
         context.Background(),
-        &corev1.Secret{},
-        "metadata.name",
-        indexSecretName,
+        &databasev1.Database{},
+        "spec.image",
+        indexDatabaseImage,
     ); err != nil {
         return err
     }
@@ -161,11 +172,12 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 ### Step 3: Use Index in Queries
 
 ```go
-// Find all Secrets with a specific name using index
-secrets := &corev1.SecretList{}
-err := r.List(ctx, secrets, client.MatchingFields{
-    "metadata.name": secretName,
+// Find all Databases using a specific PostgreSQL image
+databases := &databasev1.DatabaseList{}
+err := r.List(ctx, databases, client.MatchingFields{
+    "spec.image": "postgres:14",
 })
+// This query is O(1) with index vs O(n) without
 ```
 
 ## Cross-Namespace Watching
@@ -199,16 +211,16 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
         Watches(
-            &source.Kind{Type: &corev1.Namespace{}},
+            &corev1.Namespace{},
             handler.EnqueueRequestsFromMapFunc(r.findDatabasesForNamespace),
         ).
         Complete(r)
 }
 
-func (r *DatabaseReconciler) findDatabasesForNamespace(namespace client.Object) []reconcile.Request {
+func (r *DatabaseReconciler) findDatabasesForNamespace(ctx context.Context, namespace client.Object) []reconcile.Request {
     // Reconcile all Databases in this namespace
     databases := &databasev1.DatabaseList{}
-    r.List(context.Background(), databases, client.InNamespace(namespace.GetName()))
+    r.List(ctx, databases, client.InNamespace(namespace.GetName()))
     
     var requests []reconcile.Request
     for _, db := range databases.Items {
@@ -225,31 +237,24 @@ func (r *DatabaseReconciler) findDatabasesForNamespace(namespace client.Object) 
 
 ## Event Handling
 
-Handle different event types:
+Handle different event types with predicates to filter which events trigger reconciliation:
 
 ```go
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
-        Watches(
-            &source.Kind{Type: &appsv1.StatefulSet{}},
-            &handler.EnqueueRequestForOwner{
-                OwnerType:    &databasev1.Database{},
-                IsController: true,
+        Owns(&appsv1.StatefulSet{}, builder.WithPredicates(predicate.Funcs{
+            UpdateFunc: func(e event.UpdateEvent) bool {
+                // Only reconcile on spec changes (generation change)
+                return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
             },
-            builder.WithPredicates(predicate.Funcs{
-                UpdateFunc: func(e event.UpdateEvent) bool {
-                    // Only reconcile on spec changes
-                    return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
-                },
-                CreateFunc: func(e event.CreateEvent) bool {
-                    return true
-                },
-                DeleteFunc: func(e event.DeleteEvent) bool {
-                    return true
-                },
-            }),
-        ).
+            CreateFunc: func(e event.CreateEvent) bool {
+                return true
+            },
+            DeleteFunc: func(e event.DeleteEvent) bool {
+                return true
+            },
+        })).
         Complete(r)
 }
 ```
