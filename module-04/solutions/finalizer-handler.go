@@ -89,40 +89,66 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
 // delete them.
 func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *databasev1.Database) error {
     logger := log.FromContext(ctx)
-
+    
     // Delete StatefulSet if it exists
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Name,
         Namespace: db.Namespace,
     }, statefulSet)
-
-<<<<<<< Updated upstream
-    if !errors.IsNotFound(err) {
-        // StatefulSet still exists, wait for owner reference to delete it
-        logger.Info("Waiting for StatefulSet to be deleted")
-        return fmt.Errorf("StatefulSet still exists")
-=======
+    
     if err == nil {
-        // StatefulSet exists, delete it explicitly
-        log.Info("Deleting StatefulSet", "name", statefulSet.Name)
+        // StatefulSet exists, delete it
+        logger.Info("Deleting StatefulSet", "name", statefulSet.Name)
         if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
             return fmt.Errorf("failed to delete StatefulSet: %w", err)
         }
         // Requeue to wait for deletion to complete
         return fmt.Errorf("waiting for StatefulSet to be deleted")
     } else if !errors.IsNotFound(err) {
+        // Some other error occurred
         return fmt.Errorf("failed to get StatefulSet: %w", err)
->>>>>>> Stashed changes
     }
-
-    // Add other cleanup operations here:
-    // - Delete Services, Secrets, ConfigMaps
-    // - Delete backups in external system
-    // - Notify external services
-    // - Clean up external resources
-
+    
+    // StatefulSet is gone, now cleanup Service
+    service := &corev1.Service{}
+    err = r.Get(ctx, client.ObjectKey{
+        Name:      db.Name,
+        Namespace: db.Namespace,
+    }, service)
+    
+    if err == nil {
+        logger.Info("Deleting Service", "name", service.Name)
+        if err := r.Delete(ctx, service); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete Service: %w", err)
+        }
+        return fmt.Errorf("waiting for Service to be deleted")
+    } else if !errors.IsNotFound(err) {
+        return fmt.Errorf("failed to get Service: %w", err)
+    }
+    
+    // Cleanup Secret
+    secret := &corev1.Secret{}
+    err = r.Get(ctx, client.ObjectKey{
+        Name:      r.secretName(db),
+        Namespace: db.Namespace,
+    }, secret)
+    
+    if err == nil {
+        logger.Info("Deleting Secret", "name", secret.Name)
+        if err := r.Delete(ctx, secret); err != nil && !errors.IsNotFound(err) {
+            return fmt.Errorf("failed to delete Secret: %w", err)
+        }
+        return fmt.Errorf("waiting for Secret to be deleted")
+    } else if !errors.IsNotFound(err) {
+        return fmt.Errorf("failed to get Secret: %w", err)
+    }
+    
+    // Example: Delete backup in external system
+    // if err := r.deleteBackup(ctx, db); err != nil {
+    //     return err
+    // }
+    
     logger.Info("Cleanup completed")
     return nil
 }
-
