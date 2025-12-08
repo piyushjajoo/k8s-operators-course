@@ -4,7 +4,7 @@
 
 ## Introduction
 
-In [Module 1](../module-01/lessons/04-custom-resources.md) and [Module 3](../module-03/lessons/02-designing-api.md), you learned about CRD schema validation. But sometimes you need more complex validation or want to set defaults dynamically. **Admission webhooks** allow you to intercept resource creation/updates and validate or mutate them before they're stored.
+In [Module 1](../../module-01/lessons/04-custom-resources.md) and [Module 3](../../module-03/lessons/02-designing-api.md), you learned about CRD schema validation. But sometimes you need more complex validation or want to set defaults dynamically. **Admission webhooks** allow you to intercept resource creation/updates and validate or mutate them before they're stored.
 
 ## What is Admission Control?
 
