@@ -18,9 +18,45 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// SetupWithManager sets up the controller with watches and indexes
+// ... existing code
+
+func (r *DatabaseReconciler) findDatabasesForSecret(ctx context.Context, secret client.Object) []reconcile.Request {
+	databases := &databasev1.DatabaseList{}
+	r.List(context.Background(), databases)
+
+	var requests []reconcile.Request
+	for _, db := range databases.Items {
+		// If Database references this Secret
+		if r.secretName(&db) == secret.GetName() &&
+			db.Namespace == secret.GetNamespace() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      db.Name,
+					Namespace: db.Namespace,
+				},
+			})
+		}
+	}
+	return requests
+}
+
+// findDatabasesByImage finds all Databases using a specific PostgreSQL image
+func (r *DatabaseReconciler) findDatabasesByImage(ctx context.Context, image string) ([]databasev1.Database, error) {
+	databases := &databasev1.DatabaseList{}
+	err := r.List(ctx, databases, client.MatchingFields{
+		"spec.image": image,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return databases.Items, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Create index for image field - allows efficient lookup of Databases by image
+	// Create index for image field
 	if err := mgr.GetFieldIndexer().IndexField(
 		context.Background(),
 		&databasev1.Database{},
@@ -41,76 +77,26 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&databasev1.Database{}).
-		// Watch owned resources (automatically reconciles owner when child changes)
-		Owns(&appsv1.StatefulSet{}).
+		Owns(&appsv1.StatefulSet{}, builder.WithPredicates(predicate.Funcs{
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				oldSS := e.ObjectOld.(*appsv1.StatefulSet)
+				newSS := e.ObjectNew.(*appsv1.StatefulSet)
+				// Reconcile on spec changes (Generation) OR status changes (ReadyReplicas)
+				// Without checking ReadyReplicas, Database status would never update to Ready!
+				return oldSS.Generation != newSS.Generation ||
+					oldSS.Status.ReadyReplicas != newSS.Status.ReadyReplicas
+			},
+			CreateFunc: func(e event.CreateEvent) bool {
+				return true
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				return true
+			},
+		})).
 		Owns(&corev1.Service{}).
-		// Watch non-owned resources (Secrets)
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
 		).
 		Complete(r)
 }
-
-// secretName returns the name of the Secret for a Database
-func (r *DatabaseReconciler) secretName(db *databasev1.Database) string {
-	return fmt.Sprintf("%s-credentials", db.Name)
-}
-
-// findDatabasesForSecret finds all Databases that use a Secret
-// The Secret name is derived from the Database name (e.g., "test-db" -> "test-db-credentials")
-func (r *DatabaseReconciler) findDatabasesForSecret(ctx context.Context, secret client.Object) []reconcile.Request {
-	databases := &databasev1.DatabaseList{}
-	r.List(ctx, databases)
-
-	var requests []reconcile.Request
-	for _, db := range databases.Items {
-		// Check if this Secret belongs to this Database
-		// Secret name is derived: {db-name}-credentials
-		if r.secretName(&db) == secret.GetName() &&
-			db.Namespace == secret.GetNamespace() {
-			requests = append(requests, reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      db.Name,
-					Namespace: db.Namespace,
-				},
-			})
-		}
-	}
-	return requests
-}
-
-// findDatabasesByImage finds all Databases using a specific PostgreSQL image
-// Uses the index for efficient lookup
-func (r *DatabaseReconciler) findDatabasesByImage(ctx context.Context, image string) ([]databasev1.Database, error) {
-	databases := &databasev1.DatabaseList{}
-	err := r.List(ctx, databases, client.MatchingFields{
-		"spec.image": image,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return databases.Items, nil
-}
-
-// Example with event predicates (filter to important changes):
-// IMPORTANT: For StatefulSets, include BOTH spec changes (Generation) AND status changes (ReadyReplicas)
-// Otherwise the Database status will never update to Ready!
-//
-// Owns(&appsv1.StatefulSet{}, builder.WithPredicates(predicate.Funcs{
-//     UpdateFunc: func(e event.UpdateEvent) bool {
-//         oldSS := e.ObjectOld.(*appsv1.StatefulSet)
-//         newSS := e.ObjectNew.(*appsv1.StatefulSet)
-//         // Reconcile on spec changes OR status changes
-//         return oldSS.Generation != newSS.Generation ||
-//             oldSS.Status.ReadyReplicas != newSS.Status.ReadyReplicas
-//     },
-//     CreateFunc: func(e event.CreateEvent) bool {
-//         return true
-//     },
-//     DeleteFunc: func(e event.DeleteEvent) bool {
-//         return true
-//     },
-// }))
