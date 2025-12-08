@@ -388,38 +388,58 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
 
 ## Exercise 5: Ensure Idempotency
 
-### Task 5.1: Make All Operations Idempotent
+### Task 5.1: Review Idempotent Operations
+
+Your existing `reconcileStatefulSet` function already follows the idempotent pattern. Let's review how it works:
 
 ```go
-func (r *DatabaseReconciler) ensureStatefulSet(ctx context.Context, db *databasev1.Database) error {
+func (r *DatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.Database) error {
+    logger := log.FromContext(ctx)
+
+    // Step 1: Get current state
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Name,
         Namespace: db.Namespace,
     }, statefulSet)
-    
+
+    // Step 2: Build desired state
     desiredStatefulSet := r.buildStatefulSet(db)
-    
+
+    // Step 3: Create if not exists (idempotent - won't fail if already exists)
     if errors.IsNotFound(err) {
-        // Create
         if err := ctrl.SetControllerReference(db, desiredStatefulSet, r.Scheme); err != nil {
             return err
         }
+        logger.Info("Creating StatefulSet", "name", desiredStatefulSet.Name)
         return r.Create(ctx, desiredStatefulSet)
     } else if err != nil {
         return err
     }
-    
-    // Update if needed (idempotent)
-    if !reflect.DeepEqual(statefulSet.Spec, desiredStatefulSet.Spec) {
-        statefulSet.Spec = desiredStatefulSet.Spec
-        return r.Update(ctx, statefulSet)
+
+    // Step 4: Update only if different (idempotent - won't update if already correct)
+    if statefulSet.Spec.Replicas != desiredStatefulSet.Spec.Replicas {
+        return r.patchStatefulSetReplicas(ctx, statefulSet, *desiredStatefulSet.Spec.Replicas)
     }
-    
-    // Already in desired state
+
+    if statefulSet.Spec.Template.Spec.Containers[0].Image != desiredStatefulSet.Spec.Template.Spec.Containers[0].Image {
+        statefulSet.Spec = desiredStatefulSet.Spec
+        logger.Info("Updating StatefulSet", "name", statefulSet.Name)
+        return r.updateWithRetry(ctx, statefulSet, 3)
+    }
+
+    // Step 5: Already in desired state - do nothing (idempotent)
     return nil
 }
 ```
+
+### Key Idempotency Principles
+
+1. **Check before create**: Always check if resource exists before creating
+2. **Compare before update**: Only update if actual state differs from desired state
+3. **Use patches when possible**: `patchStatefulSetReplicas` is more targeted than full updates
+4. **Handle conflicts**: `updateWithRetry` handles concurrent modification conflicts
+5. **No side effects on no-op**: If state is already correct, function returns immediately
 
 ## Cleanup
 
