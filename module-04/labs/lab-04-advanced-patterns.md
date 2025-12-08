@@ -145,7 +145,11 @@ func (r *DatabaseReconciler) transitionToProvisioning(ctx context.Context, db *d
     db.Status.Phase = string(StateProvisioning)
     db.Status.Ready = false
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Provisioning", "Starting provisioning")
-    return ctrl.Result{}, r.Status().Update(ctx, db)
+    if err := r.Status().Update(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+    // Delay to visualize state transition (remove in production)
+    return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
@@ -172,7 +176,11 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
     // StatefulSet exists, move to next phase
     db.Status.Phase = string(StateConfiguring)
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Configuring", "StatefulSet created, configuring")
-    return ctrl.Result{}, r.Status().Update(ctx, db)
+    if err := r.Status().Update(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+    // Delay to visualize state transition (remove in production)
+    return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
@@ -185,7 +193,11 @@ func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *database
     // For now, just move to next phase
     db.Status.Phase = string(StateDeploying)
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Deploying", "Configuration complete, deploying")
-    return ctrl.Result{}, r.Status().Update(ctx, db)
+    if err := r.Status().Update(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+    // Delay to visualize state transition (remove in production)
+    return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 }
 
 func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
@@ -201,7 +213,11 @@ func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1
     if statefulSet.Status.ReadyReplicas == *statefulSet.Spec.Replicas {
         db.Status.Phase = string(StateVerifying)
         r.setCondition(db, "Progressing", metav1.ConditionTrue, "Verifying", "Deployment complete, verifying")
-        return ctrl.Result{}, r.Status().Update(ctx, db)
+        if err := r.Status().Update(ctx, db); err != nil {
+            return ctrl.Result{}, err
+        }
+        // Delay to visualize state transition (remove in production)
+        return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
     }
     
     // Not ready yet
@@ -232,6 +248,8 @@ func (r *DatabaseReconciler) handleFailed(ctx context.Context, db *databasev1.Da
     return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 }
 ```
+
+> **Note:** The `RequeueAfter: 3 * time.Second` delays are added to help visualize state transitions during development. In production, you would remove these delays to speed up reconciliation.
 
 ## Exercise 3: Test State Machine
 

@@ -144,7 +144,11 @@ func (r *DatabaseReconciler) transitionToProvisioning(ctx context.Context, db *d
 	db.Status.Ready = false
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "Provisioning", "Starting provisioning")
 	r.setCondition(db, "Ready", metav1.ConditionFalse, "Provisioning", "Database is being provisioned")
-	return ctrl.Result{}, r.Status().Update(ctx, db)
+	if err := r.Status().Update(ctx, db); err != nil {
+		return ctrl.Result{}, err
+	}
+	// Delay to visualize state transition (remove in production)
+	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 }
 
 // handleProvisioning creates the Secret and StatefulSet
@@ -180,7 +184,11 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
 	logger.Info("StatefulSet exists, transitioning to Configuring")
 	db.Status.Phase = string(StateConfiguring)
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "Configuring", "StatefulSet created, configuring")
-	return ctrl.Result{}, r.Status().Update(ctx, db)
+	if err := r.Status().Update(ctx, db); err != nil {
+		return ctrl.Result{}, err
+	}
+	// Delay to visualize state transition (remove in production)
+	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 }
 
 // handleConfiguring creates the Service and performs configuration
@@ -203,7 +211,11 @@ func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *database
 	logger.Info("Configuration complete, transitioning to Deploying")
 	db.Status.Phase = string(StateDeploying)
 	r.setCondition(db, "Progressing", metav1.ConditionTrue, "Deploying", "Configuration complete, deploying")
-	return ctrl.Result{}, r.Status().Update(ctx, db)
+	if err := r.Status().Update(ctx, db); err != nil {
+		return ctrl.Result{}, err
+	}
+	// Delay to visualize state transition (remove in production)
+	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 }
 
 // handleDeploying waits for the StatefulSet to be ready
@@ -235,7 +247,11 @@ func (r *DatabaseReconciler) handleDeploying(ctx context.Context, db *databasev1
 		logger.Info("All replicas ready, transitioning to Verifying")
 		db.Status.Phase = string(StateVerifying)
 		r.setCondition(db, "Progressing", metav1.ConditionTrue, "Verifying", "Deployment complete, verifying")
-		return ctrl.Result{}, r.Status().Update(ctx, db)
+		if err := r.Status().Update(ctx, db); err != nil {
+			return ctrl.Result{}, err
+		}
+		// Delay to visualize state transition (remove in production)
+		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
 	// Not ready yet - update condition with progress
