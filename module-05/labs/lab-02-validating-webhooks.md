@@ -455,6 +455,27 @@ func (v *DatabaseCustomValidator) ValidateCreate(ctx context.Context, obj runtim
 }
 ```
 
+**Rebuild and load the new image as explained in** [Task 4.2: Deploy Operator to Cluster](#task-42-deploy-operator-to-cluster) and restart the deployment so that it picks up the new image - `kubectl rollout restart deploy -n postgres-operator-system   postgres-operator-controller-manager`.
+
+Now validate with a sample below -
+```
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: invalid-image-storage
+spec:
+  image: nginx:latest  # Not PostgreSQL
+  replicas: 10
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi # less storage for replicas
+EOF
+
+# Should fail and error message should show both the spec.Image and spec.Storage errors
+```
+
 ## Cleanup
 
 ```bash
