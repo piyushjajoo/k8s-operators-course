@@ -62,6 +62,7 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
         For(&databasev1.Database{}).
         Owns(&appsv1.StatefulSet{}).  // Watch owned StatefulSets
         Owns(&corev1.Service{}).      // Watch owned Services
+        Owns(&corev1.Secret{}).       // Watch owned Secrets
         Complete(r)
 }
 ```
