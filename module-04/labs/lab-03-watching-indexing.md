@@ -20,7 +20,7 @@
 
 ### Task 1.1: Update SetupWithManager
 
-Modify `SetupWithManager` to watch owned resources:
+We already have modifed `SetupWithManager` to watch owned resources:
 
 ```go
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -28,6 +28,7 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
         For(&databasev1.Database{}).
         Owns(&appsv1.StatefulSet{}).  // Watch owned StatefulSets
         Owns(&corev1.Service{}).      // Watch owned Services
+        Owns(&corev1.Secret{}).       // Watch owned Secrets
         Complete(r)
 }
 ```
@@ -40,12 +41,27 @@ make install
 make run
 
 # Create Database
-kubectl apply -f database.yaml
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: test-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
 
 # Manually delete StatefulSet
 kubectl delete statefulset test-db
 
 # Watch operator logs - should detect and recreate
+
+# Validate the deleted statefulset appears
+kubectl get statefulset test-db
 ```
 
 ## Exercise 2: Watch Non-Owned Resources
@@ -66,42 +82,56 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
         Owns(&appsv1.StatefulSet{}).
+        Owns(&corev1.Service{}).
+        // deliberately removing Owns(&corev1.Secret{}). to demonstrate non-owned resources
         Watches(
-            &source.Kind{Type: &corev1.Secret{}},
-            handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
-        ).
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
+		).
         Complete(r)
 }
 
-func (r *DatabaseReconciler) findDatabasesForSecret(secret client.Object) []reconcile.Request {
-    databases := &databasev1.DatabaseList{}
-    r.List(context.Background(), databases)
-    
-    var requests []reconcile.Request
-    for _, db := range databases.Items {
-        // If Database references this Secret
-        if db.Spec.SecretName == secret.GetName() && 
-           db.Namespace == secret.GetNamespace() {
-            requests = append(requests, reconcile.Request{
-                NamespacedName: types.NamespacedName{
-                    Name:      db.Name,
-                    Namespace: db.Namespace,
-                },
-            })
-        }
-    }
-    return requests
+func (r *DatabaseReconciler) findDatabasesForSecret(ctx context.Context, secret client.Object) []reconcile.Request {
+	databases := &databasev1.DatabaseList{}
+	r.List(context.Background(), databases)
+
+	var requests []reconcile.Request
+	for _, db := range databases.Items {
+		// If Database references this Secret
+		if r.secretName(&db) == secret.GetName() &&
+			db.Namespace == secret.GetNamespace() {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      db.Name,
+					Namespace: db.Namespace,
+				},
+			})
+		}
+	}
+	return requests
 }
 ```
 
 ### Task 2.2: Test Secret Watch
 
 ```bash
-# Create Database that references a Secret
-kubectl apply -f database-with-secret.yaml
+# Create Database
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: test-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
 
 # Update the Secret
-kubectl patch secret db-secret --type merge -p '{"data":{"password":"newpassword"}}'
+kubectl patch secret test-db-credentials --type merge -p '{"data":{"password":"newpassword"}}'
 
 # Watch operator logs - should reconcile Database
 ```
