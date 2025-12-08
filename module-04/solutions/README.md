@@ -37,9 +37,27 @@ Pending → Provisioning → Configuring → Deploying → Verifying → Ready
                                                            Failed (on error)
 ```
 
-**Important:** The main `Reconcile` function must call `reconcileWithStateMachine(ctx, db)` 
-instead of directly calling resource reconciliation functions. If you skip this step, 
-you'll only see `Pending → Creating → Ready` transitions instead of the full state machine flow.
+### Prerequisites for State Machine
+
+1. **Update API Types** - Edit `api/v1/database_types.go` and update the Phase field enum:
+   ```go
+   // +kubebuilder:validation:Enum=Pending;Provisioning;Configuring;Deploying;Verifying;Ready;Failed
+   Phase string `json:"phase,omitempty"`
+   ```
+
+2. **Regenerate and reinstall CRD**:
+   ```bash
+   make manifests
+   make install
+   ```
+
+3. **Update Reconcile function** - The main `Reconcile` function must call `reconcileWithStateMachine(ctx, db)` 
+   instead of directly calling resource reconciliation functions.
+
+> **Note:** If you skip step 1-2, you'll see validation errors like:
+> `phase: Unsupported value: "Provisioning": supported values: "Pending", "Creating", "Ready", "Failed"`
+>
+> If you skip step 3, you'll only see `Pending → Creating → Ready` transitions.
 
 ## Notes
 

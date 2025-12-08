@@ -13,6 +13,14 @@ State Flow:
 Pending → Provisioning → Configuring → Deploying → Verifying → Ready
                                                               ↓
                                                            Failed (on error)
+
+IMPORTANT: Before using this code, you must update your API types (api/v1/database_types.go)
+to allow the new phase values. Update the Phase field enum:
+
+    // +kubebuilder:validation:Enum=Pending;Provisioning;Configuring;Deploying;Verifying;Ready;Failed
+    Phase string `json:"phase,omitempty"`
+
+Then run: make manifests && make install
 */
 package controller
 

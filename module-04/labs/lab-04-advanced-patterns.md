@@ -18,6 +18,33 @@
 
 ## Exercise 1: Implement State Machine
 
+### Task 1.0: Update the API Types (Important!)
+
+Before implementing the state machine, you need to update the `Phase` field validation in your API types to allow the new states.
+
+Edit `api/v1/database_types.go` and update the Phase field enum:
+
+```go
+// DatabaseStatus defines the observed state of Database
+type DatabaseStatus struct {
+    // Phase is the current phase
+    // +kubebuilder:validation:Enum=Pending;Provisioning;Configuring;Deploying;Verifying;Ready;Failed
+    Phase string `json:"phase,omitempty"`
+    
+    // ... rest of status fields
+}
+```
+
+Then regenerate and reinstall the CRD:
+
+```bash
+make manifests
+make install
+```
+
+> **Important:** If you skip this step, you'll see validation errors like:
+> `Database.database.example.com "test-db" is invalid: phase: Unsupported value: "Provisioning": supported values: "Pending", "Creating", "Ready", "Failed"`
+
 ### Task 1.1: Define States
 
 Add state constants in `internal/controller/database_controller.go`:
