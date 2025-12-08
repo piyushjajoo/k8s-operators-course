@@ -111,9 +111,6 @@ type DatabaseStatus struct {
     
     // SecretName is the name of the Secret containing database credentials
     SecretName string `json:"secretName,omitempty"`
-    
-    // Conditions represent the latest observations
-    Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 ```
 
