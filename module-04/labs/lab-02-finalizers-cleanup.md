@@ -27,6 +27,10 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+const (
+    finalizerName := "database.example.com/finalizer"
+)
+
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
     logger := log.FromContext(ctx)
     
@@ -34,8 +38,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
     if err := r.Get(ctx, req.NamespacedName, db); err != nil {
         return ctrl.Result{}, err
     }
-    
-    finalizerName := "database.example.com/finalizer"
     
     // Add finalizer if not present
     if !controllerutil.ContainsFinalizer(db, finalizerName) {
@@ -66,7 +68,6 @@ Add cleanup function:
 ```go
 func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
     logger := log.FromContext(ctx)
-    finalizerName := "database.example.com/finalizer"
     
     // Check if finalizer exists
     if !controllerutil.ContainsFinalizer(db, finalizerName) {
