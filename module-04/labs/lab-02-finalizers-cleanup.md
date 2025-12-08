@@ -28,7 +28,7 @@ import (
 )
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     
     db := &databasev1.Database{}
     if err := r.Get(ctx, req.NamespacedName, db); err != nil {
@@ -43,7 +43,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
         if err := r.Update(ctx, db); err != nil {
             return ctrl.Result{}, err
         }
-        log.Info("Added finalizer", "name", db.Name)
+        logger.Info("Added finalizer", "name", db.Name)
     }
     
     // Check if resource is being deleted
@@ -65,7 +65,7 @@ Add cleanup function:
 
 ```go
 func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     finalizerName := "database.example.com/finalizer"
     
     // Check if finalizer exists
@@ -73,11 +73,11 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
         return ctrl.Result{}, nil
     }
     
-    log.Info("Handling deletion", "name", db.Name)
+    logger.Info("Handling deletion", "name", db.Name)
     
     // Perform cleanup operations
     if err := r.cleanupExternalResources(ctx, db); err != nil {
-        log.Error(err, "Failed to cleanup external resources")
+        logger.Error(err, "Failed to cleanup external resources")
         r.setCondition(db, "Ready", metav1.ConditionFalse, "CleanupFailed", err.Error())
         r.Status().Update(ctx, db)
         // Retry after delay
@@ -90,7 +90,7 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
         return ctrl.Result{}, err
     }
     
-    log.Info("Finalizer removed, resource will be deleted")
+    logger.Info("Finalizer removed, resource will be deleted")
     return ctrl.Result{}, nil
 }
 ```
@@ -99,7 +99,7 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
 
 ```go
 func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *databasev1.Database) error {
-    log := log.FromContext(ctx)
+    logger := log.FromContext(ctx)
     
     // Example: Wait for StatefulSet to be deleted
     statefulSet := &appsv1.StatefulSet{}
@@ -110,7 +110,7 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
     
     if !errors.IsNotFound(err) {
         // StatefulSet still exists, wait for owner reference to delete it
-        log.Info("Waiting for StatefulSet to be deleted")
+        logger.Info("Waiting for StatefulSet to be deleted")
         return fmt.Errorf("StatefulSet still exists")
     }
     
@@ -119,7 +119,7 @@ func (r *DatabaseReconciler) cleanupExternalResources(ctx context.Context, db *d
     //     return err
     // }
     
-    log.Info("Cleanup completed")
+    logger.Info("Cleanup completed")
     return nil
 }
 ```
