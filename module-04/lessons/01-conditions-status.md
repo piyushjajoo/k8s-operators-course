@@ -4,7 +4,7 @@
 
 ## Introduction
 
-In [Module 3](../module-03/README.md), you learned basic status updates. Now let's implement proper status management using **conditions** - the Kubernetes-standard way to report resource state. Conditions provide structured, machine-readable status that both humans and automation can understand.
+In [Module 3](../../module-03/README.md), you learned basic status updates. Now let's implement proper status management using **conditions** - the Kubernetes-standard way to report resource state. Conditions provide structured, machine-readable status that both humans and automation can understand.
 
 ## What are Conditions?
 
