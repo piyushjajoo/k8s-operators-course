@@ -6,7 +6,7 @@
 set -e
 
 CLUSTER_NAME="${CLUSTER_NAME:-k8s-operators-course}"
-KUBERNETES_VERSION="${KUBERNETES_VERSION:-v1.28.0}"
+KUBERNETES_VERSION="${KUBERNETES_VERSION:-v1.33.0}"
 
 # Detect container runtime
 if command -v docker &> /dev/null && docker info &> /dev/null; then

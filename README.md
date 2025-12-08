@@ -67,11 +67,11 @@ The course is divided into 8 modules, each building on the previous:
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.24+
 - kubectl
 - Docker or Podman
-- kind
-- kubebuilder
+- kind v0.29+
+- Kubebuilder 4.7+
 
 ### Setup
 

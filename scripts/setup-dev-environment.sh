@@ -11,7 +11,7 @@ echo ""
 # Check Go installation
 if ! command -v go &> /dev/null; then
     echo "❌ Go is not installed"
-    echo "Please install Go 1.21+ from https://go.dev/dl/"
+    echo "Please install Go 1.24+ from https://go.dev/dl/"
     exit 1
 fi
 
@@ -72,7 +72,7 @@ if ! command -v kubebuilder &> /dev/null; then
         ARCH="amd64"
     fi
     
-    KUBEBUILDER_VERSION="3.13.0"
+    KUBEBUILDER_VERSION="4.7.1"
     KUBEBUILDER_URL="https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${OS}_${ARCH}"
     
     curl -L "$KUBEBUILDER_URL" -o /tmp/kubebuilder
