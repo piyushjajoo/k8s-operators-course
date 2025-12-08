@@ -69,6 +69,46 @@ func (r *DatabaseReconciler) reconcileWithStateMachine(ctx context.Context, db *
 }
 ```
 
+### Task 1.3: Update the Main Reconcile Function
+
+**Important:** You must update your main `Reconcile` function to call the state machine instead of the direct reconciliation flow:
+
+```go
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+
+    // Read Database resource
+    db := &databasev1.Database{}
+    if err := r.Get(ctx, req.NamespacedName, db); err != nil {
+        if errors.IsNotFound(err) {
+            return ctrl.Result{}, nil
+        }
+        return ctrl.Result{}, err
+    }
+
+    // Add finalizer if not present
+    if !controllerutil.ContainsFinalizer(db, finalizerName) {
+        controllerutil.AddFinalizer(db, finalizerName)
+        if err := r.Update(ctx, db); err != nil {
+            return ctrl.Result{}, err
+        }
+        logger.Info("Added finalizer", "name", db.Name)
+    }
+
+    // Check if resource is being deleted
+    if !db.DeletionTimestamp.IsZero() {
+        return r.handleDeletion(ctx, db)
+    }
+
+    logger.Info("Reconciling Database", "name", db.Name)
+
+    // Use state machine for multi-phase reconciliation
+    return r.reconcileWithStateMachine(ctx, db)
+}
+```
+
+> **Note:** If you skip this step and keep the old Reconcile function that directly calls `reconcileStatefulSet`, `reconcileService`, and `updateStatus`, the state machine functions will never be called and you'll only see `Pending → Creating → Ready` transitions.
+
 ## Exercise 2: Implement State Handlers
 
 ### Task 2.1: State Transition Functions
@@ -76,11 +116,17 @@ func (r *DatabaseReconciler) reconcileWithStateMachine(ctx context.Context, db *
 ```go
 func (r *DatabaseReconciler) transitionToProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
     db.Status.Phase = string(StateProvisioning)
+    db.Status.Ready = false
     r.setCondition(db, "Progressing", metav1.ConditionTrue, "Provisioning", "Starting provisioning")
     return ctrl.Result{}, r.Status().Update(ctx, db)
 }
 
 func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    // Ensure Secret exists first (StatefulSet needs it for credentials)
+    if err := r.reconcileSecret(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+
     // Check if StatefulSet exists
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
@@ -103,6 +149,11 @@ func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databas
 }
 
 func (r *DatabaseReconciler) handleConfiguring(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    // Ensure Service exists
+    if err := r.reconcileService(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+
     // Configure database (create users, databases, etc.)
     // For now, just move to next phase
     db.Status.Phase = string(StateDeploying)
@@ -134,6 +185,9 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
     // Verify database is working (connect, run test query, etc.)
     // For now, assume it's ready
     db.Status.Phase = string(StateReady)
+    db.Status.Ready = true
+    db.Status.SecretName = r.secretName(db)
+    db.Status.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:5432", db.Name, db.Namespace)
     r.setCondition(db, "Ready", metav1.ConditionTrue, "AllChecksPassed", "Database is ready")
     r.setCondition(db, "Progressing", metav1.ConditionFalse, "ReconciliationComplete", "Reconciliation complete")
     return ctrl.Result{}, r.Status().Update(ctx, db)
@@ -274,9 +328,12 @@ In this lab, you:
 ## Solutions
 
 This lab combines concepts from previous labs. Refer to:
+- [State Machine Controller](../solutions/state-machine-controller.go) - **Complete state machine implementation**
 - [Condition Helpers](../solutions/conditions-helpers.go) - For status management
 - [Finalizer Handler](../solutions/finalizer-handler.go) - For cleanup patterns
 - [Watch Setup](../solutions/watch-setup.go) - For watching patterns
+
+> **Note:** The `state-machine-controller.go` file contains the complete implementation including the updated `Reconcile` function that calls the state machine. Make sure your main `Reconcile` function calls `reconcileWithStateMachine` instead of directly reconciling resources.
 
 ## Congratulations!
 
