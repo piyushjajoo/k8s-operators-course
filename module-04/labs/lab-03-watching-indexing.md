@@ -207,6 +207,10 @@ func (r *DatabaseReconciler) findDatabasesByImage(ctx context.Context, image str
 ### Task 3.3: Test Index Usage
 
 ```bash
+# Install and run operator
+make install
+make run
+
 # Create databases with different images
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
@@ -281,6 +285,11 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
                 return true
             },
         })).
+		Owns(&corev1.Service{}).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.findDatabasesForSecret),
+		).
         Complete(r)
 }
 ```
@@ -290,6 +299,10 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 ### Task 5.1: Create Multiple Resources
 
 ```bash
+# Install and run operator
+make install
+make run
+
 # Create multiple Databases
 for i in {1..10}; do
   kubectl apply -f - <<EOF
