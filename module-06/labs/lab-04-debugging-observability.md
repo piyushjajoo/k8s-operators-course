@@ -261,9 +261,9 @@ kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n po
 
 ### Task 2.4: Test Metrics
 
-The metrics endpoint uses authentication by default. The scaffolded RBAC creates a `metrics-reader` ClusterRole but doesn't bind it to anyone - you need to create a binding for whoever should access metrics.
+The metrics endpoint uses HTTPS with authentication by default.
 
-**Option A: Bind metrics-reader role (recommended)**
+**Note**: The operator's RBAC includes a `metrics-reader-rolebinding` that grants the controller's ServiceAccount permission to read metrics. This was added to `config/rbac/metrics_reader_role_binding.yaml`.
 
 ```bash
 # Create a test database first
@@ -284,12 +284,6 @@ EOF
 # Wait for it to be reconciled
 sleep 30
 
-# The scaffolded code creates a 'metrics-reader' ClusterRole but doesn't bind it.
-# Create a binding for the controller's ServiceAccount to read its own metrics:
-kubectl create clusterrolebinding metrics-reader-binding \
-  --clusterrole=postgres-operator-metrics-reader \
-  --serviceaccount=postgres-operator-system:postgres-operator-controller-manager
-
 # Get a token for the ServiceAccount
 TOKEN=$(kubectl create token -n postgres-operator-system postgres-operator-controller-manager)
 
@@ -304,10 +298,12 @@ curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/
 pkill -f "port-forward.*8443"
 ```
 
-**Option B: Disable secure metrics for testing (simpler but less secure)**
+**Alternative: Disable secure metrics for local development**
+
+If you prefer simpler access during development:
 
 ```bash
-# Patch the deployment to disable secure metrics and enable metrics on :8080
+# Patch the deployment to disable secure metrics
 kubectl patch deployment -n postgres-operator-system postgres-operator-controller-manager \
   --type='json' -p='[
     {"op": "replace", "path": "/spec/template/spec/containers/0/args", "value": [
@@ -329,14 +325,6 @@ curl http://localhost:8080/metrics 2>/dev/null | grep database_
 # Stop port-forward
 pkill -f "port-forward.*8080"
 ```
-
-**Why is this needed?**
-
-The Kubebuilder scaffolding creates:
-- `metrics-auth-role` - Allows the controller to validate tokens (for authn/authz)
-- `metrics-reader` - Grants permission to read `/metrics` endpoint
-
-But it intentionally does NOT create a binding for `metrics-reader` - you must bind it to whichever users/ServiceAccounts should access metrics (like Prometheus, or for testing).
 
 **Expected output:**
 ```
