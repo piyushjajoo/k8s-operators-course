@@ -290,7 +290,7 @@ When deploying webhooks:
 ### Official Documentation
 - [Webhook Configuration](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#webhook-configuration)
 - [cert-manager](https://cert-manager.io/docs/)
-- [TLS in Kubernetes](https://kubernetes.io/docs/concepts/security/tls/)
+- [TLS in Kubernetes](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)
 
 ### Further Reading
 - **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 9: Webhooks
