@@ -389,8 +389,11 @@ Uncomment `- ../prometheus`:
 #### Step 3: Redeploy with ServiceMonitor
 
 ```bash
-# Redeploy to include the ServiceMonitor
+# For Docker: Redeploy to include the ServiceMonitor
 make deploy IMG=postgres-operator:v0.1.0
+
+# For Podman: Redeploy to include the ServiceMonitor
+make deploy IMG=localhost/postgres-operator:latest
 
 # Verify the ServiceMonitor was created
 kubectl get servicemonitor -n postgres-operator-system
@@ -413,7 +416,8 @@ Now let's verify Prometheus is scraping your operator's metrics.
 kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
 
 # Note the PID for later cleanup
-echo "Port-forward PID: $!"
+PF_PID=$!
+echo "Port-forward PID: $PF_PID"
 ```
 
 #### Step 2: Open Prometheus UI
