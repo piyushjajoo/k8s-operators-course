@@ -158,7 +158,7 @@ Context("When Database is not found", func() {
 ### Task 4.1: Test Multiple Scenarios
 
 ```go
-Describe("Database validation", func() {
+var _ = Describe("Database validation", func() {
     tests := []struct {
         name    string
         db      *databasev1.Database
