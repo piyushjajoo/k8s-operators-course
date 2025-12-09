@@ -232,11 +232,25 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 ```bash
 cd ~/postgres-operator
 
-# Rebuild the operator
+# Rebuild the operator (for docker)
 make docker-build IMG=postgres-operator:latest
 
-# Load into kind
+# Build with podman (note: image will be localhost/postgres-operator:latest)
+make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+
+# Load into kind (for docker)
 kind load docker-image postgres-operator:latest
+
+# For podman: Load image into kind (save to tarball, then load)
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
+
+# For docker: Deploy operator
+make deploy IMG=postgres-operator:latest
+
+# For podman: Deploy operator - use localhost/ prefix to match the loaded image
+make deploy IMG=localhost/postgres-operator:latest
 
 # Redeploy
 kubectl rollout restart deployment -n postgres-operator-system postgres-operator-controller-manager
