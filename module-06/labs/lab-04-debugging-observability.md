@@ -628,47 +628,53 @@ go install github.com/go-delve/delve/cmd/dlv@latest
 dlv version
 ```
 
-### Task 4.2: Debug Locally (Without Cluster)
+### Task 4.2: Debug with Running Cluster
+
+When debugging locally, you must:
+1. **Disable webhooks** - They require TLS certificates that don't exist locally
+2. **Have a valid kubeconfig** - The operator needs to connect to a cluster
+3. **Have CRDs installed** - Run `make install` first
 
 ```bash
 cd ~/postgres-operator
 
-# Start the operator with Delve (won't connect to cluster without kubeconfig)
-dlv debug ./cmd/main.go -- --metrics-bind-address=:8080 --health-probe-bind-address=:8081
+# Make sure CRDs are installed
+make install
 
-# In Delve console:
-(dlv) break internal/controller/database_controller.go:64
-(dlv) continue
-# The breakpoint will hit when Reconcile is called
-(dlv) print req
-(dlv) next
-(dlv) step
-(dlv) quit
-```
-
-### Task 4.3: Debug with Running Cluster
-
-```bash
-# Run operator locally (outside cluster) for debugging
-cd ~/postgres-operator
-
-# Make sure webhooks are disabled for local run
+# IMPORTANT: Disable webhooks (they require TLS certs)
 export ENABLE_WEBHOOKS=false
 
 # Start with Delve
-dlv debug ./cmd/main.go -- --metrics-bind-address=:8080 --health-probe-bind-address=:8081
+dlv debug ./cmd/main.go -- \
+  --metrics-bind-address=:8080 \
+  --health-probe-bind-address=:8081 \
+  --metrics-secure=false
 
-# Set breakpoints and debug
-(dlv) break internal/controller/database_controller.go:64
+# In Delve console - set a breakpoint in Reconcile
+(dlv) break internal/controller/database_controller.go:81
 (dlv) continue
 
-# In another terminal, create a Database to trigger the breakpoint
+# The operator is now running and waiting for events.
+# In ANOTHER terminal, create a Database to trigger the breakpoint:
 kubectl apply -f config/samples/database_v1_database.yaml
+
+# Back in Delve, the breakpoint should hit. Then you can:
+(dlv) print req
+(dlv) print db
+(dlv) next
+(dlv) step
+(dlv) continue
+(dlv) quit
 ```
 
-### Task 4.4: VS Code Debugging (Alternative)
+**Common Issues:**
+- `no such file or directory: tls.crt` → You forgot to set `ENABLE_WEBHOOKS=false`
+- `Timeout: failed waiting for Informer to sync` → No valid kubeconfig or cluster not reachable
+- Breakpoint never hits → No Database resources exist or controller not watching correctly
 
-Create `.vscode/launch.json`:
+### Task 4.3: VS Code Debugging (Recommended)
+
+Create `.vscode/launch.json` for easier debugging:
 
 ```json
 {
@@ -682,7 +688,8 @@ Create `.vscode/launch.json`:
             "program": "${workspaceFolder}/cmd/main.go",
             "args": [
                 "--metrics-bind-address=:8080",
-                "--health-probe-bind-address=:8081"
+                "--health-probe-bind-address=:8081",
+                "--metrics-secure=false"
             ],
             "env": {
                 "ENABLE_WEBHOOKS": "false"
@@ -690,6 +697,35 @@ Create `.vscode/launch.json`:
         }
     ]
 }
+```
+
+Then:
+1. Set breakpoints by clicking in the gutter
+2. Press F5 to start debugging
+3. In a terminal, create a Database: `kubectl apply -f config/samples/database_v1_database.yaml`
+4. VS Code will stop at your breakpoint
+
+### Task 4.4: Debugging Tips
+
+**Useful Delve commands:**
+```
+break <file>:<line>  - Set breakpoint
+continue (c)         - Continue execution
+next (n)             - Step over
+step (s)             - Step into
+print (p) <var>      - Print variable
+locals               - Show local variables
+stack                - Show call stack
+goroutines           - List goroutines
+quit (q)             - Exit debugger
+```
+
+**Print examples in Reconcile:**
+```
+(dlv) p req.NamespacedName
+(dlv) p db.Spec
+(dlv) p db.Status.Phase
+(dlv) p err
 ```
 
 ## Exercise 5: Full Observability Verification
