@@ -261,9 +261,9 @@ kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n po
 
 ### Task 2.4: Test Metrics
 
-The metrics endpoint uses authentication by default. There are two ways to access it:
+The metrics endpoint uses authentication by default. The scaffolded RBAC creates a `metrics-reader` ClusterRole but doesn't bind it to anyone - you need to create a binding for whoever should access metrics.
 
-**Option A: Use ServiceAccount token (recommended for testing)**
+**Option A: Bind metrics-reader role (recommended)**
 
 ```bash
 # Create a test database first
@@ -284,10 +284,16 @@ EOF
 # Wait for it to be reconciled
 sleep 30
 
-# Get the ServiceAccount token for metrics access
+# The scaffolded code creates a 'metrics-reader' ClusterRole but doesn't bind it.
+# Create a binding for the controller's ServiceAccount to read its own metrics:
+kubectl create clusterrolebinding metrics-reader-binding \
+  --clusterrole=postgres-operator-metrics-reader \
+  --serviceaccount=postgres-operator-system:postgres-operator-controller-manager
+
+# Get a token for the ServiceAccount
 TOKEN=$(kubectl create token -n postgres-operator-system postgres-operator-controller-manager)
 
-# Port forward to the metrics endpoint
+# Port forward to the metrics service
 kubectl port-forward -n postgres-operator-system svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
 sleep 2
 
@@ -298,34 +304,39 @@ curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/
 pkill -f "port-forward.*8443"
 ```
 
-**Option B: Use kubectl exec to access metrics from inside the cluster**
+**Option B: Disable secure metrics for testing (simpler but less secure)**
 
 ```bash
-# Run curl from inside a pod that has access
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -k https://postgres-operator-controller-manager-metrics-service.postgres-operator-system.svc:8443/metrics
-
-# Note: This may also require auth depending on your RBAC setup
-```
-
-**Option C: Temporarily disable secure metrics for testing**
-
-If you want simpler access during development, you can disable secure metrics by adding this to the manager deployment:
-
-```bash
-# Edit the deployment to add --metrics-secure=false
+# Patch the deployment to disable secure metrics and enable metrics on :8080
 kubectl patch deployment -n postgres-operator-system postgres-operator-controller-manager \
-  --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--metrics-secure=false"}]'
+  --type='json' -p='[
+    {"op": "replace", "path": "/spec/template/spec/containers/0/args", "value": [
+      "--metrics-bind-address=:8080",
+      "--leader-elect",
+      "--health-probe-bind-address=:8081",
+      "--metrics-secure=false"
+    ]}
+  ]'
 
 # Wait for rollout
 kubectl rollout status deployment -n postgres-operator-system postgres-operator-controller-manager
 
-# Now you can access without auth (uses HTTP on port 8080)
+# Port forward and query metrics (no auth needed)
 kubectl port-forward -n postgres-operator-system deployment/postgres-operator-controller-manager 8080:8080 &
 sleep 2
-curl http://localhost:8080/metrics | grep database_
+curl http://localhost:8080/metrics 2>/dev/null | grep database_
+
+# Stop port-forward
 pkill -f "port-forward.*8080"
 ```
+
+**Why is this needed?**
+
+The Kubebuilder scaffolding creates:
+- `metrics-auth-role` - Allows the controller to validate tokens (for authn/authz)
+- `metrics-reader` - Grants permission to read `/metrics` endpoint
+
+But it intentionally does NOT create a binding for `metrics-reader` - you must bind it to whichever users/ServiceAccounts should access metrics (like Prometheus, or for testing).
 
 **Expected output:**
 ```
@@ -634,12 +645,12 @@ kubectl get database observability-test -o jsonpath='{.status}' | jq .
 
 echo ""
 echo "=== 4. Checking Metrics ==="
-# Get token for metrics access
-TOKEN=$(kubectl create token -n postgres-operator-system postgres-operator-controller-manager 2>/dev/null)
-kubectl port-forward -n postgres-operator-system svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
+# Note: This assumes you've disabled secure metrics (Option A from Exercise 2)
+# If secure metrics are enabled, you'll need to use a token
+kubectl port-forward -n postgres-operator-system deployment/postgres-operator-controller-manager 8080:8080 &
 sleep 2
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep -E "^database_" | head -20
-pkill -f "port-forward.*8443"
+curl -s http://localhost:8080/metrics 2>/dev/null | grep -E "^database_" | head -20 || echo "Metrics not available (secure metrics may be enabled)"
+pkill -f "port-forward.*8080" 2>/dev/null
 ```
 
 ### Task 5.3: Cleanup
