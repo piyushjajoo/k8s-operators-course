@@ -641,7 +641,23 @@ cd ~/postgres-operator
 # Make sure CRDs are installed
 make install
 
-# IMPORTANT: Disable webhooks (they require TLS certs)
+# In Delve console:
+(dlv) break internal/controller/database_controller.go:81
+(dlv) continue
+# The breakpoint will hit when Reconcile is called
+(dlv) print req
+(dlv) next
+(dlv) step
+(dlv) quit
+```
+
+### Task 4.3: Debug with Running Cluster
+
+```bash
+# Run operator locally (outside cluster) for debugging
+cd ~/postgres-operator
+
+# Make sure webhooks are disabled for local run
 export ENABLE_WEBHOOKS=false
 
 # Start with Delve
