@@ -205,13 +205,22 @@ make manifests
 grep "mutating" config/webhook/manifests.yaml
 ```
 
-### Task 4.3: Undeploy Existing Operator
+### Task 4.3: Undeploy and Clean Up Stale Webhooks
 
-Since we added a new webhook, we need to fully redeploy (not just restart) so the new MutatingWebhookConfiguration gets created and cert-manager can inject the CA bundle:
+Since we added a new webhook, we need to fully redeploy. Also clean up any stale webhook configurations from previous deployments:
 
 ```bash
 # Remove existing deployment
 make undeploy
+
+# Clean up any stale webhook configurations (from previous deployments without proper prefixes)
+kubectl delete validatingwebhookconfiguration validating-webhook-configuration 2>/dev/null || true
+kubectl delete mutatingwebhookconfiguration mutating-webhook-configuration 2>/dev/null || true
+
+# Verify cleanup
+kubectl get validatingwebhookconfigurations
+kubectl get mutatingwebhookconfigurations
+# Should only show cert-manager and ingress-nginx webhooks, not our old ones
 
 # Wait for resources to be deleted
 kubectl get all -n postgres-operator-system
