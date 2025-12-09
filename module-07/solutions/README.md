@@ -11,13 +11,10 @@ This directory contains complete, working solutions for Module 7 labs, aligned w
 - **ha-deployment.yaml**: High availability deployment with PDB (kubebuilder `config/manager/` format)
 - **ratelimiter.go**: Rate limiting using controller-runtime and golang.org/x/time/rate
 - **performance.go**: Performance optimization examples with kubebuilder patterns
-- **helm-chart/**: Complete Helm chart for operator distribution
-  - `templates/crds.yaml`: Custom Resource Definitions
-  - `templates/rbac.yaml`: ServiceAccount, ClusterRole, ClusterRoleBinding, leader election Role
-  - `templates/deployment.yaml`: Controller manager Deployment and PDB
-  - `templates/webhook.yaml`: Validating/Mutating webhooks (optional)
-  - `templates/_helpers.tpl`: Helm template helpers
-  - `templates/NOTES.txt`: Post-install instructions
+- **helm-chart/**: Helm chart generated from Kustomize (matches `make helm-chart` output)
+  - `Chart.yaml`: Chart metadata
+  - `values.yaml`: Default values
+  - `templates/manifests.yaml`: All resources from `kustomize build config/default`
 - **github-actions/**: CI/CD workflows for automated releases
   - `release.yaml`: Main release workflow (Docker + Helm to GHCR)
   - `helm-gh-pages.yaml`: Alternative GitHub Pages Helm repository
@@ -103,14 +100,23 @@ Add to `internal/controller/database_controller.go`:
 - Add field indexes in `cmd/main.go`
 - Register custom metrics with `metrics.Registry`
 
-### 6. Helm Chart (Optional - for distribution)
-Copy and customize `helm-chart/` directory. For kubebuilder projects, Kustomize is preferred:
+### 6. Helm Chart (Lab 7.1)
+The `make helm-chart` target generates a Helm chart from Kustomize:
 ```bash
-# Deploy with Kustomize (recommended)
-make deploy IMG=postgres-operator:v0.1.0
+# Generate helm chart from kustomize
+make helm-chart IMG=postgres-operator:v0.1.0
 
-# Or package for Helm distribution
-helm package charts/postgres-operator
+# Lint the chart
+make helm-lint
+
+# Package for distribution
+make helm-package
+
+# Install to cluster
+make helm-install
+
+# Uninstall
+make helm-uninstall
 ```
 
 ## Key Commands
@@ -132,7 +138,7 @@ make manifests
 make install
 make uninstall
 
-# Helm chart commands (add targets from lab 7.1)
+# Helm chart commands
 make helm-chart IMG=<registry>/postgres-operator:v0.1.0
 make helm-lint
 make helm-package
@@ -152,28 +158,45 @@ CHART_DIR ?= charts/$(CHART_NAME)
 ##@ Helm
 
 .PHONY: helm-chart
-helm-chart: manifests kustomize ## Generate Helm chart from Kustomize
+helm-chart: manifests kustomize ## Generate Helm chart from Kustomize (includes CRDs, RBAC, Deployment, Webhooks)
+	@echo "Generating Helm chart with ALL operator components..."
 	@mkdir -p $(CHART_DIR)/templates
-	@cat > $(CHART_DIR)/Chart.yaml <<EOF
-apiVersion: v2
-name: $(CHART_NAME)
-description: A Helm chart for $(CHART_NAME)
-type: application
-version: $(CHART_VERSION)
-appVersion: "$(VERSION)"
-EOF
-	@cat > $(CHART_DIR)/values.yaml <<EOF
-image:
-  repository: $(IMAGE_TAG_BASE)
-  tag: $(VERSION)
-  pullPolicy: IfNotPresent
-replicaCount: 1
-leaderElection:
-  enabled: false
-EOF
+	@# Create Chart.yaml
+	@printf '%s\n' \
+		'apiVersion: v2' \
+		'name: $(CHART_NAME)' \
+		'description: A Helm chart for $(CHART_NAME) - includes CRDs, RBAC, and webhooks' \
+		'type: application' \
+		'version: $(CHART_VERSION)' \
+		'appVersion: "$(VERSION)"' \
+		> $(CHART_DIR)/Chart.yaml
+	@# Create values.yaml
+	@printf '%s\n' \
+		'image:' \
+		'  repository: $(IMAGE_TAG_BASE)' \
+		'  tag: $(VERSION)' \
+		'  pullPolicy: IfNotPresent' \
+		'' \
+		'replicaCount: 1' \
+		'' \
+		'resources:' \
+		'  limits:' \
+		'    cpu: 500m' \
+		'    memory: 128Mi' \
+		'  requests:' \
+		'    cpu: 10m' \
+		'    memory: 64Mi' \
+		'' \
+		'leaderElection:' \
+		'  enabled: false' \
+		'' \
+		'namespace: $(CHART_NAME)-system' \
+		> $(CHART_DIR)/values.yaml
+	@# Generate ALL manifests from kustomize (CRDs, RBAC, Deployment, Webhooks)
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	@$(KUSTOMIZE) build config/default > $(CHART_DIR)/templates/manifests.yaml
 	@echo "Helm chart generated at $(CHART_DIR)"
+	@echo "Contents include: CRDs, RBAC (ServiceAccount, ClusterRole, ClusterRoleBinding), Deployment, Webhooks"
 
 .PHONY: helm-package
 helm-package: helm-chart ## Package Helm chart
@@ -184,10 +207,15 @@ helm-package: helm-chart ## Package Helm chart
 helm-lint: helm-chart ## Lint Helm chart
 	helm lint $(CHART_DIR)
 
+.PHONY: helm-template
+helm-template: helm-chart ## Render Helm templates locally
+	helm template $(CHART_NAME) $(CHART_DIR)
+
 .PHONY: helm-install
-helm-install: helm-chart ## Install Helm chart
+helm-install: helm-chart ## Install Helm chart to cluster
 	helm upgrade --install $(CHART_NAME) $(CHART_DIR) \
-		--namespace $(CHART_NAME)-system --create-namespace
+		--namespace $(CHART_NAME)-system \
+		--create-namespace
 
 .PHONY: helm-uninstall
 helm-uninstall: ## Uninstall Helm chart
@@ -200,5 +228,5 @@ helm-uninstall: ## Uninstall Helm chart
 - Security configurations match kubebuilder defaults (distroless, non-root, capabilities dropped)
 - Leader election is built into kubebuilder via `--leader-elect` flag
 - Performance optimizations use controller-runtime's built-in features
-- Helm charts are optional; Kustomize (via `make deploy`) is preferred for kubebuilder projects
-
+- Helm charts are generated from Kustomize; the chart packages all resources into a single `manifests.yaml`
+- For production Helm charts, consider splitting resources into separate templates for better customization
