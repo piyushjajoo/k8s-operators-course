@@ -18,87 +18,153 @@
 
 ## Exercise 1: Review Generated RBAC
 
-### Task 1.1: Generate RBAC Manifests
+Kubebuilder generates RBAC manifests automatically from markers in your controller code.
+
+### Task 1.1: Review RBAC Markers in Controller
+
+First, examine your controller's RBAC markers:
 
 ```bash
-# Generate RBAC manifests
-make manifests
+# Navigate to your operator project
+cd ~/postgres-operator
 
-# Check generated RBAC
-cat config/rbac/role.yaml
-cat config/rbac/role_binding.yaml
+# View RBAC markers in your controller
+grep -n "// +kubebuilder:rbac" internal/controller/database_controller.go
 ```
 
-### Task 1.2: Review Permissions
+You should see markers like:
+
+```go
+// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+```
+
+### Task 1.2: Generate and Review RBAC Manifests
 
 ```bash
-# List all permissions
-kubectl get role database-operator -o yaml | grep -A 100 "rules:"
+# Generate RBAC manifests from markers
+make manifests
 
-# Check for overly broad permissions
-# Look for:
-# - verbs: ["*"]
-# - resources: ["*"]
-# - apiGroups: ["*"]
+# View generated ClusterRole
+cat config/rbac/role.yaml
+
+# View generated ClusterRoleBinding
+cat config/rbac/role_binding.yaml
+
+# View ServiceAccount
+cat config/rbac/service_account.yaml
+```
+
+### Task 1.3: Check for Overly Broad Permissions
+
+```bash
+# Look for wildcards that might indicate too broad permissions
+grep -E "(verbs: \[\"\*\"\]|resources: \[\"\*\"\]|apiGroups: \[\"\*\"\])" config/rbac/role.yaml
+
+# If any are found, review and restrict the corresponding markers
 ```
 
 ## Exercise 2: Optimize RBAC
 
-### Task 2.1: Minimize Permissions
+### Task 2.1: Audit Required Permissions
 
-Review your controller code and remove unnecessary RBAC markers:
+Review what resources your controller actually accesses:
 
-```go
-// Remove if not needed
-// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
-
-// Keep only what you use
-// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
+```bash
+# Find all r.Get, r.Create, r.Update, r.Delete, r.List calls
+grep -E "r\.(Get|Create|Update|Delete|List|Patch)" internal/controller/database_controller.go
 ```
 
-### Task 2.2: Regenerate RBAC
+### Task 2.2: Update RBAC Markers
+
+Edit your controller to match only the permissions actually needed:
+
+```go
+// internal/controller/database_controller.go
+
+// Only include markers for resources you actually use:
+// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create
+
+// Note: Removed 'delete' from secrets if your controller doesn't delete secrets
+// Note: Consider if you need 'update;patch' for all resources
+```
+
+### Task 2.3: Regenerate RBAC
 
 ```bash
 # Regenerate with optimized markers
 make manifests
 
-# Review new RBAC
+# Review the updated RBAC
 cat config/rbac/role.yaml
+
+# Compare rules - they should be minimal
 ```
 
-## Exercise 3: Configure Service Account
+## Exercise 3: Review Kubebuilder Security Configuration
 
-### Task 3.1: Create Service Account
+Kubebuilder generates security configuration by default. Let's review and enhance it.
 
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: database-operator
-  namespace: default
+### Task 3.1: Review Generated ServiceAccount
+
+```bash
+# Kubebuilder creates ServiceAccount automatically
+cat config/rbac/service_account.yaml
 ```
 
-### Task 3.2: Update Deployment
+### Task 3.2: Review Deployment Security Context
+
+Kubebuilder's generated deployment includes security contexts. Review them:
+
+```bash
+cat config/manager/manager.yaml
+```
+
+Look for the security settings:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
 spec:
   template:
     spec:
-      serviceAccountName: database-operator
       securityContext:
         runAsNonRoot: true
-        runAsUser: 65532
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-          - ALL
       containers:
       - name: manager
         securityContext:
-          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+```
+
+### Task 3.3: Enhance Security Context (Optional)
+
+Add additional security hardening to `config/manager/manager.yaml`:
+
+```yaml
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: manager
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
           capabilities:
             drop:
             - ALL
@@ -141,17 +207,21 @@ USER 65532:65532
 
 ### Task 5.2: Add Network Policy
 
-Create `config/security/network-policy.yaml`:
+Create `config/network-policy/network-policy.yaml`:
 
-```yaml
+```bash
+mkdir -p config/network-policy
+
+cat > config/network-policy/network-policy.yaml << 'EOF'
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: database-operator
+  name: controller-manager
+  namespace: system
 spec:
   podSelector:
     matchLabels:
-      app: database-operator
+      control-plane: controller-manager
   policyTypes:
   - Ingress
   - Egress
@@ -161,33 +231,50 @@ spec:
     ports:
     - protocol: TCP
       port: 443  # Kubernetes API
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 6443  # Kubernetes API (alternative port)
+EOF
+```
+
+Add to `config/default/kustomization.yaml`:
+
+```yaml
+resources:
+- ../network-policy
 ```
 
 ## Cleanup
 
 ```bash
-# Remove test resources
-kubectl delete networkpolicy database-operator
+# Undeploy operator
+make undeploy
+
+# Remove network policy if added separately
+kubectl delete networkpolicy controller-manager -n database-operator-system
 ```
 
 ## Lab Summary
 
 In this lab, you:
-- Reviewed generated RBAC
-- Optimized permissions
-- Configured service accounts
-- Scanned images for vulnerabilities
-- Applied security hardening
+- Reviewed RBAC markers in kubebuilder controllers
+- Generated and reviewed RBAC manifests with `make manifests`
+- Optimized RBAC permissions using least privilege
+- Reviewed kubebuilder's security configurations
+- Scanned images for vulnerabilities with Trivy
+- Enhanced security hardening
 
 ## Key Learnings
 
-1. Review generated RBAC carefully
-2. Minimize permissions to least privilege
-3. Use service accounts for identity
-4. Scan images for vulnerabilities
-5. Apply security best practices
-6. Use distroless images
-7. Configure security contexts
+1. RBAC is generated from markers via `make manifests`
+2. Review `config/rbac/role.yaml` for generated permissions
+3. Minimize markers to match actual controller needs
+4. Kubebuilder includes security contexts by default
+5. Scan images regularly with Trivy or similar tools
+6. Add network policies for additional isolation
+7. The distroless base image is already used by kubebuilder
 
 ## Solutions
 

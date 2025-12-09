@@ -16,100 +16,127 @@
 - Operator with HA setup
 - Understanding of performance concepts
 
-## Exercise 1: Implement Rate Limiting
+## Exercise 1: Configure Controller Rate Limiting
 
-### Task 1.1: Add Rate Limiter
+Controller-runtime (used by kubebuilder) has built-in rate limiting. Let's configure it.
 
-Create `internal/ratelimiter/ratelimiter.go`:
+### Task 1.1: Configure MaxConcurrentReconciles
+
+Update your controller's `SetupWithManager` in `internal/controller/database_controller.go`:
 
 ```go
-package ratelimiter
-
 import (
-    "sync"
     "time"
-)
-
-type RateLimiter struct {
-    mu          sync.Mutex
-    lastCall    time.Time
-    minInterval time.Duration
-}
-
-func NewRateLimiter(minInterval time.Duration) *RateLimiter {
-    return &RateLimiter{
-        minInterval: minInterval,
-    }
-}
-
-func (r *RateLimiter) Wait() {
-    r.mu.Lock()
-    defer r.mu.Unlock()
     
-    elapsed := time.Since(r.lastCall)
-    if elapsed < r.minInterval {
-        time.Sleep(r.minInterval - elapsed)
-    }
-    r.lastCall = time.Now()
-}
-```
-
-### Task 1.2: Use in Controller
-
-```go
-import "github.com/example/postgres-operator/internal/ratelimiter"
-
-type DatabaseReconciler struct {
-    client.Client
-    Scheme      *runtime.Scheme
-    rateLimiter *ratelimiter.RateLimiter
-}
-
-func NewDatabaseReconciler(mgr ctrl.Manager) *DatabaseReconciler {
-    return &DatabaseReconciler{
-        Client:      mgr.GetClient(),
-        Scheme:      mgr.GetScheme(),
-        rateLimiter: ratelimiter.NewRateLimiter(100 * time.Millisecond),
-    }
-}
-
-func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    r.rateLimiter.Wait()
-    // ... reconciliation ...
-}
-```
-
-## Exercise 2: Add Caching
-
-### Task 2.1: Use Informer Cache
-
-```go
-import (
-    "sigs.k8s.io/controller-runtime/pkg/cache"
+    "k8s.io/client-go/util/workqueue"
+    ctrl "sigs.k8s.io/controller-runtime"
+    "sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-    // Use cache for faster lookups
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
+        Owns(&appsv1.StatefulSet{}).
+        Owns(&corev1.Service{}).
+        Owns(&corev1.Secret{}).
         WithOptions(controller.Options{
-            CacheSyncTimeout: 2 * time.Minute,
+            // Limit concurrent reconciliations
+            MaxConcurrentReconciles: 2,
+            // Custom rate limiter for requeue
+            RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(
+                time.Millisecond*5,    // Base delay
+                time.Second*1000,      // Max delay
+            ),
         }).
         Complete(r)
 }
 ```
 
-### Task 2.2: Optimize Queries
+### Task 1.2: Add Rate Limiting for External API Calls (Optional)
+
+If your operator calls external APIs, add rate limiting:
 
 ```go
-// Use field selectors instead of listing all
-databases := &databasev1.DatabaseList{}
-err := r.List(ctx, databases, client.MatchingFields{
-    "spec.environment": "production",
-})
+import (
+    "golang.org/x/time/rate"
+)
 
-// Use namespace selector
-err := r.List(ctx, databases, client.InNamespace("production"))
+type DatabaseReconciler struct {
+    client.Client
+    Scheme     *runtime.Scheme
+    APILimiter *rate.Limiter  // For external API calls
+}
+
+// In cmd/main.go when creating the reconciler:
+if err = (&controller.DatabaseReconciler{
+    Client:     mgr.GetClient(),
+    Scheme:     mgr.GetScheme(),
+    APILimiter: rate.NewLimiter(rate.Limit(10), 1), // 10 req/sec
+}).SetupWithManager(mgr); err != nil {
+    setupLog.Error(err, "unable to create controller", "controller", "Database")
+    os.Exit(1)
+}
+
+// In Reconcile, use before external calls:
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    // Wait for rate limiter before external API calls
+    if err := r.APILimiter.Wait(ctx); err != nil {
+        return ctrl.Result{}, err
+    }
+    // ... reconciliation with external API calls ...
+}
+```
+
+## Exercise 2: Add Field Indexing for Fast Lookups
+
+Controller-runtime provides automatic caching. You can add custom indexes for fast lookups.
+
+### Task 2.1: Create Field Indexer
+
+Add indexing in `cmd/main.go` before starting the manager:
+
+```go
+// In cmd/main.go, after creating manager but before SetupWithManager
+
+// Index databases by environment for fast filtering
+if err := mgr.GetFieldIndexer().IndexField(
+    context.Background(),
+    &databasev1.Database{},
+    "spec.environment",
+    func(obj client.Object) []string {
+        db := obj.(*databasev1.Database)
+        if db.Spec.Environment == "" {
+            return nil
+        }
+        return []string{db.Spec.Environment}
+    },
+); err != nil {
+    setupLog.Error(err, "unable to create field index")
+    os.Exit(1)
+}
+```
+
+### Task 2.2: Use Indexes in Controller
+
+```go
+// In your reconciler, use MatchingFields for indexed queries
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    // Fast lookup using index
+    prodDatabases := &databasev1.DatabaseList{}
+    if err := r.List(ctx, prodDatabases, client.MatchingFields{
+        "spec.environment": "production",
+    }); err != nil {
+        return ctrl.Result{}, err
+    }
+    
+    // Use namespace selector for namespace-scoped queries
+    nsDatabases := &databasev1.DatabaseList{}
+    if err := r.List(ctx, nsDatabases, client.InNamespace(req.Namespace)); err != nil {
+        return ctrl.Result{}, err
+    }
+    
+    // ... rest of reconciliation
+}
 ```
 
 ## Exercise 3: Optimize Reconciliation
@@ -147,41 +174,83 @@ func (r *DatabaseReconciler) reconcileBatch(ctx context.Context, databases []dat
 }
 ```
 
-## Exercise 4: Profile Performance
+## Exercise 4: Monitor Performance with Built-in Metrics
 
-### Task 4.1: Add Performance Metrics
+Controller-runtime automatically exposes metrics. Let's explore and add custom ones.
+
+### Task 4.1: Access Built-in Metrics
+
+```bash
+# Deploy operator
+make deploy IMG=database-operator:v0.1.0
+
+# Port forward to metrics endpoint
+kubectl port-forward -n database-operator-system \
+  $(kubectl get pods -n database-operator-system -l control-plane=controller-manager -o name | head -1) \
+  8080:8080
+
+# View all metrics
+curl -s http://localhost:8080/metrics | head -50
+
+# View controller-runtime reconciliation metrics
+curl -s http://localhost:8080/metrics | grep controller_runtime_reconcile
+```
+
+### Task 4.2: Add Custom Metrics
+
+Add custom metrics in `internal/controller/database_controller.go`:
 
 ```go
+import (
+    "github.com/prometheus/client_golang/prometheus"
+    "sigs.k8s.io/controller-runtime/pkg/metrics"
+)
+
 var (
+    databasesTotal = prometheus.NewGaugeVec(
+        prometheus.GaugeOpts{
+            Name: "database_operator_databases_total",
+            Help: "Total number of Database resources by phase",
+        },
+        []string{"phase"},
+    )
+    
     reconcileDuration = prometheus.NewHistogramVec(
         prometheus.HistogramOpts{
-            Name: "database_reconcile_duration_seconds",
-            Help: "Duration of reconciliations",
+            Name:    "database_operator_reconcile_duration_seconds",
+            Help:    "Duration of reconciliations",
             Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
         },
         []string{"result"},
     )
-    
-    reconcileQueueDepth = prometheus.NewGauge(
-        prometheus.GaugeOpts{
-            Name: "database_reconcile_queue_depth",
-            Help: "Number of items in reconcile queue",
-        },
-    )
 )
+
+func init() {
+    // Register custom metrics with controller-runtime
+    metrics.Registry.MustRegister(databasesTotal, reconcileDuration)
+}
 ```
 
-### Task 4.2: Monitor Performance
+### Task 4.3: Use Metrics in Reconcile
 
-```bash
-# Port forward to metrics
-kubectl port-forward -l control-plane=controller-manager 8080:8080
-
-# Query metrics
-curl http://localhost:8080/metrics | grep database_reconcile
-
-# Check reconcile rate
-watch 'curl -s http://localhost:8080/metrics | grep database_reconcile_total'
+```go
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    start := time.Now()
+    result := "success"
+    
+    defer func() {
+        reconcileDuration.WithLabelValues(result).Observe(time.Since(start).Seconds())
+    }()
+    
+    // ... reconciliation logic ...
+    
+    if err != nil {
+        result = "error"
+        return ctrl.Result{}, err
+    }
+    
+    return ctrl.Result{}, nil
+}
 ```
 
 ## Exercise 5: Load Testing
@@ -189,35 +258,54 @@ watch 'curl -s http://localhost:8080/metrics | grep database_reconcile_total'
 ### Task 5.1: Create Many Resources
 
 ```bash
-# Create multiple databases
-for i in {1..100}; do
+# Create multiple databases for load testing
+for i in {1..50}; do
   kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: test-db-$i
+  namespace: default
 spec:
   image: postgres:14
   replicas: 1
   databaseName: db$i
   username: admin
   storage:
-    size: 10Gi
+    size: 1Gi
 EOF
 done
+
+echo "Created 50 test databases"
 ```
 
-### Task 5.2: Monitor Performance
+### Task 5.2: Monitor Performance Under Load
 
 ```bash
-# Watch operator metrics
-watch 'kubectl top pods -l control-plane=controller-manager'
+# Watch operator resource usage
+watch kubectl top pods -n database-operator-system -l control-plane=controller-manager
 
-# Check reconcile rate
-kubectl logs -l control-plane=controller-manager | grep -c "Reconciling"
+# In another terminal, watch reconciliation metrics
+while true; do
+  curl -s http://localhost:8080/metrics 2>/dev/null | grep controller_runtime_reconcile_total
+  sleep 5
+done
 
-# Check queue depth
-curl -s http://localhost:8080/metrics | grep reconcile_queue_depth
+# Check controller logs for reconciliation activity
+kubectl logs -n database-operator-system -l control-plane=controller-manager --tail=20 -f
+
+# Check queue length
+curl -s http://localhost:8080/metrics | grep workqueue
+```
+
+### Task 5.3: Verify All Resources Are Reconciled
+
+```bash
+# Check status of all databases
+kubectl get databases -o custom-columns=NAME:.metadata.name,PHASE:.status.phase,READY:.status.ready
+
+# Count databases in each phase
+kubectl get databases -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' | sort | uniq -c
 ```
 
 ## Cleanup
@@ -226,27 +314,28 @@ curl -s http://localhost:8080/metrics | grep reconcile_queue_depth
 # Delete test resources
 kubectl delete databases --all
 
-# Remove rate limiter if needed
+# Undeploy operator
+make undeploy
 ```
 
 ## Lab Summary
 
 In this lab, you:
-- Implemented rate limiting
-- Added caching strategies
-- Optimized reconciliation
-- Added performance metrics
-- Load tested operator
+- Configured controller-runtime rate limiting
+- Added field indexing for fast lookups
+- Optimized reconciliation with MaxConcurrentReconciles
+- Added custom performance metrics
+- Load tested the operator with many resources
 
 ## Key Learnings
 
-1. Rate limiting prevents API overload
-2. Caching reduces API calls
-3. Batch processing improves efficiency
-4. Performance metrics help optimization
-5. Load testing validates performance
-6. Field selectors optimize queries
-7. Monitoring is essential
+1. Controller-runtime has built-in rate limiting via RateLimiter option
+2. MaxConcurrentReconciles controls parallelism
+3. Field indexes enable fast filtered queries
+4. Built-in metrics are available at `:8080/metrics`
+5. Custom metrics use prometheus client with metrics.Registry
+6. Load testing validates operator performance at scale
+7. `client.MatchingFields{}` leverages indexes for fast lookups
 
 ## Solutions
 

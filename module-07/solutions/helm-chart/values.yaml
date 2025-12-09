@@ -1,37 +1,116 @@
 # Solution: Helm Chart Values from Module 7
 # Default values for Database Operator
+# Based on kubebuilder defaults from config/ directory
+#
+# This chart includes: CRDs, RBAC, Manager Deployment, Webhooks (optional)
 
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full name
+fullnameOverride: ""
+
+# -- Namespace for all resources (defaults to release namespace)
+namespace: ""
+
+# Image configuration
 image:
-  repository: database-operator
+  # -- Image repository
+  repository: ghcr.io/example/database-operator
+  # -- Image pull policy
   pullPolicy: IfNotPresent
-  tag: "latest"
+  # -- Image tag (defaults to chart appVersion)
+  tag: ""
 
-replicaCount: 3
+# -- Number of replicas (use 3+ for HA with leaderElection.enabled=true)
+replicaCount: 1
 
+# Resource limits based on kubebuilder defaults
 resources:
   limits:
     cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 100m
     memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
 
+# Leader election configuration
 leaderElection:
-  enabled: true
-  resourceName: database-operator-leader-election
-  namespace: default
+  # -- Enable leader election (required for replicaCount > 1)
+  enabled: false
 
+# Service account configuration
 serviceAccount:
+  # -- Create service account
   create: true
-  name: database-operator
+  # -- Service account name
+  name: ""
+  # -- Annotations to add to service account
   annotations: {}
 
+# Pod security context (kubebuilder defaults)
 securityContext:
   runAsNonRoot: true
-  runAsUser: 65532
-  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
 
+# Container security context (kubebuilder defaults)
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+# Health probes (kubebuilder defaults)
+healthProbes:
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8081
+    initialDelaySeconds: 15
+    periodSeconds: 20
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 8081
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+# Pod Disruption Budget (enable with replicaCount >= 3)
 podDisruptionBudget:
-  enabled: true
+  # -- Enable PDB
+  enabled: false
+  # -- Minimum available pods
   minAvailable: 2
+
+# Metrics configuration
+metrics:
+  # -- Metrics bind address
+  bindAddress: ":8080"
+  # -- Enable secure metrics serving
+  secure: false
+
+# CRD configuration
+crds:
+  # -- Install CRDs with the chart
+  # Note: Helm doesn't manage CRD lifecycle well; consider installing separately
+  install: true
+
+# Webhook configuration (created in Module 5)
+webhook:
+  # -- Enable webhooks (validating and mutating)
+  enabled: false
+  # cert-manager integration for webhook certificates
+  certManager:
+    # -- Use cert-manager to manage webhook certificates
+    enabled: false
+
+# -- Node selector for pod scheduling
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+tolerations: []
+
+# -- Affinity rules for pod scheduling
+affinity: {}
 

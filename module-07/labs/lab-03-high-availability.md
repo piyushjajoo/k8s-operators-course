@@ -19,49 +19,74 @@
 
 ## Exercise 1: Enable Leader Election
 
-### Task 1.1: Update main.go
+Kubebuilder's generated `cmd/main.go` already supports leader election via the `--leader-elect` flag.
 
-Edit `main.go`:
+### Task 1.1: Review Leader Election Code
+
+```bash
+# Navigate to your operator project
+cd ~/postgres-operator
+
+# Review the leader election setup in main.go
+grep -A 20 "LeaderElection" cmd/main.go
+```
+
+You should see code like:
 
 ```go
+var enableLeaderElection bool
+flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+    "Enable leader election for controller manager.")
+
 mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-    Scheme:                  scheme,
-    Metrics:                metricsserver.Options{BindAddress: metricsAddr},
-    WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
-    HealthProbeBindAddress: probeAddr,
-    LeaderElection:         true,
-    LeaderElectionID:       "database-operator-leader-election",
-    LeaderElectionNamespace: "default",
-    LeaseDuration:          &metav1.Duration{Duration: 15 * time.Second},
-    RenewDeadline:          &metav1.Duration{Duration: 10 * time.Second},
-    RetryPeriod:            &metav1.Duration{Duration: 2 * time.Second},
+    // ... other options ...
+    LeaderElection:         enableLeaderElection,
+    LeaderElectionID:       "your-operator-leader-election",
 })
 ```
 
-### Task 1.2: Verify Leader Election
+### Task 1.2: Enable Leader Election in Deployment
+
+Update `config/manager/manager.yaml` to add the `--leader-elect` flag:
+
+```yaml
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        args:
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+```
+
+### Task 1.3: Deploy and Verify
 
 ```bash
-# Deploy operator
-make deploy
+# Deploy the operator
+make deploy IMG=database-operator:v0.1.0
 
-# Check for lease
-kubectl get lease database-operator-leader-election
+# Check for lease object
+kubectl get lease -n database-operator-system
 
 # Check logs for leader election
-kubectl logs -l control-plane=controller-manager | grep -i leader
+kubectl logs -n database-operator-system -l control-plane=controller-manager | grep -i "leader"
 ```
 
 ## Exercise 2: Deploy Multiple Replicas
 
-### Task 2.1: Update Deployment
+### Task 2.1: Update Deployment Replicas
+
+Edit `config/manager/manager.yaml` to increase replicas:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: database-operator
+  name: controller-manager
+  namespace: system
 spec:
-  replicas: 3  # Multiple replicas
+  replicas: 3  # Change from 1 to 3
   selector:
     matchLabels:
       control-plane: controller-manager
@@ -69,29 +94,35 @@ spec:
     spec:
       containers:
       - name: manager
+        args:
+        - --leader-elect  # Required for HA
+        - --health-probe-bind-address=:8081
         resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
           limits:
             cpu: 500m
-            memory: 512Mi
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
 ```
 
 ### Task 2.2: Deploy and Verify
 
 ```bash
-# Apply deployment
-kubectl apply -f config/manager/manager.yaml
+# Redeploy with updated config
+make deploy IMG=database-operator:v0.1.0
 
 # Check replicas
-kubectl get deployment database-operator
+kubectl get deployment -n database-operator-system
 
-# Check pods
-kubectl get pods -l control-plane=controller-manager
+# Check all pods are running
+kubectl get pods -n database-operator-system -l control-plane=controller-manager
 
-# Verify only one is leader
-kubectl logs -l control-plane=controller-manager | grep -i leader
+# Verify only one is leader (check logs)
+for pod in $(kubectl get pods -n database-operator-system -l control-plane=controller-manager -o name); do
+  echo "=== $pod ==="
+  kubectl logs -n database-operator-system $pod | grep -i "leader" | tail -2
+done
 ```
 
 ## Exercise 3: Configure Resource Limits
@@ -125,30 +156,38 @@ watch kubectl top pods -l control-plane=controller-manager
 ### Task 4.1: Identify Leader
 
 ```bash
-# Find leader pod
-kubectl get pods -l control-plane=controller-manager -o wide
+# List all pods
+kubectl get pods -n database-operator-system -l control-plane=controller-manager
 
-# Check which pod holds the lease
-kubectl get lease database-operator-leader-election -o yaml
+# Find the lease and identify the leader
+kubectl get lease -n database-operator-system -o yaml
 
-# Check logs to identify leader
-kubectl logs <pod-name> | grep -i "became leader"
+# The holderIdentity field shows which pod is the leader
+# Look for the pod name in the holderIdentity
+
+# Check logs to confirm leader
+LEADER_POD=$(kubectl get lease -n database-operator-system -o jsonpath='{.items[0].spec.holderIdentity}' | cut -d'_' -f1)
+echo "Leader pod: $LEADER_POD"
+kubectl logs -n database-operator-system $LEADER_POD | grep -i "became leader"
 ```
 
 ### Task 4.2: Simulate Leader Failure
 
 ```bash
-# Delete leader pod
-kubectl delete pod <leader-pod-name>
+# Get the leader pod name
+LEADER_POD=$(kubectl get lease -n database-operator-system -o jsonpath='{.items[0].spec.holderIdentity}' | cut -d'_' -f1)
 
-# Watch failover
-watch kubectl get pods -l control-plane=controller-manager
+# Delete the leader pod
+kubectl delete pod -n database-operator-system $LEADER_POD
 
-# Check new leader
-kubectl get lease database-operator-leader-election -o yaml
+# Watch failover happen
+watch kubectl get pods -n database-operator-system -l control-plane=controller-manager
 
-# Verify reconciliation continues
-kubectl logs -l control-plane=controller-manager | tail -20
+# In another terminal, watch the lease
+watch kubectl get lease -n database-operator-system -o jsonpath='{.items[0].spec.holderIdentity}'
+
+# After a new leader is elected, verify reconciliation continues
+kubectl logs -n database-operator-system -l control-plane=controller-manager --tail=20 | grep -i "reconcil"
 ```
 
 ## Exercise 5: Pod Disruption Budget
@@ -157,58 +196,73 @@ kubectl logs -l control-plane=controller-manager | tail -20
 
 Create `config/manager/pdb.yaml`:
 
-```yaml
+```bash
+cat > config/manager/pdb.yaml << 'EOF'
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: database-operator-pdb
+  name: controller-manager-pdb
+  namespace: system
 spec:
   minAvailable: 2
   selector:
     matchLabels:
       control-plane: controller-manager
+EOF
 ```
 
-### Task 5.2: Test PDB
+Add to `config/manager/kustomization.yaml`:
+
+```yaml
+resources:
+- manager.yaml
+- pdb.yaml
+```
+
+### Task 5.2: Deploy and Test PDB
 
 ```bash
-# Apply PDB
-kubectl apply -f config/manager/pdb.yaml
+# Deploy with PDB
+make deploy IMG=database-operator:v0.1.0
 
-# Try to drain node (should be blocked if it would violate PDB)
-kubectl drain <node-name> --ignore-daemonsets
+# Verify PDB is created
+kubectl get pdb -n database-operator-system
 
-# Verify PDB is protecting pods
-kubectl get pdb database-operator-pdb
+# Check PDB status
+kubectl describe pdb -n database-operator-system controller-manager-pdb
+
+# Try to delete multiple pods (PDB should prevent deleting more than 1)
+kubectl delete pod -n database-operator-system -l control-plane=controller-manager --all
+# This should fail or be delayed to maintain minAvailable
 ```
 
 ## Cleanup
 
 ```bash
-# Delete PDB
-kubectl delete pdb database-operator-pdb
+# Undeploy operator
+make undeploy
 
-# Scale down
-kubectl scale deployment database-operator --replicas=1
+# Or scale down for testing
+kubectl scale deployment -n database-operator-system controller-manager --replicas=1
 ```
 
 ## Lab Summary
 
 In this lab, you:
-- Enabled leader election
-- Deployed multiple replicas
+- Enabled leader election via `--leader-elect` flag
+- Deployed multiple replicas by updating `config/manager/manager.yaml`
 - Configured resource limits
-- Tested failover scenarios
+- Tested failover by deleting leader pod
 - Set up Pod Disruption Budget
 
 ## Key Learnings
 
-1. Leader election ensures only one active controller
-2. Multiple replicas provide redundancy
-3. Resource limits prevent exhaustion
-4. Failover is automatic
-5. PDB protects availability
-6. Health checks ensure operator health
+1. Leader election is enabled via command-line flag in kubebuilder
+2. Increase replicas in `config/manager/manager.yaml` for HA
+3. Use `make deploy` to apply all configurations
+4. Failover is automatic - standby pods acquire the lease
+5. PDB protects availability during node maintenance
+6. Health checks are pre-configured by kubebuilder
 
 ## Solutions
 

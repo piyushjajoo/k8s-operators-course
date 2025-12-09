@@ -116,30 +116,60 @@ flowchart TD
     style RATE[Rate Limit] fill:#90EE90
 ```
 
-### Implementing Rate Limiting
+### Using Controller-Runtime's Built-in Rate Limiting
+
+Controller-runtime (used by kubebuilder) includes built-in rate limiting. Configure it when setting up your controller:
 
 ```go
-type RateLimiter struct {
-    lastCall time.Time
-    minInterval time.Duration
+// In internal/controller/database_controller.go
+
+func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewControllerManagedBy(mgr).
+        For(&databasev1.Database{}).
+        Owns(&appsv1.StatefulSet{}).
+        Owns(&corev1.Service{}).
+        WithOptions(controller.Options{
+            // MaxConcurrentReconciles limits parallel reconciliations
+            MaxConcurrentReconciles: 2,
+            // RateLimiter controls requeue rate
+            RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(
+                5*time.Millisecond,  // Base delay
+                1000*time.Second,    // Max delay
+            ),
+        }).
+        Complete(r)
+}
+```
+
+### Custom Rate Limiting for API Calls
+
+For rate limiting external API calls within reconciliation:
+
+```go
+import (
+    "golang.org/x/time/rate"
+)
+
+type DatabaseReconciler struct {
+    client.Client
+    Scheme      *runtime.Scheme
+    apiLimiter  *rate.Limiter  // Rate limiter for external APIs
 }
 
-func (r *RateLimiter) Wait() {
-    elapsed := time.Since(r.lastCall)
-    if elapsed < r.minInterval {
-        time.Sleep(r.minInterval - elapsed)
+func NewDatabaseReconciler(mgr ctrl.Manager) *DatabaseReconciler {
+    return &DatabaseReconciler{
+        Client:     mgr.GetClient(),
+        Scheme:     mgr.GetScheme(),
+        apiLimiter: rate.NewLimiter(rate.Limit(10), 1), // 10 requests/second
     }
-    r.lastCall = time.Now()
-}
-
-// Usage
-rateLimiter := &RateLimiter{
-    minInterval: 100 * time.Millisecond,
 }
 
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    rateLimiter.Wait()
-    // ... reconciliation ...
+    // Wait for rate limiter before external API calls
+    if err := r.apiLimiter.Wait(ctx); err != nil {
+        return ctrl.Result{}, err
+    }
+    // ... reconciliation with external API calls ...
 }
 ```
 
@@ -221,19 +251,53 @@ graph TB
     style FAST fill:#FFB6C1
 ```
 
-### Using Informers for Caching
+### Kubebuilder's Built-in Caching
+
+Controller-runtime (used by kubebuilder) provides automatic caching through the Manager's client. When you use `r.Get()` or `r.List()`, it reads from the cache, not directly from the API server:
 
 ```go
-// Informers provide built-in caching
-informer := cache.NewSharedIndexInformer(
-    &source.Kind{Type: &databasev1.Database{}},
-    &databasev1.Database{},
-    resyncPeriod,
-    cache.Indexers{},
-)
+// In your controller - reads from cache by default
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    db := &databasev1.Database{}
+    // This reads from cache, NOT from API server
+    if err := r.Get(ctx, req.NamespacedName, db); err != nil {
+        return ctrl.Result{}, client.IgnoreNotFound(err)
+    }
+    
+    // List also uses cache
+    dbList := &databasev1.DatabaseList{}
+    if err := r.List(ctx, dbList, client.InNamespace(req.Namespace)); err != nil {
+        return ctrl.Result{}, err
+    }
+    
+    return ctrl.Result{}, nil
+}
+```
 
-// Get from cache (no API call)
-databases := informer.GetStore().List()
+### Custom Indexers for Fast Lookups
+
+Add custom indexes in your controller setup to enable fast filtering:
+
+```go
+// In cmd/main.go or during controller setup
+func SetupIndexes(mgr ctrl.Manager) error {
+    // Index databases by their environment
+    return mgr.GetFieldIndexer().IndexField(
+        context.Background(),
+        &databasev1.Database{},
+        "spec.environment",
+        func(obj client.Object) []string {
+            db := obj.(*databasev1.Database)
+            return []string{db.Spec.Environment}
+        },
+    )
+}
+
+// Then use in controller with MatchingFields
+dbList := &databasev1.DatabaseList{}
+err := r.List(ctx, dbList, client.MatchingFields{
+    "spec.environment": "production",
+})
 ```
 
 ## Parallel Processing
@@ -359,26 +423,25 @@ var (
 
 ## Key Takeaways
 
-- **Rate limiting** prevents API overload
-- **Batch processing** improves efficiency
-- **Caching** reduces API calls
-- **Parallel processing** increases throughput
-- **Field selectors** optimize queries
-- **Indexes** speed up lookups
-- **Monitor performance** with metrics
+- **Controller-runtime caching** is automatic in kubebuilder
+- **MaxConcurrentReconciles** controls parallel reconciliations
+- **RateLimiter** in controller options manages requeue rates
+- **Field indexes** enable fast filtered lookups
+- **`client.MatchingFields`** optimizes queries
+- **Metrics** are available at `:8080/metrics` by default
 - **Scale strategies** depend on cluster size
 
 ## Understanding for Building Operators
 
-When optimizing performance:
-- Implement rate limiting
-- Use batch processing for bulk operations
-- Cache frequently accessed data
-- Use parallel processing when safe
-- Optimize queries with selectors
-- Create indexes for lookups
-- Monitor performance metrics
-- Adjust strategies based on scale
+When optimizing kubebuilder operators:
+- Use controller-runtime's built-in caching (automatic)
+- Configure `MaxConcurrentReconciles` in `SetupWithManager`
+- Set up custom field indexes for frequent lookups
+- Use `client.MatchingFields{}` for filtered queries
+- Monitor metrics at the default metrics endpoint
+- Use `rate.Limiter` for external API calls
+- Increase replicas with leader election for scale
+- Profile with `go tool pprof` if needed
 
 ## Related Lab
 

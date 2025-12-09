@@ -1,16 +1,36 @@
 # Solution: Helm Chart from Module 7
 # Complete Helm chart for Database Operator
+# Includes: CRDs, RBAC, Deployment, Webhooks (optional)
 
 apiVersion: v2
 name: database-operator
-description: A Helm chart for Database Operator
+description: |
+  A Kubernetes operator for managing PostgreSQL databases.
+  Built with kubebuilder and packaged for Helm distribution.
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
 keywords:
   - operator
   - database
   - postgresql
+  - kubernetes
+  - kubebuilder
+home: https://github.com/example/database-operator
+sources:
+  - https://github.com/example/database-operator
 maintainers:
   - name: Database Operator Team
+    email: team@example.com
+annotations:
+  # Artifact Hub annotations
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: "Basic Install"
+  artifacthub.io/crds: |
+    - kind: Database
+      version: v1
+      name: databases.database.example.com
+      displayName: Database
+      description: Represents a PostgreSQL database instance
 

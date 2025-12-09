@@ -1,0 +1,60 @@
+# Solution: GitHub Actions Helm Chart Release to GitHub Pages from Module 7
+# This workflow publishes Helm charts to a GitHub Pages-based Helm repository
+#
+# File location: .github/workflows/helm-gh-pages.yaml
+#
+# Prerequisites:
+# 1. Enable GitHub Pages in repository settings (source: gh-pages branch)
+# 2. Ensure charts are in charts/ directory
+
+name: Helm Chart Release (GitHub Pages)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/**'
+      - '.github/workflows/helm-gh-pages.yaml'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        with:
+          charts_dir: charts
+          config: .github/cr.yaml  # Optional: chart-releaser config
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+---
+# Optional: Create .github/cr.yaml for chart-releaser configuration
+# 
+# Example .github/cr.yaml:
+# ---
+# owner: your-username
+# git-repo: database-operator
+# release-name-template: "helm-{{ .Name }}-{{ .Version }}"
+# skip-existing: true
+

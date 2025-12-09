@@ -124,7 +124,7 @@ graph TB
 
 ## Kubebuilder RBAC Markers
 
-Kubebuilder generates RBAC from markers:
+Kubebuilder generates RBAC automatically from markers in your controller code. These markers are placed just above your `Reconcile` function:
 
 ```go
 // +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
@@ -132,7 +132,29 @@ Kubebuilder generates RBAC from markers:
 // +kubebuilder:rbac:groups=database.example.com,resources=databases/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    // ... reconciliation logic
+}
 ```
+
+### Generating RBAC Manifests
+
+After updating markers, regenerate RBAC manifests:
+
+```bash
+# Generate RBAC from markers
+make manifests
+
+# View generated RBAC
+cat config/rbac/role.yaml
+```
+
+The generated manifests are in `config/rbac/`:
+- `role.yaml` - ClusterRole with permissions
+- `role_binding.yaml` - ClusterRoleBinding
+- `service_account.yaml` - ServiceAccount for the operator
 
 ### RBAC Marker Format
 
@@ -246,28 +268,55 @@ sequenceDiagram
     Note over Scanner: Tools: Trivy,<br/>Grype, Snyk
 ```
 
+## Kubebuilder Security Configuration
+
+Kubebuilder's generated deployment in `config/manager/manager.yaml` includes security best practices:
+
+```yaml
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: manager
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        # Resource limits from config/manager/manager.yaml
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+```
+
 ## Key Takeaways
 
 - **RBAC** controls operator permissions
 - **Service Accounts** identify the operator
 - **Roles** are namespaced, **ClusterRoles** are cluster-wide
-- **Kubebuilder markers** generate RBAC automatically
+- **Kubebuilder markers** generate RBAC automatically via `make manifests`
 - **Principle of least privilege** minimizes risk
-- **Security best practices** harden operators
+- **Kubebuilder's Dockerfile** uses distroless images by default
 - **Security scanning** finds vulnerabilities
-- **Review and minimize** generated RBAC
+- **Review `config/rbac/`** to verify generated permissions
 
 ## Understanding for Building Operators
 
-When configuring RBAC and security:
-- Use kubebuilder markers for RBAC
-- Review and minimize permissions
-- Use distroless images
-- Run as non-root
-- Use read-only root filesystem
-- Apply network policies
-- Scan images for vulnerabilities
-- Follow least privilege principle
+When configuring RBAC and security with kubebuilder:
+- Add RBAC markers above your Reconcile function
+- Run `make manifests` to regenerate RBAC
+- Review `config/rbac/role.yaml` for generated permissions
+- Remove unnecessary markers to minimize permissions
+- Use the distroless base image (already in kubebuilder Dockerfile)
+- Configure security contexts in `config/manager/manager.yaml`
+- Apply network policies in `config/network-policy/` (if created)
+- Scan images for vulnerabilities before deployment
 
 ## Related Lab
 
