@@ -227,11 +227,15 @@ Context("Validating webhook", func() {
 ### Task 4.1: Run Tests Locally
 
 ```bash
-# Ensure kind cluster is running
+# Ensure kind cluster is running, if not use ./scripts/setup-kind-cluster.sh
 kind get clusters
 
-# Deploy operator to cluster
-make deploy
+# Deploy
+# For Docker:
+make deploy IMG=postgres-operator:latest
+
+# For Podman:
+make deploy IMG=localhost/postgres-operator:latest
 
 # Run integration tests
 ginkgo -v ./test/integration
