@@ -95,7 +95,7 @@ Complete working solutions for all labs are available in the [solutions director
 - [Lab 6.1 Solutions](solutions/suite_test.go) - Test suite setup
 - [Lab 6.2 Solutions](solutions/database_controller_test.go) - Unit test examples
 - [Lab 6.3 Solutions](solutions/integration_test.go) - Integration test examples
-- [Lab 6.4 Solutions - Metrics](solutions/metrics.go), [Lab 6.4 Solutions - Observability](solutions/observability.go)
+- [Lab 6.4 Solutions - Metrics](solutions/metrics.go), [Lab 6.4 Solutions - Observability](solutions/observability.go) - Observability examples
 
 
 ## Navigation
