@@ -619,6 +619,8 @@ kubectl delete database test-events
 
 ## Exercise 4: Set Up Delve Debugger
 
+**Note**: For this exercise, you'll run the operator locally (outside the cluster) for debugging. First, scale down the deployed operator so it doesn't conflict.
+
 ### Task 4.1: Install Delve
 
 ```bash
@@ -628,69 +630,103 @@ go install github.com/go-delve/delve/cmd/dlv@latest
 dlv version
 ```
 
-### Task 4.2: Debug with Running Cluster
-
-When debugging locally, you must:
-1. **Disable webhooks** - They require TLS certificates that don't exist locally
-2. **Have a valid kubeconfig** - The operator needs to connect to a cluster
-3. **Have CRDs installed** - Run `make install` first
+### Task 4.2: Prepare for Local Debugging
 
 ```bash
-cd ~/postgres-operator
+# Scale down the deployed operator to avoid conflicts
+kubectl scale deployment -n postgres-operator-system postgres-operator-controller-manager --replicas=0
 
-# Make sure CRDs are installed
-make install
-
-# In Delve console:
-(dlv) break internal/controller/database_controller.go:81
-(dlv) continue
-# The breakpoint will hit when Reconcile is called
-(dlv) print req
-(dlv) next
-(dlv) step
-(dlv) quit
+# Verify it's stopped
+kubectl get pods -n postgres-operator-system
 ```
 
-### Task 4.3: Debug with Running Cluster
+### Task 4.3: Debug with Delve
+
+When running the operator locally for debugging:
+- **Webhooks must be disabled** - They require TLS certificates that don't exist locally
+- **CRDs must be installed** - Already done from previous exercises
+- **Kubeconfig must be valid** - Your local kubectl context is used
 
 ```bash
-# Run operator locally (outside cluster) for debugging
 cd ~/postgres-operator
 
-# Make sure webhooks are disabled for local run
+# IMPORTANT: Disable webhooks (they require TLS certs that don't exist locally)
 export ENABLE_WEBHOOKS=false
 
-# Start with Delve
+# Start the operator with Delve
 dlv debug ./cmd/main.go -- \
   --metrics-bind-address=:8080 \
   --health-probe-bind-address=:8081 \
   --metrics-secure=false
+```
 
-# In Delve console - set a breakpoint in Reconcile
+Now in the Delve console:
+
+```
+# Set a breakpoint in the Reconcile function
 (dlv) break internal/controller/database_controller.go:81
+Breakpoint 1 set at ...
+
+# Start the operator
 (dlv) continue
+```
 
-# The operator is now running and waiting for events.
-# In ANOTHER terminal, create a Database to trigger the breakpoint:
-kubectl apply -f config/samples/database_v1_database.yaml
+The operator is now running. In **another terminal**, create a Database to trigger reconciliation:
 
-# Back in Delve, the breakpoint should hit. Then you can:
+```bash
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: debug-test
+  namespace: default
+spec:
+  image: postgres:14
+  databaseName: debugdb
+  username: debuguser
+  storage:
+    size: 1Gi
+EOF
+```
+
+Back in Delve, the breakpoint should hit:
+
+```
+# Inspect variables
 (dlv) print req
-(dlv) print db
+(dlv) print req.NamespacedName
+
+# Step through code
 (dlv) next
-(dlv) step
+(dlv) next
+
+# After the db variable is populated:
+(dlv) print db.Name
+(dlv) print db.Spec
+
+# Continue execution
 (dlv) continue
+
+# Exit when done
 (dlv) quit
 ```
 
-**Common Issues:**
-- `no such file or directory: tls.crt` → You forgot to set `ENABLE_WEBHOOKS=false`
-- `Timeout: failed waiting for Informer to sync` → No valid kubeconfig or cluster not reachable
-- Breakpoint never hits → No Database resources exist or controller not watching correctly
+### Task 4.4: Cleanup Debug Session
 
-### Task 4.3: VS Code Debugging (Recommended)
+```bash
+# Delete the test database
+kubectl delete database debug-test
 
-Create `.vscode/launch.json` for easier debugging:
+# Scale the operator back up
+kubectl scale deployment -n postgres-operator-system postgres-operator-controller-manager --replicas=1
+
+# Wait for it to be ready
+kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=60s
+```
+
+### Task 4.5: VS Code Debugging (Alternative)
+
+For easier debugging, create `.vscode/launch.json`:
 
 ```json
 {
@@ -716,33 +752,30 @@ Create `.vscode/launch.json` for easier debugging:
 ```
 
 Then:
-1. Set breakpoints by clicking in the gutter
-2. Press F5 to start debugging
-3. In a terminal, create a Database: `kubectl apply -f config/samples/database_v1_database.yaml`
-4. VS Code will stop at your breakpoint
+1. Scale down the deployed operator first
+2. Set breakpoints by clicking in the gutter
+3. Press F5 to start debugging
+4. In a terminal, create a Database to trigger the breakpoint
+5. VS Code will stop at your breakpoint
 
-### Task 4.4: Debugging Tips
+### Task 4.6: Useful Delve Commands
 
-**Useful Delve commands:**
 ```
 break <file>:<line>  - Set breakpoint
-continue (c)         - Continue execution
-next (n)             - Step over
-step (s)             - Step into
-print (p) <var>      - Print variable
-locals               - Show local variables
+continue (c)         - Continue execution  
+next (n)             - Step over (next line)
+step (s)             - Step into function
+print (p) <var>      - Print variable value
+locals               - Show all local variables
 stack                - Show call stack
-goroutines           - List goroutines
+goroutines           - List all goroutines
 quit (q)             - Exit debugger
 ```
 
-**Print examples in Reconcile:**
-```
-(dlv) p req.NamespacedName
-(dlv) p db.Spec
-(dlv) p db.Status.Phase
-(dlv) p err
-```
+**Common Issues:**
+- `no such file or directory: tls.crt` → Set `ENABLE_WEBHOOKS=false`
+- `Timeout: failed waiting for Informer to sync` → Check kubeconfig and cluster connectivity
+- Breakpoint never hits → Create a Database resource to trigger reconciliation
 
 ## Exercise 5: Full Observability Verification
 
