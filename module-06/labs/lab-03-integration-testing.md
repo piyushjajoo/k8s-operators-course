@@ -35,7 +35,9 @@ ginkgo bootstrap
 
 ### Task 1.3: Create Suite Test
 
-Create `test/integration/suite_test.go`:
+Create `test/integration/integration_suite_test.go`:
+
+**Important**: The client needs to know about your custom `Database` type. You must register it with the scheme!
 
 ```go
 package integration_test
@@ -45,8 +47,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
 var (
@@ -61,14 +66,25 @@ func TestIntegration(t *testing.T) {
 var _ = BeforeSuite(func() {
 	By("setting up integration test environment")
 
+	// Register the Database type with the scheme
+	// Without this, the client won't know how to serialize/deserialize Database objects!
+	err := databasev1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	cfg, err := config.GetConfig()
 	Expect(err).NotTo(HaveOccurred())
 
-	k8sClient, err = client.New(cfg, client.Options{})
+	// Pass the scheme to the client so it knows about our custom types
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 })
 ```
+
+**Why is scheme registration needed?**
+- The Kubernetes client uses the scheme to convert Go types to/from JSON/YAML
+- Built-in types (Pod, Service, etc.) are already registered
+- Custom Resource types like `Database` must be explicitly registered
 
 ## Exercise 2: Write End-to-End Test
 
@@ -76,150 +92,170 @@ var _ = BeforeSuite(func() {
 
 Create `test/integration/database_test.go`:
 
+**Note**: The package must match the suite file (`integration_test`).
+
 ```go
-package integration
+package integration_test
 
 import (
-    "context"
-    "time"
-    
-    . "github.com/onsi/ginkgo/v2"
-    . "github.com/onsi/gomega"
-    
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/types"
-    "k8s.io/utils/pointer"
-    "sigs.k8s.io/controller-runtime/pkg/client"
-    
-    databasev1 "github.com/example/postgres-operator/api/v1"
-    appsv1 "k8s.io/api/apps/v1"
+	"context"
+	"time"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
 var _ = Describe("Database Operator Integration", func() {
-    var (
-        ctx    context.Context
-        cancel context.CancelFunc
-        timeout = 5 * time.Minute
-        interval = 5 * time.Second
-    )
-    
-    BeforeEach(func() {
-        ctx, cancel = context.WithCancel(context.Background())
-    })
-    
-    AfterEach(func() {
-        cancel()
-    })
-    
-    Context("Database lifecycle", func() {
-        It("should create, update, and delete a Database", func() {
-            // Create Database
-            db := &databasev1.Database{
-                ObjectMeta: metav1.ObjectMeta{
-                    Name:      "integration-test-db",
-                    Namespace: "default",
-                },
-                Spec: databasev1.DatabaseSpec{
-                    Image:       "postgres:14",
-                    Replicas:    pointer.Int32(1),
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
-                },
-            }
-            Expect(k8sClient.Create(ctx, db)).To(Succeed())
-            
-            key := types.NamespacedName{
-                Name:      "integration-test-db",
-                Namespace: "default",
-            }
-            
-            // Wait for StatefulSet to be created
-            Eventually(func() error {
-                ss := &appsv1.StatefulSet{}
-                return k8sClient.Get(ctx, key, ss)
-            }, timeout, interval).Should(Succeed())
-            
-            // Verify StatefulSet is ready
-            Eventually(func() bool {
-                ss := &appsv1.StatefulSet{}
-                k8sClient.Get(ctx, key, ss)
-                return ss.Status.ReadyReplicas == *ss.Spec.Replicas
-            }, timeout, interval).Should(BeTrue())
-            
-            // Update Database
-            Expect(k8sClient.Get(ctx, key, db)).To(Succeed())
-            db.Spec.Replicas = pointer.Int32(3)
-            Expect(k8sClient.Update(ctx, db)).To(Succeed())
-            
-            // Wait for update
-            Eventually(func() *int32 {
-                ss := &appsv1.StatefulSet{}
-                k8sClient.Get(ctx, key, ss)
-                return ss.Spec.Replicas
-            }, timeout, interval).Should(Equal(pointer.Int32(3)))
-            
-            // Delete Database
-            Expect(k8sClient.Delete(ctx, db)).To(Succeed())
-            
-            // Verify cleanup
-            Eventually(func() bool {
-                err := k8sClient.Get(ctx, key, db)
-                return client.IgnoreNotFound(err) == nil
-            }, timeout, interval).Should(BeTrue())
-        })
-    })
+	var (
+		ctx      context.Context
+		cancel   context.CancelFunc
+		timeout  = 5 * time.Minute
+		interval = 5 * time.Second
+	)
+
+	BeforeEach(func() {
+		ctx, cancel = context.WithCancel(context.Background())
+	})
+
+	AfterEach(func() {
+		cancel()
+	})
+
+	Context("Database lifecycle", func() {
+		It("should create, update, and delete a Database", func() {
+			// Create Database
+			db := &databasev1.Database{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "integration-test-db",
+					Namespace: "default",
+				},
+				Spec: databasev1.DatabaseSpec{
+					Image:        "postgres:14",
+					Replicas:     ptr.To(int32(1)),
+					DatabaseName: "mydb",
+					Username:     "admin",
+					Storage: databasev1.StorageSpec{
+						Size: "10Gi",
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, db)).To(Succeed())
+
+			key := types.NamespacedName{
+				Name:      "integration-test-db",
+				Namespace: "default",
+			}
+
+			// Wait for StatefulSet to be created
+			Eventually(func() error {
+				ss := &appsv1.StatefulSet{}
+				return k8sClient.Get(ctx, key, ss)
+			}, timeout, interval).Should(Succeed())
+
+			// Verify StatefulSet is ready
+			Eventually(func() bool {
+				ss := &appsv1.StatefulSet{}
+				if err := k8sClient.Get(ctx, key, ss); err != nil {
+					return false
+				}
+				return ss.Status.ReadyReplicas == *ss.Spec.Replicas
+			}, timeout, interval).Should(BeTrue())
+
+			// Update Database
+			Expect(k8sClient.Get(ctx, key, db)).To(Succeed())
+			db.Spec.Replicas = ptr.To(int32(3))
+			Expect(k8sClient.Update(ctx, db)).To(Succeed())
+
+			// Wait for update
+			Eventually(func() int32 {
+				ss := &appsv1.StatefulSet{}
+				if err := k8sClient.Get(ctx, key, ss); err != nil {
+					return 0
+				}
+				return *ss.Spec.Replicas
+			}, timeout, interval).Should(Equal(int32(3)))
+
+			// Delete Database
+			Expect(k8sClient.Delete(ctx, db)).To(Succeed())
+
+			// Verify cleanup
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, key, db)
+				return client.IgnoreNotFound(err) == nil
+			}, timeout, interval).Should(BeTrue())
+		})
+	})
 })
 ```
 
-## Exercise 3: Test Webhooks
+## Exercise 3: Test Webhooks (Optional)
+
+**Note**: Webhook tests require webhooks to be deployed and configured with cert-manager. If you haven't set up webhooks, skip this exercise.
 
 ### Task 3.1: Test Validating Webhook
 
+Add to `test/integration/database_test.go` (inside the main Describe block):
+
 ```go
-Context("Validating webhook", func() {
-    It("should reject invalid Database", func() {
-        db := &databasev1.Database{
-            ObjectMeta: metav1.ObjectMeta{
-                Name:      "invalid-db",
-                Namespace: "default",
-            },
-            Spec: databasev1.DatabaseSpec{
-                Image: "nginx:latest", // Invalid: not PostgreSQL
-                DatabaseName: "mydb",
-                Username: "admin",
-                Storage: databasev1.StorageSpec{
-                    Size: "10Gi",
-                },
-            },
-        }
-        
-        err := k8sClient.Create(ctx, db)
-        Expect(err).To(HaveOccurred())
-        Expect(err.Error()).To(ContainSubstring("must be a PostgreSQL image"))
-    })
-    
-    It("should accept valid Database", func() {
-        db := &databasev1.Database{
-            ObjectMeta: metav1.ObjectMeta{
-                Name:      "valid-db",
-                Namespace: "default",
-            },
-            Spec: databasev1.DatabaseSpec{
-                Image:       "postgres:14",
-                DatabaseName: "mydb",
-                Username:    "admin",
-                Storage: databasev1.StorageSpec{
-                    Size: "10Gi",
-                },
-            },
-        }
-        
-        Expect(k8sClient.Create(ctx, db)).To(Succeed())
-    })
-})
+	// Only run if webhooks are deployed
+	Context("Validating webhook", func() {
+		It("should reject invalid Database", func() {
+			db := &databasev1.Database{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "invalid-db",
+					Namespace: "default",
+				},
+				Spec: databasev1.DatabaseSpec{
+					Image:        "nginx:latest", // Invalid: not PostgreSQL
+					DatabaseName: "mydb",
+					Username:     "admin",
+					Storage: databasev1.StorageSpec{
+						Size: "10Gi",
+					},
+				},
+			}
+
+			err := k8sClient.Create(ctx, db)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("must be a PostgreSQL image"))
+		})
+
+		It("should accept valid Database", func() {
+			db := &databasev1.Database{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "valid-db",
+					Namespace: "default",
+				},
+				Spec: databasev1.DatabaseSpec{
+					Image:        "postgres:14",
+					DatabaseName: "mydb",
+					Username:     "admin",
+					Storage: databasev1.StorageSpec{
+						Size: "10Gi",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, db)).To(Succeed())
+
+			// Cleanup
+			Expect(k8sClient.Delete(ctx, db)).To(Succeed())
+		})
+	})
+```
+
+**Note**: If webhooks aren't deployed, the "reject invalid" test will fail because the validation only happens in the webhook. You can skip webhook tests by using:
+
+```bash
+ginkgo -v -skip="webhook" ./test/integration
 ```
 
 ## Exercise 4: Run Integration Tests
@@ -317,12 +353,14 @@ In this lab, you:
 
 ## Key Learnings
 
-1. Integration tests use real clusters
-2. Eventually waits for async operations
-3. Test complete workflows
-4. Webhooks can be tested with real API
-5. CI/CD automates testing
-6. Clean up resources after tests
+1. **Register custom types with scheme** - The k8s client must know about your CRD types via `databasev1.AddToScheme(scheme.Scheme)`
+2. **Pass scheme to client** - Use `client.Options{Scheme: scheme.Scheme}` when creating the client
+3. **Integration tests use real clusters** - Tests run against actual Kubernetes API (kind, minikube, etc.)
+4. **Eventually waits for async operations** - Controllers are async; use `Eventually` for assertions
+5. **Test complete workflows** - Create → Update → Delete lifecycle
+6. **Webhooks require deployment** - Webhook tests only work when webhooks are deployed with cert-manager
+7. **CI/CD automates testing** - Use GitHub Actions or similar for automated testing
+8. **Clean up resources after tests** - Delete created resources to avoid test pollution
 
 ## Solutions
 
