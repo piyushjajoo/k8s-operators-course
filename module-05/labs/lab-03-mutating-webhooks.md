@@ -180,17 +180,35 @@ if _, exists := database.Labels["managed-by"]; !exists {
 
 ## Exercise 4: Deploy and Test Mutating Webhook
 
-### Task 4.1: Generate Manifests
+### Task 4.1: Enable MutatingWebhookConfiguration in Kustomization
+
+Since we added a mutating webhook manually, we need to uncomment the MutatingWebhookConfiguration replacements in `config/default/kustomization.yaml` so cert-manager can inject the CA bundle:
+
+```bash
+cd ~/postgres-operator
+
+# Uncomment the MutatingWebhookConfiguration section (around lines 188-217)
+# Find the section that says "Uncomment the following block if you have a DefaultingWebhook"
+# and uncomment it.
+
+# Or run this sed command to uncomment it automatically:
+sed -i '' '188,218s/^# //' config/default/kustomization.yaml
+
+# Verify it's uncommented - should show MutatingWebhookConfiguration without # prefix
+grep -A 5 "DefaultingWebhook" config/default/kustomization.yaml
+```
+
+### Task 4.2: Generate Manifests
 
 ```bash
 # Generate manifests (includes new mutating webhook configuration)
 make manifests
 
 # Verify mutating webhook manifest was generated
-grep -l "mutating" config/webhook/manifests.yaml
+grep "mutating" config/webhook/manifests.yaml
 ```
 
-### Task 4.2: Undeploy Existing Operator
+### Task 4.3: Undeploy Existing Operator
 
 Since we added a new webhook, we need to fully redeploy (not just restart) so the new MutatingWebhookConfiguration gets created and cert-manager can inject the CA bundle:
 
@@ -203,7 +221,7 @@ kubectl get all -n postgres-operator-system
 # Should show "No resources found"
 ```
 
-### Task 4.3: Rebuild and Deploy
+### Task 4.4: Rebuild and Deploy
 
 ```bash
 # Rebuild the image
@@ -230,7 +248,7 @@ make deploy IMG=postgres-operator:latest
 make deploy IMG=localhost/postgres-operator:latest
 ```
 
-### Task 4.4: Wait for Certificates
+### Task 4.5: Wait for Certificates
 
 cert-manager needs time to generate certificates and inject the CA bundle:
 
@@ -246,7 +264,7 @@ kubectl wait --for=condition=Ready pod -l control-plane=controller-manager \
 kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager | grep -i webhook
 ```
 
-### Task 4.5: Verify Both Webhooks are Registered
+### Task 4.6: Verify Both Webhooks are Registered
 
 ```bash
 # Check both webhooks are configured
@@ -258,7 +276,7 @@ kubectl get mutatingwebhookconfigurations
 # - postgres-operator-mutating-webhook-configuration
 ```
 
-### Task 4.6: Test Minimal Resource
+### Task 4.7: Test Minimal Resource
 
 ```bash
 # Create resource with minimal spec (missing image, replicas)
@@ -290,7 +308,7 @@ kubectl get database minimal-db -o jsonpath='{.metadata.labels.managed-by}'
 echo
 ```
 
-### Task 4.7: Test Namespace-Based Defaults
+### Task 4.8: Test Namespace-Based Defaults
 
 ```bash
 # Create in production namespace
