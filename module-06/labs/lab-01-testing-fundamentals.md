@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 5](../module-05/README.md)
+- Completion of [Module 5](../../module-05/README.md)
 - Database operator from Module 3/4/5
 - Go 1.21+ installed
 - Understanding of Go testing
