@@ -45,10 +45,16 @@ if kind get clusters | grep -q "^${CLUSTER_NAME}$"; then
 fi
 
 # Create kind cluster configuration
+# Note: We disable the default CNI and install Calico for Network Policy support
 cat > /tmp/kind-config.yaml <<EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: ${CLUSTER_NAME}
+networking:
+  # Disable default CNI - we'll install Calico for Network Policy support
+  disableDefaultCNI: true
+  # Set pod subnet for Calico
+  podSubnet: "192.168.0.0/16"
 nodes:
 - role: control-plane
   kubeadmConfigPatches:
@@ -72,7 +78,22 @@ kind create cluster \
     --config /tmp/kind-config.yaml \
     --image "kindest/node:${KUBERNETES_VERSION}"
 
-# Wait for cluster to be ready
+# Install Calico CNI for Network Policy support
+echo "Installing Calico CNI (for Network Policy enforcement)..."
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+# Wait for Calico to be ready
+echo "Waiting for Calico to be ready..."
+kubectl wait --namespace kube-system \
+    --for=condition=Ready pod \
+    --selector=k8s-app=calico-node \
+    --timeout=300s
+kubectl wait --namespace kube-system \
+    --for=condition=Ready pod \
+    --selector=k8s-app=calico-kube-controllers \
+    --timeout=300s
+
+# Wait for cluster nodes to be ready (after CNI is installed)
 echo "Waiting for cluster to be ready..."
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
 
@@ -162,10 +183,12 @@ echo "Cluster name: ${CLUSTER_NAME}"
 echo "Context: kind-${CLUSTER_NAME}"
 echo ""
 echo "Installed components:"
+echo "  - Calico CNI (Network Policy enforcement enabled)"
 echo "  - ingress-nginx"
 echo "  - cert-manager (for webhook TLS certificates)"
 if [ "$PROMETHEUS_INSTALLED" = "yes" ]; then
 echo "  - Prometheus stack (for metrics - Module 6-7)"
+echo "    - Discovers ServiceMonitors from ALL namespaces"
 echo "    - monitoring namespace labeled with: metrics=enabled"
 fi
 echo ""

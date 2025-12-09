@@ -16,7 +16,7 @@
 - Completion of [Lab 7.1](lab-01-packaging-distribution.md)
 - Operator with generated RBAC
 - Understanding of RBAC concepts
-- Prometheus installed (included in `scripts/setup-kind-cluster.sh`)
+- Kind cluster created with `scripts/setup-kind-cluster.sh` (includes Calico CNI and Prometheus)
 
 ## Exercise 1: Review Generated RBAC
 
@@ -491,23 +491,55 @@ histogram_quantile(0.99, rate(controller_runtime_reconcile_time_seconds_bucket[5
 pkill -f "port-forward.*9090"
 ```
 
-### Task 5.8: Test Network Policy Enforcement (Optional)
+### Task 5.8: Test Network Policy Enforcement
 
-Network Policies require a CNI that supports them (Calico, Cilium, etc.):
+The course setup script installs **Calico CNI**, which enforces Network Policies. Let's verify it's working.
+
+#### Step 1: Verify Calico is Running
 
 ```bash
-# Check if your cluster has a CNI that supports network policies
-kubectl get pods -n kube-system | grep -E "(calico|cilium|weave)"
+# Check Calico pods are running
+kubectl get pods -n kube-system | grep calico
 
-# Test: Try to access metrics from an unlabeled namespace (should fail with CNI)
-kubectl run test-curl --rm -it --image=curlimages/curl --restart=Never -- \
-  curl -k https://postgres-operator-controller-manager-metrics-service.postgres-operator-system:8443/metrics
-
-# The request should timeout or be blocked if network policies are enforced
-# In kind (without Calico), the request will succeed because policies aren't enforced
+# Expected output:
+# calico-kube-controllers-xxx   1/1     Running
+# calico-node-xxx               1/1     Running
 ```
 
-**Note:** The default kind cluster does NOT enforce Network Policies. In production clusters with Calico/Cilium, unlabeled namespaces will be blocked.
+#### Step 2: Test Access from Unlabeled Namespace
+
+```bash
+# Create a test namespace WITHOUT the metrics=enabled label
+kubectl create namespace test-netpol
+
+# Try to access the operator metrics from the unlabeled namespace
+# This should FAIL (timeout or connection refused) because of the NetworkPolicy
+kubectl run test-curl -n test-netpol --rm -it --image=curlimages/curl --restart=Never -- \
+  curl -k --connect-timeout 5 https://postgres-operator-controller-manager-metrics-service.postgres-operator-system:8443/metrics
+
+# Expected: curl: (28) Connection timed out or similar error
+```
+
+#### Step 3: Test Access from Labeled Namespace
+
+```bash
+# Label the test namespace to allow metrics access
+kubectl label namespace test-netpol metrics=enabled
+
+# Try again - this should SUCCEED
+kubectl run test-curl2 -n test-netpol --rm -it --image=curlimages/curl --restart=Never -- \
+  curl -k --connect-timeout 5 https://postgres-operator-controller-manager-metrics-service.postgres-operator-system:8443/metrics
+
+# Expected: Metrics output (or 401 Unauthorized if auth is required, but connection succeeds)
+```
+
+#### Step 4: Cleanup
+
+```bash
+kubectl delete namespace test-netpol
+```
+
+**Key takeaway:** Network Policies enforce that only pods in namespaces with `metrics=enabled` label can access the metrics endpoint. This is defense in depth!
 
 ## Cleanup
 
