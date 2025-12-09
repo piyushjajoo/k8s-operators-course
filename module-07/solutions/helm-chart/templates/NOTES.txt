@@ -1,15 +1,15 @@
 Database Operator has been installed!
 
 CHART: {{ .Chart.Name }}-{{ .Chart.Version }}
-NAMESPACE: {{ include "database-operator.namespace" . }}
+NAMESPACE: {{ include "postgres-operator.namespace" . }}
 
 To verify the installation:
 
-  kubectl get pods -n {{ include "database-operator.namespace" . }} -l control-plane=controller-manager
+  kubectl get pods -n {{ include "postgres-operator.namespace" . }} -l control-plane=controller-manager
 
 To check the operator logs:
 
-  kubectl logs -n {{ include "database-operator.namespace" . }} -l control-plane=controller-manager -f
+  kubectl logs -n {{ include "postgres-operator.namespace" . }} -l control-plane=controller-manager -f
 
 {{- if .Values.crds.install }}
 
@@ -37,8 +37,8 @@ To create a Database:
 {{- if .Values.webhook.enabled }}
 
 Webhooks are enabled:
-  - ValidatingWebhookConfiguration: {{ include "database-operator.fullname" . }}-validating-webhook
-  - MutatingWebhookConfiguration: {{ include "database-operator.fullname" . }}-mutating-webhook
+  - ValidatingWebhookConfiguration: {{ include "postgres-operator.fullname" . }}-validating-webhook
+  - MutatingWebhookConfiguration: {{ include "postgres-operator.fullname" . }}-mutating-webhook
 
 {{- if .Values.webhook.certManager.enabled }}
 Certificates are managed by cert-manager.

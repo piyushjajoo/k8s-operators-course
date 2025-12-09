@@ -64,13 +64,13 @@ spec:
 
 ```bash
 # Deploy the operator
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 
 # Check for lease object
-kubectl get lease -n database-operator-system
+kubectl get lease -n postgres-operator-system
 
 # Check logs for leader election
-kubectl logs -n database-operator-system -l control-plane=controller-manager | grep -i "leader"
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "leader"
 ```
 
 ## Exercise 2: Deploy Multiple Replicas
@@ -110,18 +110,18 @@ spec:
 
 ```bash
 # Redeploy with updated config
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 
 # Check replicas
-kubectl get deployment -n database-operator-system
+kubectl get deployment -n postgres-operator-system
 
 # Check all pods are running
-kubectl get pods -n database-operator-system -l control-plane=controller-manager
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
 
 # Verify only one is leader (check logs)
-for pod in $(kubectl get pods -n database-operator-system -l control-plane=controller-manager -o name); do
+for pod in $(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o name); do
   echo "=== $pod ==="
-  kubectl logs -n database-operator-system $pod | grep -i "leader" | tail -2
+  kubectl logs -n postgres-operator-system $pod | grep -i "leader" | tail -2
 done
 ```
 
@@ -157,37 +157,37 @@ watch kubectl top pods -l control-plane=controller-manager
 
 ```bash
 # List all pods
-kubectl get pods -n database-operator-system -l control-plane=controller-manager
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
 
 # Find the lease and identify the leader
-kubectl get lease -n database-operator-system -o yaml
+kubectl get lease -n postgres-operator-system -o yaml
 
 # The holderIdentity field shows which pod is the leader
 # Look for the pod name in the holderIdentity
 
 # Check logs to confirm leader
-LEADER_POD=$(kubectl get lease -n database-operator-system -o jsonpath='{.items[0].spec.holderIdentity}' | cut -d'_' -f1)
+LEADER_POD=$(kubectl get lease -n postgres-operator-system -o jsonpath='{.items[0].spec.holderIdentity}' | cut -d'_' -f1)
 echo "Leader pod: $LEADER_POD"
-kubectl logs -n database-operator-system $LEADER_POD | grep -i "became leader"
+kubectl logs -n postgres-operator-system $LEADER_POD | grep -i "became leader"
 ```
 
 ### Task 4.2: Simulate Leader Failure
 
 ```bash
 # Get the leader pod name
-LEADER_POD=$(kubectl get lease -n database-operator-system -o jsonpath='{.items[0].spec.holderIdentity}' | cut -d'_' -f1)
+LEADER_POD=$(kubectl get lease -n postgres-operator-system -o jsonpath='{.items[0].spec.holderIdentity}' | cut -d'_' -f1)
 
 # Delete the leader pod
-kubectl delete pod -n database-operator-system $LEADER_POD
+kubectl delete pod -n postgres-operator-system $LEADER_POD
 
 # Watch failover happen
-watch kubectl get pods -n database-operator-system -l control-plane=controller-manager
+watch kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
 
 # In another terminal, watch the lease
-watch kubectl get lease -n database-operator-system -o jsonpath='{.items[0].spec.holderIdentity}'
+watch kubectl get lease -n postgres-operator-system -o jsonpath='{.items[0].spec.holderIdentity}'
 
 # After a new leader is elected, verify reconciliation continues
-kubectl logs -n database-operator-system -l control-plane=controller-manager --tail=20 | grep -i "reconcil"
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager --tail=20 | grep -i "reconcil"
 ```
 
 ## Exercise 5: Pod Disruption Budget
@@ -223,16 +223,16 @@ resources:
 
 ```bash
 # Deploy with PDB
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 
 # Verify PDB is created
-kubectl get pdb -n database-operator-system
+kubectl get pdb -n postgres-operator-system
 
 # Check PDB status
-kubectl describe pdb -n database-operator-system controller-manager-pdb
+kubectl describe pdb -n postgres-operator-system controller-manager-pdb
 
 # Try to delete multiple pods (PDB should prevent deleting more than 1)
-kubectl delete pod -n database-operator-system -l control-plane=controller-manager --all
+kubectl delete pod -n postgres-operator-system -l control-plane=controller-manager --all
 # This should fail or be delayed to maintain minAvailable
 ```
 
@@ -243,7 +243,7 @@ kubectl delete pod -n database-operator-system -l control-plane=controller-manag
 make undeploy
 
 # Or scale down for testing
-kubectl scale deployment -n database-operator-system controller-manager --replicas=1
+kubectl scale deployment -n postgres-operator-system controller-manager --replicas=1
 ```
 
 ## Lab Summary

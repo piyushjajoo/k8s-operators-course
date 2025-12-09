@@ -73,13 +73,13 @@ Kubebuilder provides Makefile targets for building images:
 
 ```bash
 # Build the image using kubebuilder's make target
-make docker-build IMG=database-operator:v0.1.0
+make docker-build IMG=postgres-operator:v0.1.0
 
 # For kind, load image into the cluster
-kind load docker-image database-operator:v0.1.0 --name k8s-operators-course
+kind load docker-image postgres-operator:v0.1.0 --name k8s-operators-course
 
 # Verify image is available in kind
-docker exec -it k8s-operators-course-control-plane crictl images | grep database-operator
+docker exec -it k8s-operators-course-control-plane crictl images | grep postgres-operator
 ```
 
 ## Exercise 2: Deploy Using Kubebuilder's Kustomize (Recommended)
@@ -106,11 +106,11 @@ ls -la config/
 make install
 
 # Deploy the operator (builds and deploys)
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 
 # Verify deployment
-kubectl get deployment -n database-operator-system
-kubectl get pods -n database-operator-system
+kubectl get deployment -n postgres-operator-system
+kubectl get pods -n postgres-operator-system
 ```
 
 ### Task 2.3: View Generated Manifests
@@ -120,7 +120,7 @@ kubectl get pods -n database-operator-system
 kustomize build config/default
 
 # Or using make target
-make build-installer IMG=database-operator:v0.1.0
+make build-installer IMG=postgres-operator:v0.1.0
 ```
 
 ## Exercise 3: Create Helm Chart from Kustomize
@@ -140,7 +140,7 @@ Add these targets to your `Makefile`:
 
 ```makefile
 # Helm chart configuration
-CHART_NAME ?= database-operator
+CHART_NAME ?= postgres-operator
 CHART_VERSION ?= 0.1.0
 CHART_DIR ?= charts/$(CHART_NAME)
 
@@ -151,36 +151,36 @@ helm-chart: manifests kustomize ## Generate Helm chart from Kustomize (includes 
 	@echo "Generating Helm chart with ALL operator components..."
 	@mkdir -p $(CHART_DIR)/templates
 	@# Create Chart.yaml
-	@cat > $(CHART_DIR)/Chart.yaml <<EOF
-apiVersion: v2
-name: $(CHART_NAME)
-description: A Helm chart for $(CHART_NAME) - includes CRDs, RBAC, and webhooks
-type: application
-version: $(CHART_VERSION)
-appVersion: "$(VERSION)"
-EOF
+	@printf '%s\n' \
+		'apiVersion: v2' \
+		'name: $(CHART_NAME)' \
+		'description: A Helm chart for $(CHART_NAME) - includes CRDs, RBAC, and webhooks' \
+		'type: application' \
+		'version: $(CHART_VERSION)' \
+		'appVersion: "$(VERSION)"' \
+		> $(CHART_DIR)/Chart.yaml
 	@# Create values.yaml
-	@cat > $(CHART_DIR)/values.yaml <<EOF
-image:
-  repository: $(IMAGE_TAG_BASE)
-  tag: $(VERSION)
-  pullPolicy: IfNotPresent
-
-replicaCount: 1
-
-resources:
-  limits:
-    cpu: 500m
-    memory: 128Mi
-  requests:
-    cpu: 10m
-    memory: 64Mi
-
-leaderElection:
-  enabled: false
-
-namespace: $(CHART_NAME)-system
-EOF
+	@printf '%s\n' \
+		'image:' \
+		'  repository: $(IMAGE_TAG_BASE)' \
+		'  tag: $(VERSION)' \
+		'  pullPolicy: IfNotPresent' \
+		'' \
+		'replicaCount: 1' \
+		'' \
+		'resources:' \
+		'  limits:' \
+		'    cpu: 500m' \
+		'    memory: 128Mi' \
+		'  requests:' \
+		'    cpu: 10m' \
+		'    memory: 64Mi' \
+		'' \
+		'leaderElection:' \
+		'  enabled: false' \
+		'' \
+		'namespace: $(CHART_NAME)-system' \
+		> $(CHART_DIR)/values.yaml
 	@# Generate ALL manifests from kustomize (CRDs, RBAC, Deployment, Webhooks)
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	@$(KUSTOMIZE) build config/default > $(CHART_DIR)/templates/manifests.yaml
@@ -215,23 +215,23 @@ helm-uninstall: ## Uninstall Helm chart
 
 ```bash
 # Generate Helm chart from Kustomize
-make helm-chart IMG=database-operator:v0.1.0
+make helm-chart IMG=postgres-operator:v0.1.0
 
 # Verify the chart structure
-ls -la charts/database-operator/
-ls -la charts/database-operator/templates/
+ls -la charts/postgres-operator/
+ls -la charts/postgres-operator/templates/
 
 # IMPORTANT: Verify the generated manifests include all components
 echo "=== Checking for CRDs ==="
-grep -c "kind: CustomResourceDefinition" charts/database-operator/templates/manifests.yaml
+grep -c "kind: CustomResourceDefinition" charts/postgres-operator/templates/manifests.yaml
 
 echo "=== Checking for RBAC ==="
-grep -c "kind: ServiceAccount" charts/database-operator/templates/manifests.yaml
-grep -c "kind: ClusterRole" charts/database-operator/templates/manifests.yaml
-grep -c "kind: ClusterRoleBinding" charts/database-operator/templates/manifests.yaml
+grep -c "kind: ServiceAccount" charts/postgres-operator/templates/manifests.yaml
+grep -c "kind: ClusterRole" charts/postgres-operator/templates/manifests.yaml
+grep -c "kind: ClusterRoleBinding" charts/postgres-operator/templates/manifests.yaml
 
 echo "=== Checking for Deployment ==="
-grep -c "kind: Deployment" charts/database-operator/templates/manifests.yaml
+grep -c "kind: Deployment" charts/postgres-operator/templates/manifests.yaml
 
 # Lint the chart
 make helm-lint
@@ -253,7 +253,7 @@ ls -la dist/
 make helm-install
 
 # Verify deployment
-kubectl get pods -n database-operator-system
+kubectl get pods -n postgres-operator-system
 
 # Cleanup
 make helm-uninstall
@@ -412,27 +412,27 @@ Create `charts/README.md`:
 ### Using OCI Registry (GHCR)
 
 ```bash
-helm install database-operator oci://ghcr.io/YOUR_USERNAME/charts/database-operator --version 0.1.0
+helm install postgres-operator oci://ghcr.io/YOUR_USERNAME/charts/postgres-operator --version 0.1.0
 ```
 
 ### Using Helm Repository
 
 ```bash
 # Add the repository
-helm repo add database-operator https://YOUR_USERNAME.github.io/database-operator
+helm repo add postgres-operator https://YOUR_USERNAME.github.io/postgres-operator
 
 # Update repositories
 helm repo update
 
 # Install
-helm install database-operator database-operator/database-operator
+helm install postgres-operator postgres-operator/postgres-operator
 ```
 
 ## Configuration
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `image.repository` | Image repository | `ghcr.io/YOUR_USERNAME/database-operator` |
+| `image.repository` | Image repository | `ghcr.io/YOUR_USERNAME/postgres-operator` |
 | `image.tag` | Image tag | `v0.1.0` |
 | `replicaCount` | Number of replicas | `1` |
 | `leaderElection.enabled` | Enable leader election | `false` |
@@ -458,7 +458,7 @@ Update the version in `Makefile`:
 
 ```makefile
 # Image URL to use all building/pushing image targets
-IMG ?= database-operator:v0.1.0
+IMG ?= postgres-operator:v0.1.0
 VERSION ?= 0.1.0
 ```
 
@@ -466,36 +466,36 @@ Or specify at build time:
 
 ```bash
 # Build with specific version
-make docker-build IMG=database-operator:v0.1.0
+make docker-build IMG=postgres-operator:v0.1.0
 
 # Build for multiple architectures (if needed)
-make docker-buildx IMG=database-operator:v0.1.0
+make docker-buildx IMG=postgres-operator:v0.1.0
 ```
 
 ### Task 5.2: Push to Registry
 
 ```bash
 # Tag for your registry
-docker tag database-operator:v0.1.0 ghcr.io/your-username/database-operator:v0.1.0
+docker tag postgres-operator:v0.1.0 ghcr.io/your-username/postgres-operator:v0.1.0
 
 # Push (requires authentication)
-docker push ghcr.io/your-username/database-operator:v0.1.0
+docker push ghcr.io/your-username/postgres-operator:v0.1.0
 
 # Or use make target
-make docker-push IMG=ghcr.io/your-username/database-operator:v0.1.0
+make docker-push IMG=ghcr.io/your-username/postgres-operator:v0.1.0
 ```
 
 ### Task 5.3: Deploy Specific Version
 
 ```bash
 # Deploy with Kustomize
-make deploy IMG=ghcr.io/your-username/database-operator:v0.1.0
+make deploy IMG=ghcr.io/your-username/postgres-operator:v0.1.0
 
 # Or deploy with Helm
-make helm-install IMG=ghcr.io/your-username/database-operator:v0.1.0
+make helm-install IMG=ghcr.io/your-username/postgres-operator:v0.1.0
 
 # Verify
-kubectl get deployment -n database-operator-system -o yaml | grep image:
+kubectl get deployment -n postgres-operator-system -o yaml | grep image:
 ```
 
 ## Cleanup
@@ -511,7 +511,7 @@ make helm-uninstall
 make uninstall
 
 # Remove local images (optional)
-docker rmi database-operator:v0.1.0
+docker rmi postgres-operator:v0.1.0
 
 # Clean up generated charts
 rm -rf charts/ dist/

@@ -138,7 +138,7 @@ mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
     Metrics:                metricsserver.Options{BindAddress: metricsAddr},
     HealthProbeBindAddress: probeAddr,
     LeaderElection:         enableLeaderElection,
-    LeaderElectionID:       "database-operator.example.com",
+    LeaderElectionID:       "postgres-operator.example.com",
     // LeaderElectionReleaseOnCancel defines if the leader should step down
     // when the Manager ends. This requires the binary to immediately end
     // when the Manager is stopped.
@@ -277,12 +277,12 @@ graph LR
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: database-operator-pdb
+  name: postgres-operator-pdb
 spec:
   minAvailable: 2
   selector:
     matchLabels:
-      app: database-operator
+      app: postgres-operator
 ```
 
 ### PDB Protection

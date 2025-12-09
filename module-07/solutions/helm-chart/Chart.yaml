@@ -3,7 +3,7 @@
 # Includes: CRDs, RBAC, Deployment, Webhooks (optional)
 
 apiVersion: v2
-name: database-operator
+name: postgres-operator
 description: |
   A Kubernetes operator for managing PostgreSQL databases.
   Built with kubebuilder and packaged for Helm distribution.
@@ -17,9 +17,9 @@ keywords:
   - postgresql
   - kubernetes
   - kubebuilder
-home: https://github.com/example/database-operator
+home: https://github.com/example/postgres-operator
 sources:
-  - https://github.com/example/database-operator
+  - https://github.com/example/postgres-operator
 maintainers:
   - name: Database Operator Team
     email: team@example.com

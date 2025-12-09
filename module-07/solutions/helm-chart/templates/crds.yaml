@@ -11,7 +11,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 spec:
   group: database.example.com
   names:

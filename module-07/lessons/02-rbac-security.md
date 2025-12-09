@@ -99,7 +99,7 @@ graph TB
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: database-operator
+  name: postgres-operator
   namespace: default
 ```
 
@@ -231,11 +231,11 @@ volumes:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: database-operator
+  name: postgres-operator
 spec:
   podSelector:
     matchLabels:
-      app: database-operator
+      app: postgres-operator
   policyTypes:
   - Ingress
   - Egress

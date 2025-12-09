@@ -44,7 +44,7 @@ cp release.yaml .github/workflows/
 Install charts from OCI:
 
 ```bash
-helm install my-operator oci://ghcr.io/YOUR_USERNAME/charts/database-operator --version 0.1.0
+helm install my-operator oci://ghcr.io/YOUR_USERNAME/charts/postgres-operator --version 0.1.0
 ```
 
 ### Option 2: GitHub Pages Helm Repository
@@ -58,9 +58,9 @@ cp helm-gh-pages.yaml .github/workflows/
 Add Helm repository:
 
 ```bash
-helm repo add database-operator https://YOUR_USERNAME.github.io/database-operator
+helm repo add postgres-operator https://YOUR_USERNAME.github.io/postgres-operator
 helm repo update
-helm install my-operator database-operator/database-operator
+helm install my-operator postgres-operator/postgres-operator
 ```
 
 ## Required Makefile Targets
@@ -68,7 +68,7 @@ helm install my-operator database-operator/database-operator
 Ensure your Makefile has these targets:
 
 ```makefile
-CHART_NAME ?= database-operator
+CHART_NAME ?= postgres-operator
 CHART_VERSION ?= 0.1.0
 CHART_DIR ?= charts/$(CHART_NAME)
 

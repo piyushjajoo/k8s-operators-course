@@ -135,13 +135,13 @@ Kubebuilder provides Makefile targets for building images:
 
 ```bash
 # Build the container image
-make docker-build IMG=<registry>/database-operator:v0.1.0
+make docker-build IMG=<registry>/postgres-operator:v0.1.0
 
 # Push to registry
-make docker-push IMG=<registry>/database-operator:v0.1.0
+make docker-push IMG=<registry>/postgres-operator:v0.1.0
 
 # Build and push in one command
-make docker-build docker-push IMG=<registry>/database-operator:v0.1.0
+make docker-build docker-push IMG=<registry>/postgres-operator:v0.1.0
 ```
 
 ### Image Build Process
@@ -172,10 +172,10 @@ For local development with kind clusters:
 
 ```bash
 # Build the image
-make docker-build IMG=database-operator:latest
+make docker-build IMG=postgres-operator:latest
 
 # Load into kind cluster
-kind load docker-image database-operator:latest --name k8s-operators-course
+kind load docker-image postgres-operator:latest --name k8s-operators-course
 ```
 
 ## Helm Charts for Operators
@@ -235,7 +235,7 @@ config/
 **To deploy with Kustomize** (recommended for development):
 ```bash
 # Deploy the operator
-make deploy IMG=<registry>/database-operator:v0.1.0
+make deploy IMG=<registry>/postgres-operator:v0.1.0
 
 # This runs: kustomize build config/default | kubectl apply -f -
 ```
@@ -243,10 +243,10 @@ make deploy IMG=<registry>/database-operator:v0.1.0
 **To create a Helm chart** (for distribution):
 ```bash
 # Create Helm chart directory
-mkdir -p charts/database-operator/templates
+mkdir -p charts/postgres-operator/templates
 
 # Export kustomize output as a starting point
-kustomize build config/default > charts/database-operator/templates/all.yaml
+kustomize build config/default > charts/postgres-operator/templates/all.yaml
 
 # Then split into separate files and add templating
 ```
@@ -282,13 +282,13 @@ operator-sdk init --plugins=manifests
 # Generate OLM bundle from kubebuilder manifests
 operator-sdk generate bundle \
   --version 0.1.0 \
-  --package database-operator \
+  --package postgres-operator \
   --channels stable
 
 # Creates:
 # bundle/
 #   manifests/
-#     database-operator.clusterserviceversion.yaml
+#     postgres-operator.clusterserviceversion.yaml
 #     database.example.com_databases.yaml
 #   metadata/
 #     annotations.yaml
@@ -421,10 +421,10 @@ Modern approach: Push Helm charts to OCI registries (like GHCR):
 
 ```bash
 # Push chart to OCI registry
-helm push database-operator-0.1.0.tgz oci://ghcr.io/myorg/charts
+helm push postgres-operator-0.1.0.tgz oci://ghcr.io/myorg/charts
 
 # Install from OCI registry
-helm install my-operator oci://ghcr.io/myorg/charts/database-operator --version 0.1.0
+helm install my-operator oci://ghcr.io/myorg/charts/postgres-operator --version 0.1.0
 ```
 
 ## Key Takeaways

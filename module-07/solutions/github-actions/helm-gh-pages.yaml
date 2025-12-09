@@ -54,7 +54,7 @@ jobs:
 # Example .github/cr.yaml:
 # ---
 # owner: your-username
-# git-repo: database-operator
+# git-repo: postgres-operator
 # release-name-template: "helm-{{ .Name }}-{{ .Version }}"
 # skip-existing: true
 

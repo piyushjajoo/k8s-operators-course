@@ -59,13 +59,13 @@ your-operator/
 Kubebuilder already generates a Dockerfile. Use the kubebuilder make targets:
 ```bash
 # Build image
-make docker-build IMG=database-operator:v0.1.0
+make docker-build IMG=postgres-operator:v0.1.0
 
 # Push to registry
-make docker-push IMG=database-operator:v0.1.0
+make docker-push IMG=postgres-operator:v0.1.0
 
 # Load to kind (for local development)
-kind load docker-image database-operator:v0.1.0 --name k8s-operators-course
+kind load docker-image postgres-operator:v0.1.0 --name k8s-operators-course
 ```
 
 ### 2. RBAC (Lab 7.2)
@@ -94,7 +94,7 @@ Update `config/manager/manager.yaml`:
 
 Deploy:
 ```bash
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 ```
 
 ### 5. Performance (Lab 7.4)
@@ -107,20 +107,20 @@ Add to `internal/controller/database_controller.go`:
 Copy and customize `helm-chart/` directory. For kubebuilder projects, Kustomize is preferred:
 ```bash
 # Deploy with Kustomize (recommended)
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 
 # Or package for Helm distribution
-helm package charts/database-operator
+helm package charts/postgres-operator
 ```
 
 ## Key Commands
 
 ```bash
 # Build and push image
-make docker-build docker-push IMG=<registry>/database-operator:v0.1.0
+make docker-build docker-push IMG=<registry>/postgres-operator:v0.1.0
 
 # Deploy operator (Kustomize)
-make deploy IMG=<registry>/database-operator:v0.1.0
+make deploy IMG=<registry>/postgres-operator:v0.1.0
 
 # Undeploy
 make undeploy
@@ -133,7 +133,7 @@ make install
 make uninstall
 
 # Helm chart commands (add targets from lab 7.1)
-make helm-chart IMG=<registry>/database-operator:v0.1.0
+make helm-chart IMG=<registry>/postgres-operator:v0.1.0
 make helm-lint
 make helm-package
 make helm-install
@@ -145,7 +145,7 @@ make helm-uninstall
 Add these targets to your Makefile to generate Helm charts automatically:
 
 ```makefile
-CHART_NAME ?= database-operator
+CHART_NAME ?= postgres-operator
 CHART_VERSION ?= 0.1.0
 CHART_DIR ?= charts/$(CHART_NAME)
 

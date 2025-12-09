@@ -182,11 +182,11 @@ Controller-runtime automatically exposes metrics. Let's explore and add custom o
 
 ```bash
 # Deploy operator
-make deploy IMG=database-operator:v0.1.0
+make deploy IMG=postgres-operator:v0.1.0
 
 # Port forward to metrics endpoint
-kubectl port-forward -n database-operator-system \
-  $(kubectl get pods -n database-operator-system -l control-plane=controller-manager -o name | head -1) \
+kubectl port-forward -n postgres-operator-system \
+  $(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o name | head -1) \
   8080:8080
 
 # View all metrics
@@ -283,7 +283,7 @@ echo "Created 50 test databases"
 
 ```bash
 # Watch operator resource usage
-watch kubectl top pods -n database-operator-system -l control-plane=controller-manager
+watch kubectl top pods -n postgres-operator-system -l control-plane=controller-manager
 
 # In another terminal, watch reconciliation metrics
 while true; do
@@ -292,7 +292,7 @@ while true; do
 done
 
 # Check controller logs for reconciliation activity
-kubectl logs -n database-operator-system -l control-plane=controller-manager --tail=20 -f
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager --tail=20 -f
 
 # Check queue length
 curl -s http://localhost:8080/metrics | grep workqueue

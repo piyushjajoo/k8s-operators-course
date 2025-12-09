@@ -81,7 +81,7 @@ func main() {
 		}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "database-operator.example.com",
+		LeaderElectionID:       "postgres-operator.example.com",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down
 		// when the Manager ends. This requires the binary to immediately end
 		// when the Manager is stopped, otherwise, this setting is unsafe.

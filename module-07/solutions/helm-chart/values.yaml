@@ -15,7 +15,7 @@ namespace: ""
 # Image configuration
 image:
   # -- Image repository
-  repository: ghcr.io/example/database-operator
+  repository: ghcr.io/example/postgres-operator
   # -- Image pull policy
   pullPolicy: IfNotPresent
   # -- Image tag (defaults to chart appVersion)

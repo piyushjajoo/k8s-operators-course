@@ -14,7 +14,7 @@ metadata:
   namespace: system
   labels:
     control-plane: controller-manager
-    app.kubernetes.io/name: database-operator
+    app.kubernetes.io/name: postgres-operator
     app.kubernetes.io/managed-by: kustomize
 spec:
   replicas: 3  # Multiple replicas for HA (default is 1)

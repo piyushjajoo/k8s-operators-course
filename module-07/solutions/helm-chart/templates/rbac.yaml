@@ -8,10 +8,10 @@ Includes: ServiceAccount, ClusterRole, ClusterRoleBinding
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "database-operator.serviceAccountName" . }}
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.serviceAccountName" . }}
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
   {{- with .Values.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -22,9 +22,9 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "database-operator.fullname" . }}-manager-role
+  name: {{ include "postgres-operator.fullname" . }}-manager-role
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 rules:
   # Database custom resource permissions
   - apiGroups:
@@ -103,27 +103,27 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "database-operator.fullname" . }}-manager-rolebinding
+  name: {{ include "postgres-operator.fullname" . }}-manager-rolebinding
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "database-operator.fullname" . }}-manager-role
+  name: {{ include "postgres-operator.fullname" . }}-manager-role
 subjects:
   - kind: ServiceAccount
-    name: {{ include "database-operator.serviceAccountName" . }}
-    namespace: {{ include "database-operator.namespace" . }}
+    name: {{ include "postgres-operator.serviceAccountName" . }}
+    namespace: {{ include "postgres-operator.namespace" . }}
 
 ---
 # Role for leader election
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "database-operator.fullname" . }}-leader-election-role
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-leader-election-role
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 rules:
   - apiGroups:
       - ""
@@ -162,16 +162,16 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "database-operator.fullname" . }}-leader-election-rolebinding
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-leader-election-rolebinding
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "database-operator.fullname" . }}-leader-election-role
+  name: {{ include "postgres-operator.fullname" . }}-leader-election-role
 subjects:
   - kind: ServiceAccount
-    name: {{ include "database-operator.serviceAccountName" . }}
-    namespace: {{ include "database-operator.namespace" . }}
+    name: {{ include "postgres-operator.serviceAccountName" . }}
+    namespace: {{ include "postgres-operator.namespace" . }}
 

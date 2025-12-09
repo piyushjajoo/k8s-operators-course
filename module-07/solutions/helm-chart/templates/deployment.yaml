@@ -5,26 +5,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "database-operator.fullname" . }}-controller-manager
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-controller-manager
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
     control-plane: controller-manager
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       control-plane: controller-manager
-      {{- include "database-operator.selectorLabels" . | nindent 6 }}
+      {{- include "postgres-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
         control-plane: controller-manager
-        {{- include "database-operator.selectorLabels" . | nindent 8 }}
+        {{- include "postgres-operator.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "database-operator.serviceAccountName" . }}
+      serviceAccountName: {{ include "postgres-operator.serviceAccountName" . }}
       terminationGracePeriodSeconds: 10
       securityContext:
         {{- toYaml .Values.securityContext | nindent 8 }}
@@ -75,7 +75,7 @@ spec:
       volumes:
       - name: cert
         secret:
-          secretName: {{ include "database-operator.fullname" . }}-webhook-cert
+          secretName: {{ include "postgres-operator.fullname" . }}-webhook-cert
           defaultMode: 420
       {{- end }}
 
@@ -84,16 +84,16 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "database-operator.fullname" . }}-pdb
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-pdb
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
     control-plane: controller-manager
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 spec:
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
   selector:
     matchLabels:
       control-plane: controller-manager
-      {{- include "database-operator.selectorLabels" . | nindent 6 }}
+      {{- include "postgres-operator.selectorLabels" . | nindent 6 }}
 {{- end }}
 

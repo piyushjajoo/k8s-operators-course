@@ -9,10 +9,10 @@ Only deployed if webhook.enabled is true
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "database-operator.fullname" . }}-webhook-service
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-webhook-service
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 spec:
   ports:
     - port: 443
@@ -20,19 +20,19 @@ spec:
       targetPort: 9443
   selector:
     control-plane: controller-manager
-    {{- include "database-operator.selectorLabels" . | nindent 4 }}
+    {{- include "postgres-operator.selectorLabels" . | nindent 4 }}
 
 ---
 # ValidatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: {{ include "database-operator.fullname" . }}-validating-webhook
+  name: {{ include "postgres-operator.fullname" . }}-validating-webhook
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.webhook.certManager.enabled }}
-    cert-manager.io/inject-ca-from: {{ include "database-operator.namespace" . }}/{{ include "database-operator.fullname" . }}-serving-cert
+    cert-manager.io/inject-ca-from: {{ include "postgres-operator.namespace" . }}/{{ include "postgres-operator.fullname" . }}-serving-cert
     {{- end }}
 webhooks:
   - name: vdatabase.kb.io
@@ -40,8 +40,8 @@ webhooks:
       - v1
     clientConfig:
       service:
-        name: {{ include "database-operator.fullname" . }}-webhook-service
-        namespace: {{ include "database-operator.namespace" . }}
+        name: {{ include "postgres-operator.fullname" . }}-webhook-service
+        namespace: {{ include "postgres-operator.namespace" . }}
         path: /validate-database-example-com-v1-database
     failurePolicy: Fail
     rules:
@@ -61,12 +61,12 @@ webhooks:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: {{ include "database-operator.fullname" . }}-mutating-webhook
+  name: {{ include "postgres-operator.fullname" . }}-mutating-webhook
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.webhook.certManager.enabled }}
-    cert-manager.io/inject-ca-from: {{ include "database-operator.namespace" . }}/{{ include "database-operator.fullname" . }}-serving-cert
+    cert-manager.io/inject-ca-from: {{ include "postgres-operator.namespace" . }}/{{ include "postgres-operator.fullname" . }}-serving-cert
     {{- end }}
 webhooks:
   - name: mdatabase.kb.io
@@ -74,8 +74,8 @@ webhooks:
       - v1
     clientConfig:
       service:
-        name: {{ include "database-operator.fullname" . }}-webhook-service
-        namespace: {{ include "database-operator.namespace" . }}
+        name: {{ include "postgres-operator.fullname" . }}-webhook-service
+        namespace: {{ include "postgres-operator.namespace" . }}
         path: /mutate-database-example-com-v1-database
     failurePolicy: Fail
     rules:
@@ -96,28 +96,28 @@ webhooks:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "database-operator.fullname" . }}-serving-cert
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-serving-cert
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 spec:
   dnsNames:
-    - {{ include "database-operator.fullname" . }}-webhook-service.{{ include "database-operator.namespace" . }}.svc
-    - {{ include "database-operator.fullname" . }}-webhook-service.{{ include "database-operator.namespace" . }}.svc.cluster.local
+    - {{ include "postgres-operator.fullname" . }}-webhook-service.{{ include "postgres-operator.namespace" . }}.svc
+    - {{ include "postgres-operator.fullname" . }}-webhook-service.{{ include "postgres-operator.namespace" . }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: {{ include "database-operator.fullname" . }}-selfsigned-issuer
-  secretName: {{ include "database-operator.fullname" . }}-webhook-cert
+    name: {{ include "postgres-operator.fullname" . }}-selfsigned-issuer
+  secretName: {{ include "postgres-operator.fullname" . }}-webhook-cert
 
 ---
 # Self-signed Issuer for webhook certificate
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: {{ include "database-operator.fullname" . }}-selfsigned-issuer
-  namespace: {{ include "database-operator.namespace" . }}
+  name: {{ include "postgres-operator.fullname" . }}-selfsigned-issuer
+  namespace: {{ include "postgres-operator.namespace" . }}
   labels:
-    {{- include "database-operator.labels" . | nindent 4 }}
+    {{- include "postgres-operator.labels" . | nindent 4 }}
 spec:
   selfSigned: {}
 {{- end }}

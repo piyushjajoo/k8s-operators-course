@@ -185,10 +185,10 @@ sudo apt-get install trivy  # Linux
 
 ```bash
 # Scan image
-trivy image database-operator:latest
+trivy image postgres-operator:latest
 
 # Scan with JSON output
-trivy image -f json -o scan-report.json database-operator:latest
+trivy image -f json -o scan-report.json postgres-operator:latest
 
 # Fix high/critical vulnerabilities
 ```
@@ -253,7 +253,7 @@ resources:
 make undeploy
 
 # Remove network policy if added separately
-kubectl delete networkpolicy controller-manager -n database-operator-system
+kubectl delete networkpolicy controller-manager -n postgres-operator-system
 ```
 
 ## Lab Summary
