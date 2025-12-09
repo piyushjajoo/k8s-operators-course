@@ -637,7 +637,7 @@ cd ~/postgres-operator
 dlv debug ./cmd/main.go -- --metrics-bind-address=:8080 --health-probe-bind-address=:8081
 
 # In Delve console:
-(dlv) break internal/controller/database_controller.go:64
+(dlv) break internal/controller/database_controller.go:81
 (dlv) continue
 # The breakpoint will hit when Reconcile is called
 (dlv) print req
