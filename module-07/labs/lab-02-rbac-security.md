@@ -16,6 +16,7 @@
 - Completion of [Lab 7.1](lab-01-packaging-distribution.md)
 - Operator with generated RBAC
 - Understanding of RBAC concepts
+- Prometheus installed (included in `scripts/setup-kind-cluster.sh`)
 
 ## Exercise 1: Review Generated RBAC
 
@@ -318,11 +319,16 @@ allow-webhook-traffic   app.kubernetes.io/name=postgres-operator,control-plane=.
 
 ### Task 5.5: Label Namespaces for Access
 
-For Prometheus to scrape metrics and webhooks to work, label the appropriate namespaces:
+For Prometheus to scrape metrics and webhooks to work, label the appropriate namespaces.
+
+**Note:** If you used the course setup script (`scripts/setup-kind-cluster.sh`), the `monitoring` namespace is already labeled with `metrics=enabled`.
 
 ```bash
-# Label namespace where Prometheus runs (to allow metrics scraping)
-kubectl label namespace monitoring metrics=enabled
+# Check if monitoring namespace already has the label
+kubectl get namespace monitoring --show-labels
+
+# If not labeled, add it (the setup script does this automatically)
+kubectl label namespace monitoring metrics=enabled --overwrite
 
 # Label namespaces where you'll create Database CRs (for webhook access)
 kubectl label namespace default webhook=enabled
@@ -331,7 +337,31 @@ kubectl label namespace default webhook=enabled
 kubectl get namespaces --show-labels | grep -E "(metrics|webhook)"
 ```
 
-### Task 5.6: Test Network Policy Enforcement (Optional)
+### Task 5.6: Verify Prometheus Can Scrape Metrics
+
+With Prometheus installed (from the setup script), verify it can scrape your operator's metrics:
+
+```bash
+# Check that Prometheus is running
+kubectl get pods -n monitoring | grep prometheus
+
+# Create a ServiceMonitor for your operator (if not already present)
+# Kubebuilder generates this in config/prometheus/monitor.yaml
+
+# Check if the operator metrics endpoint is accessible from Prometheus
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
+
+# Open http://localhost:9090 and search for your operator metrics
+# Look for metrics like: controller_runtime_reconcile_total
+
+# Or query from command line
+curl -s "http://localhost:9090/api/v1/query?query=up" | jq '.data.result[] | select(.metric.namespace=="postgres-operator-system")'
+
+# Stop the port-forward
+pkill -f "port-forward.*9090"
+```
+
+### Task 5.7: Test Network Policy Enforcement (Optional)
 
 Network Policies require a CNI that supports them (Calico, Cilium, etc.):
 
@@ -343,8 +373,8 @@ kubectl get pods -n kube-system | grep -E "(calico|cilium|weave)"
 kubectl run test-curl --rm -it --image=curlimages/curl --restart=Never -- \
   curl -k https://postgres-operator-controller-manager-metrics-service.postgres-operator-system:8443/metrics
 
-# Now label the namespace and try again (should work)
-kubectl label namespace default metrics=enabled
+# The request should timeout or be blocked if network policies are enforced
+# In kind (without Calico), the request will succeed because policies aren't enforced
 ```
 
 **Note:** The default kind cluster does NOT enforce Network Policies. In production clusters with Calico/Cilium, unlabeled namespaces will be blocked.

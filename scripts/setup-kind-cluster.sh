@@ -99,6 +99,48 @@ kubectl wait --namespace cert-manager \
     --for=condition=Available deployment/cert-manager-cainjector \
     --timeout=120s
 
+# Install Prometheus Stack (for metrics and observability in Module 6-7)
+echo "Installing Prometheus stack..."
+
+# Check if Helm is installed
+if ! command -v helm &> /dev/null; then
+    echo "Warning: Helm is not installed. Skipping Prometheus installation."
+    echo "Install Helm and run: helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace"
+    PROMETHEUS_INSTALLED="no"
+else
+    # Add prometheus-community Helm repo
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+
+    # Install kube-prometheus-stack with minimal resources for kind
+    helm install prometheus prometheus-community/kube-prometheus-stack \
+        --namespace monitoring \
+        --create-namespace \
+        --set prometheus.prometheusSpec.resources.requests.memory=256Mi \
+        --set prometheus.prometheusSpec.resources.requests.cpu=100m \
+        --set prometheus.prometheusSpec.resources.limits.memory=512Mi \
+        --set prometheus.prometheusSpec.resources.limits.cpu=500m \
+        --set grafana.resources.requests.memory=128Mi \
+        --set grafana.resources.requests.cpu=50m \
+        --set grafana.resources.limits.memory=256Mi \
+        --set grafana.resources.limits.cpu=200m \
+        --set alertmanager.enabled=false \
+        --set nodeExporter.enabled=false \
+        --set kubeStateMetrics.enabled=true \
+        --wait \
+        --timeout 300s
+
+    # Label the monitoring namespace for network policy access
+    kubectl label namespace monitoring metrics=enabled --overwrite
+    
+    PROMETHEUS_INSTALLED="yes"
+    
+    echo "Prometheus stack installed!"
+    echo "  - Prometheus UI: kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090"
+    echo "  - Grafana UI: kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
+    echo "  - Grafana credentials: admin / prom-operator"
+fi
+
 # Set kubectl context
 kubectl cluster-info --context "kind-${CLUSTER_NAME}"
 
@@ -111,10 +153,22 @@ echo ""
 echo "Installed components:"
 echo "  - ingress-nginx"
 echo "  - cert-manager (for webhook TLS certificates)"
+if [ "$PROMETHEUS_INSTALLED" = "yes" ]; then
+echo "  - Prometheus stack (for metrics - Module 6-7)"
+echo "    - monitoring namespace labeled with: metrics=enabled"
+fi
 echo ""
 echo "To use this cluster:"
 echo "  kubectl cluster-info --context kind-${CLUSTER_NAME}"
 echo ""
+if [ "$PROMETHEUS_INSTALLED" = "yes" ]; then
+echo "To access Prometheus:"
+echo "  kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090"
+echo ""
+echo "To access Grafana (admin/prom-operator):"
+echo "  kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
+echo ""
+fi
 echo "To delete this cluster:"
 echo "  kind delete cluster --name ${CLUSTER_NAME}"
 
