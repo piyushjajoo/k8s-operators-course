@@ -288,7 +288,6 @@ When writing integration tests:
 ### Related Topics
 - [Integration Testing Patterns](https://martinfowler.com/articles/practical-test-pyramid.html)
 - [Test Containers](https://www.testcontainers.org/)
-- [CI/CD Testing](https://kubernetes.io/docs/concepts/architecture/test/)
 
 ## Next Steps
 
