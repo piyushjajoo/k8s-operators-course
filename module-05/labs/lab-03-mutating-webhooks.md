@@ -191,9 +191,6 @@ cd ~/postgres-operator
 # Find the section that says "Uncomment the following block if you have a DefaultingWebhook"
 # and uncomment it.
 
-# Or run this sed command to uncomment it automatically:
-sed -i '' '188,218s/^# //' config/default/kustomization.yaml
-
 # Verify it's uncommented - should show MutatingWebhookConfiguration without # prefix
 grep -A 5 "DefaultingWebhook" config/default/kustomization.yaml
 ```
