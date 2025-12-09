@@ -32,28 +32,18 @@ func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Objec
 	if !ok {
 		return fmt.Errorf("expected a Database object but got %T", obj)
 	}
-	databaselog.Info("Defaulting for Database", "name", database.GetName())
+	databaselog.Info("Defaulting for Database", "name", database.GetName(), "namespace", database.GetNamespace())
 
 	// Set defaults based on namespace
 	if database.Namespace == "production" {
-		// Production defaults
-		if database.Spec.Image == "" {
-			database.Spec.Image = "postgres:14" // Stable version
-		}
-		if database.Spec.Replicas == nil {
-			replicas := int32(3) // More replicas
-			database.Spec.Replicas = &replicas
-		}
-	} else {
-		// Development defaults
-		if database.Spec.Image == "" {
-			database.Spec.Image = "postgres:latest"
-		}
-		if database.Spec.Replicas == nil {
-			replicas := int32(1)
+		// Production defaults - ensure minimum 3 replicas
+		// Note: We check < 3 instead of nil because CRD schema defaults may already set replicas=1
+		if database.Spec.Replicas == nil || *database.Spec.Replicas < 3 {
+			replicas := int32(3)
 			database.Spec.Replicas = &replicas
 		}
 	}
+	// For non-production, CRD schema default of 1 replica is fine
 
 	// Common defaults
 	if database.Spec.Storage.StorageClass == "" {
@@ -87,3 +77,7 @@ func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Objec
 //         WithDefaulter(&DatabaseCustomDefaulter{}).
 //         Complete()
 // }
+//
+// Key Learning:
+// CRD schema defaults (+kubebuilder:default) are applied BEFORE webhooks run.
+// To override them, check for the default value (e.g., < 3) instead of just nil.

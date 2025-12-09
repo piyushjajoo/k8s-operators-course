@@ -65,9 +65,33 @@ make deploy IMG=localhost/postgres-operator:latest
 ## Notes
 
 - Webhook code goes in `internal/webhook/v1/` directory
-- Uses `webhook.CustomValidator` interface with a separate validator struct
+- Uses `webhook.CustomValidator` and `webhook.CustomDefaulter` interfaces
 - Methods receive `context.Context` as first parameter
 - `ValidateUpdate` receives both old and new objects as `runtime.Object`
 - Error messages are clear and actionable
 - Mutations are idempotent
 - Validation covers common scenarios
+
+## Important: CRD Schema Defaults vs Webhook Defaults
+
+CRD schema defaults (via `+kubebuilder:default` markers) are applied **before** mutating webhooks run. This means:
+
+- If your CRD has `+kubebuilder:default=1` for replicas, `Spec.Replicas` will be `1` (not `nil`) when your webhook runs
+- To override CRD defaults in webhooks, check for the default value instead of `nil`
+
+Example:
+```go
+// Instead of checking nil (won't work if CRD has default):
+if database.Spec.Replicas == nil {
+    replicas := int32(3)
+    database.Spec.Replicas = &replicas
+}
+
+// Check for the value you want to override:
+if database.Spec.Replicas == nil || *database.Spec.Replicas < 3 {
+    replicas := int32(3)
+    database.Spec.Replicas = &replicas
+}
+```
+
+**Best Practice:** Use CRD schema defaults for simple static defaults, and webhooks for context-aware defaults (e.g., based on namespace).

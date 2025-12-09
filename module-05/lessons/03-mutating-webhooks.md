@@ -253,15 +253,52 @@ func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Objec
 }
 ```
 
+## CRD Schema Defaults vs Webhook Defaults
+
+An important consideration when implementing defaulting:
+
+```mermaid
+graph LR
+    REQUEST[Create Request] --> CRD[CRD Schema Defaults Applied]
+    CRD --> MUTATE[Mutating Webhooks Run]
+    MUTATE --> VALIDATE[Validating Webhooks Run]
+    
+    style CRD fill:#FFE4B5
+    style MUTATE fill:#90EE90
+```
+
+**CRD schema defaults** (via `+kubebuilder:default` markers) are applied **before** mutating webhooks:
+
+```go
+// In api/v1/database_types.go
+// +kubebuilder:default=1
+Replicas *int32 `json:"replicas,omitempty"`
+```
+
+This means when your webhook runs, `Replicas` is already `1`, not `nil`. To override:
+
+```go
+// Check for the default value, not just nil
+if database.Namespace == "production" {
+    if database.Spec.Replicas == nil || *database.Spec.Replicas < 3 {
+        replicas := int32(3)
+        database.Spec.Replicas = &replicas
+    }
+}
+```
+
+**Best Practice:** Use CRD schema defaults for simple static defaults, webhooks for context-aware defaults.
+
 ## Key Takeaways
 
 - **Mutating webhooks** modify resources before validation
-- Run **before** validating webhooks
+- Run **before** validating webhooks, but **after** CRD schema defaults
 - Use `webhook.CustomDefaulter` interface with separate struct
 - `Default` method receives `context.Context` and `runtime.Object`
 - Register with `.WithDefaulter(&DatabaseCustomDefaulter{})`
 - Mutations must be **idempotent**
 - Provide **sensible defaults** based on context
+- Check for default values, not just `nil`, when overriding CRD schema defaults
 
 ## Understanding for Building Operators
 

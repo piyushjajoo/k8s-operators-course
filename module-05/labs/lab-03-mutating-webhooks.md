@@ -110,28 +110,18 @@ func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Objec
     if !ok {
         return fmt.Errorf("expected a Database object but got %T", obj)
     }
-    databaselog.Info("Defaulting for Database", "name", database.GetName())
+    databaselog.Info("Defaulting for Database", "name", database.GetName(), "namespace", database.GetNamespace())
 
     // Set defaults based on namespace
     if database.Namespace == "production" {
-        // Production defaults
-        if database.Spec.Image == "" {
-            database.Spec.Image = "postgres:14"  // Stable version
-        }
-        if database.Spec.Replicas == nil {
-            replicas := int32(3)  // More replicas
-            database.Spec.Replicas = &replicas
-        }
-    } else {
-        // Development defaults
-        if database.Spec.Image == "" {
-            database.Spec.Image = "postgres:latest"
-        }
-        if database.Spec.Replicas == nil {
-            replicas := int32(1)
+        // Production defaults - ensure minimum 3 replicas
+        // Note: We check < 3 instead of nil because CRD schema defaults may already set replicas=1
+        if database.Spec.Replicas == nil || *database.Spec.Replicas < 3 {
+            replicas := int32(3)
             database.Spec.Replicas = &replicas
         }
     }
+    // For non-production, CRD schema default of 1 replica is fine
 
     // Common defaults
     if database.Spec.Storage.StorageClass == "" {
@@ -157,6 +147,8 @@ func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Objec
     return nil
 }
 ```
+
+> **Note:** We check `< 3` instead of `nil` for replicas because CRD schema defaults (via `+kubebuilder:default=1`) are applied before webhooks run. This ensures production namespaces always get at least 3 replicas.
 
 ## Exercise 3: Ensure Idempotency
 
@@ -316,16 +308,27 @@ echo
 
 ### Task 4.8: Test Namespace-Based Defaults
 
-> **Important:** If your CRD has `+kubebuilder:default` markers in `api/v1/database_types.go`, those defaults are applied at the CRD schema level BEFORE the mutating webhook runs. This means `Spec.Replicas` will already be `1` (not `nil`) when your webhook checks it.
->
-> To enable namespace-aware defaults, you need to either:
-> 1. **Remove the kubebuilder default markers** from your types file and regenerate manifests (`make manifests`)
-> 2. Or change your webhook logic to check for the default value instead of nil
->
-> For this lab, we'll demonstrate with the webhook setting other defaults (labels, annotations, storage class) that don't conflict with CRD schema defaults.
+Our webhook checks `replicas < 3` (not just `nil`) for production namespace, so it works even when CRD schema defaults have already set `replicas=1`.
 
 ```bash
-# Create in production namespace
+# Clean up previous test resources
+kubectl delete database --all --ignore-not-found
+kubectl delete database --all -n production --ignore-not-found
+
+# Create in default namespace (should stay at 1 replica - CRD default)
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: dev-db
+spec:
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
+
+# Create in production namespace (should be bumped to 3 replicas)
 kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl apply -f - <<EOF
@@ -341,16 +344,17 @@ spec:
     size: 10Gi
 EOF
 
-# Check production defaults (should be 3 replicas)
-echo "Production replicas:"
-kubectl get database prod-db -n production -o jsonpath='{.spec.replicas}'
+# Check results
+echo "=== Default namespace (should be 1 replica) ==="
+kubectl get database dev-db -o jsonpath='Replicas: {.spec.replicas}'
 echo
 
-# Check default namespace (should be 1 replica from earlier test)
-echo "Default namespace replicas:"
-kubectl get database minimal-db -o jsonpath='{.spec.replicas}'
+echo "=== Production namespace (should be 3 replicas) ==="
+kubectl get database prod-db -n production -o jsonpath='Replicas: {.spec.replicas}'
 echo
 ```
+
+> **Key Learning:** CRD schema defaults (`+kubebuilder:default`) are applied before webhooks. To override them, check for the default value (e.g., `< 3`) instead of just checking for `nil`.
 
 ## Exercise 5: Test Mutation Order
 
