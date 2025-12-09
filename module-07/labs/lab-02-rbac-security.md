@@ -341,31 +341,141 @@ kubectl label namespace default webhook=enabled
 kubectl get namespaces --show-labels | grep -E "(metrics|webhook)"
 ```
 
-### Task 5.6: Verify Prometheus Can Scrape Metrics
+### Task 5.6: Enable ServiceMonitor for Prometheus
 
-With Prometheus installed (from the setup script), verify it can scrape your operator's metrics:
+Kubebuilder generates a `ServiceMonitor` in `config/prometheus/` that tells Prometheus how to scrape your operator's metrics. It's disabled by default.
+
+#### Step 1: Review the Generated ServiceMonitor
 
 ```bash
-# Check that Prometheus is running
-kubectl get pods -n monitoring | grep prometheus
+# View the kubebuilder-generated ServiceMonitor
+cat config/prometheus/monitor.yaml
+```
 
-# Create a ServiceMonitor for your operator (if not already present)
-# Kubebuilder generates this in config/prometheus/monitor.yaml
+You'll see:
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: controller-manager-metrics-monitor
+spec:
+  endpoints:
+    - path: /metrics
+      port: https
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+```
 
-# Check if the operator metrics endpoint is accessible from Prometheus
+#### Step 2: Enable the ServiceMonitor
+
+Edit `config/default/kustomization.yaml` and uncomment the prometheus line:
+
+```bash
+# Find the PROMETHEUS section
+grep -n "PROMETHEUS" config/default/kustomization.yaml
+```
+
+Uncomment `- ../prometheus`:
+```yaml
+# [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
+- ../prometheus  # <-- Uncomment this line
+```
+
+#### Step 3: Redeploy with ServiceMonitor
+
+```bash
+# Redeploy to include the ServiceMonitor
+make deploy IMG=postgres-operator:v0.1.0
+
+# Verify the ServiceMonitor was created
+kubectl get servicemonitor -n postgres-operator-system
+```
+
+Expected output:
+```
+NAME                                 AGE
+postgres-operator-controller-manager-metrics-monitor   10s
+```
+
+### Task 5.7: Verify Prometheus Can Scrape Metrics
+
+Now let's verify Prometheus is scraping your operator's metrics.
+
+#### Step 1: Start Port-Forward to Prometheus
+
+```bash
+# Start port-forward in background
 kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
 
-# Open http://localhost:9090 and search for your operator metrics
-# Look for metrics like: controller_runtime_reconcile_total
+# Note the PID for later cleanup
+echo "Port-forward PID: $!"
+```
 
-# Or query from command line
-curl -s "http://localhost:9090/api/v1/query?query=up" | jq '.data.result[] | select(.metric.namespace=="postgres-operator-system")'
+#### Step 2: Open Prometheus UI
 
+Open your browser and go to: **http://localhost:9090**
+
+#### Step 3: Check if Your Operator Target is Being Scraped
+
+1. In Prometheus UI, click **Status** → **Targets** in the top menu
+2. Look for a target with `serviceMonitor/postgres-operator-system/` in the name
+3. The **State** should show `UP` (green)
+
+If the target shows `DOWN`, check:
+- Is the monitoring namespace labeled? (`kubectl get ns monitoring --show-labels`)
+- Is the ServiceMonitor deployed? (`kubectl get servicemonitor -A`)
+- Are network policies blocking access?
+
+#### Step 4: Query Operator Metrics
+
+1. Go back to the main Prometheus page (click **Prometheus** logo or **Graph**)
+2. In the **Expression** input box, type one of these queries:
+   
+   ```promql
+   controller_runtime_reconcile_total
+   ```
+   
+3. Click the **Execute** button (or press Enter)
+4. Click the **Graph** tab to see a time-series visualization
+
+**Common operator metrics to explore:**
+
+| Metric | Description |
+|--------|-------------|
+| `controller_runtime_reconcile_total` | Total reconciliations by controller and result |
+| `controller_runtime_reconcile_errors_total` | Total reconciliation errors |
+| `controller_runtime_reconcile_time_seconds` | Time spent in reconciliation |
+| `workqueue_depth` | Current depth of the work queue |
+| `workqueue_adds_total` | Total items added to the queue |
+
+#### Step 5: Example Queries to Try
+
+Paste these into the Prometheus Expression box:
+
+```promql
+# Reconciliation rate per second (last 5 minutes)
+rate(controller_runtime_reconcile_total[5m])
+
+# Error rate
+rate(controller_runtime_reconcile_errors_total[5m])
+
+# 99th percentile reconciliation latency
+histogram_quantile(0.99, rate(controller_runtime_reconcile_time_seconds_bucket[5m]))
+```
+
+#### Step 6: Cleanup Port-Forward
+
+```bash
 # Stop the port-forward
 pkill -f "port-forward.*9090"
 ```
 
-### Task 5.7: Test Network Policy Enforcement (Optional)
+### Task 5.8: Test Network Policy Enforcement (Optional)
 
 Network Policies require a CNI that supports them (Calico, Cilium, etc.):
 
@@ -407,6 +517,8 @@ In this lab, you:
 - Enhanced security hardening with security contexts
 - Enabled kubebuilder-generated Network Policies
 - Labeled namespaces to allow metrics and webhook traffic
+- Enabled ServiceMonitor for Prometheus scraping
+- Verified metrics collection in Prometheus UI
 
 ## Key Learnings
 
@@ -418,8 +530,10 @@ In this lab, you:
 6. **Kubebuilder generates Network Policies** in `config/network-policy/`
 7. Enable network policies by uncommenting `../network-policy` in kustomization
 8. Label namespaces with `metrics: enabled` or `webhook: enabled` to allow access
-9. The distroless base image is already used by kubebuilder
-10. Network Policies require a CNI that supports them (Calico, Cilium)
+9. **Kubebuilder generates ServiceMonitor** in `config/prometheus/` - enable it!
+10. Use Prometheus UI **Status → Targets** to verify scraping is working
+11. The distroless base image is already used by kubebuilder
+12. Network Policies require a CNI that supports them (Calico, Cilium)
 
 ## Solutions
 
