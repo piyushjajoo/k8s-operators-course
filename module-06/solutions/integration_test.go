@@ -1,7 +1,7 @@
 // Solution: Integration Test Example from Module 6
 // This demonstrates end-to-end testing with a real Kubernetes cluster
 
-package integration
+package integration_test
 
 import (
     "context"
