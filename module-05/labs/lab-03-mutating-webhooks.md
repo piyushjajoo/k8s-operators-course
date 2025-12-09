@@ -316,6 +316,14 @@ echo
 
 ### Task 4.8: Test Namespace-Based Defaults
 
+> **Important:** If your CRD has `+kubebuilder:default` markers in `api/v1/database_types.go`, those defaults are applied at the CRD schema level BEFORE the mutating webhook runs. This means `Spec.Replicas` will already be `1` (not `nil`) when your webhook checks it.
+>
+> To enable namespace-aware defaults, you need to either:
+> 1. **Remove the kubebuilder default markers** from your types file and regenerate manifests (`make manifests`)
+> 2. Or change your webhook logic to check for the default value instead of nil
+>
+> For this lab, we'll demonstrate with the webhook setting other defaults (labels, annotations, storage class) that don't conflict with CRD schema defaults.
+
 ```bash
 # Create in production namespace
 kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
