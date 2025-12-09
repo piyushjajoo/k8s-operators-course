@@ -362,6 +362,9 @@ name: Integration Tests
 
 on: [push, pull_request]
 
+env:
+  IMG: postgres-operator:ci
+
 jobs:
   integration:
     runs-on: ubuntu-latest
@@ -377,27 +380,56 @@ jobs:
         run: |
           go install sigs.k8s.io/kind@latest
       
+      - name: Install ginkgo
+        run: |
+          go install github.com/onsi/ginkgo/v2/ginkgo@latest
+      
       - name: Create cluster
-        run: kind create cluster
+        run: kind create cluster --wait 60s
       
-      - name: Install CRDs
-        run: make install
+      - name: Build Docker image
+        run: make docker-build IMG=${{ env.IMG }}
       
-      - name: Deploy operator
-        run: make deploy
+      - name: Load image into kind
+        run: kind load docker-image ${{ env.IMG }}
+      
+      - name: Deploy operator (includes cert-manager)
+        run: make deploy IMG=${{ env.IMG }}
+      
+      - name: Wait for cert-manager
+        run: |
+          kubectl wait --for=condition=Available deployment/cert-manager -n cert-manager --timeout=120s
+          kubectl wait --for=condition=Available deployment/cert-manager-webhook -n cert-manager --timeout=120s
       
       - name: Wait for operator
         run: |
-          kubectl wait --for=condition=ready pod -l control-plane=controller-manager --timeout=300s
+          kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=120s
       
       - name: Run integration tests
         run: |
           ginkgo -v ./test/integration
       
+      - name: Debug on failure
+        if: failure()
+        run: |
+          echo "=== Pods in all namespaces ==="
+          kubectl get pods -A
+          echo "=== Operator logs ==="
+          kubectl logs -n postgres-operator-system -l control-plane=controller-manager --tail=100 || true
+          echo "=== Events ==="
+          kubectl get events -n postgres-operator-system --sort-by='.lastTimestamp' || true
+      
       - name: Cleanup
         if: always()
         run: kind delete cluster
 ```
+
+**Key points:**
+- **Build image first** - `make docker-build` creates the container image
+- **Load into kind** - `kind load docker-image` makes the image available to the cluster
+- **Include namespace** - `-n postgres-operator-system` in kubectl wait
+- **Wait for cert-manager** - Cert-manager must be ready before the operator can start (webhooks need TLS certs)
+- **Debug on failure** - Logs help diagnose issues
 
 ## Cleanup
 
