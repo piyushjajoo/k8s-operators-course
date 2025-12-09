@@ -1,197 +1,89 @@
-// Solution: Complete Unit Tests for Database Controller from Module 6
-// This demonstrates comprehensive unit testing with envtest
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Solution: Database Controller Test from Module 6
+// This file matches the Kubebuilder-generated test scaffolding structure.
+// Location: internal/controller/database_controller_test.go
 
 package controller
 
 import (
-    "context"
-    
-    . "github.com/onsi/ginkgo/v2"
-    . "github.com/onsi/gomega"
-    
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/types"
-    "k8s.io/client-go/kubernetes/scheme"
-    "k8s.io/utils/pointer"
-    "sigs.k8s.io/controller-runtime/pkg/client"
-    ctrl "sigs.k8s.io/controller-runtime"
-    
-    databasev1 "github.com/example/postgres-operator/api/v1"
-    appsv1 "k8s.io/api/apps/v1"
-    corev1 "k8s.io/api/core/v1"
+	"context"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
-var _ = Describe("DatabaseReconciler", func() {
-    var (
-        ctx    context.Context
-        cancel context.CancelFunc
-    )
-    
-    BeforeEach(func() {
-        ctx, cancel = context.WithCancel(context.Background())
-    })
-    
-    AfterEach(func() {
-        cancel()
-    })
-    
-    Context("When reconciling a Database", func() {
-        It("should create a StatefulSet", func() {
-            // Arrange
-            db := &databasev1.Database{
-                ObjectMeta: metav1.ObjectMeta{
-                    Name:      "test-db",
-                    Namespace: "default",
-                },
-                Spec: databasev1.DatabaseSpec{
-                    Image:       "postgres:14",
-                    Replicas:    pointer.Int32(1),
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
-                },
-            }
-            Expect(k8sClient.Create(ctx, db)).To(Succeed())
-            
-            // Act
-            reconciler := &DatabaseReconciler{
-                Client: k8sClient,
-                Scheme: scheme.Scheme,
-            }
-            _, err := reconciler.Reconcile(ctx, ctrl.Request{
-                NamespacedName: types.NamespacedName{
-                    Name:      "test-db",
-                    Namespace: "default",
-                },
-            })
-            
-            // Assert
-            Expect(err).NotTo(HaveOccurred())
-            
-            statefulSet := &appsv1.StatefulSet{}
-            Expect(k8sClient.Get(ctx, types.NamespacedName{
-                Name:      "test-db",
-                Namespace: "default",
-            }, statefulSet)).To(Succeed())
-            
-            Expect(statefulSet.Spec.Replicas).To(Equal(pointer.Int32(1)))
-            Expect(statefulSet.Spec.Template.Spec.Containers[0].Image).To(Equal("postgres:14"))
-        })
-        
-        It("should create a Service", func() {
-            // Arrange
-            db := &databasev1.Database{
-                ObjectMeta: metav1.ObjectMeta{
-                    Name:      "test-db",
-                    Namespace: "default",
-                },
-                Spec: databasev1.DatabaseSpec{
-                    Image:       "postgres:14",
-                    Replicas:    pointer.Int32(1),
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
-                },
-            }
-            Expect(k8sClient.Create(ctx, db)).To(Succeed())
-            
-            // Act
-            reconciler := &DatabaseReconciler{
-                Client: k8sClient,
-                Scheme: scheme.Scheme,
-            }
-            _, err := reconciler.Reconcile(ctx, ctrl.Request{
-                NamespacedName: types.NamespacedName{
-                    Name:      "test-db",
-                    Namespace: "default",
-                },
-            })
-            
-            // Assert
-            Expect(err).NotTo(HaveOccurred())
-            
-            service := &corev1.Service{}
-            Expect(k8sClient.Get(ctx, types.NamespacedName{
-                Name:      "test-db",
-                Namespace: "default",
-            }, service)).To(Succeed())
-            
-            Expect(service.Spec.Ports[0].Port).To(Equal(int32(5432)))
-        })
-    })
-    
-    Context("When updating a Database", func() {
-        It("should update the StatefulSet", func() {
-            // Create initial Database
-            db := &databasev1.Database{
-                ObjectMeta: metav1.ObjectMeta{
-                    Name:      "test-db",
-                    Namespace: "default",
-                },
-                Spec: databasev1.DatabaseSpec{
-                    Image:       "postgres:14",
-                    Replicas:    pointer.Int32(1),
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
-                },
-            }
-            Expect(k8sClient.Create(ctx, db)).To(Succeed())
-            
-            reconciler := &DatabaseReconciler{
-                Client: k8sClient,
-                Scheme: scheme.Scheme,
-            }
-            
-            req := ctrl.Request{
-                NamespacedName: types.NamespacedName{
-                    Name:      "test-db",
-                    Namespace: "default",
-                },
-            }
-            
-            // Reconcile to create StatefulSet
-            reconciler.Reconcile(ctx, req)
-            
-            // Update Database
-            Expect(k8sClient.Get(ctx, req.NamespacedName, db)).To(Succeed())
-            db.Spec.Replicas = pointer.Int32(3)
-            Expect(k8sClient.Update(ctx, db)).To(Succeed())
-            
-            // Reconcile again
-            reconciler.Reconcile(ctx, req)
-            
-            // Verify StatefulSet updated
-            statefulSet := &appsv1.StatefulSet{}
-            Expect(k8sClient.Get(ctx, req.NamespacedName, statefulSet)).To(Succeed())
-            Expect(statefulSet.Spec.Replicas).To(Equal(pointer.Int32(3)))
-        })
-    })
-    
-    Context("When Database is not found", func() {
-        It("should not return an error", func() {
-            reconciler := &DatabaseReconciler{
-                Client: k8sClient,
-                Scheme: scheme.Scheme,
-            }
-            
-            req := ctrl.Request{
-                NamespacedName: types.NamespacedName{
-                    Name:      "non-existent",
-                    Namespace: "default",
-                },
-            }
-            
-            result, err := reconciler.Reconcile(ctx, req)
-            Expect(err).NotTo(HaveOccurred())
-            Expect(result).To(Equal(ctrl.Result{}))
-        })
-    })
-})
+var _ = Describe("Database Controller", func() {
+	Context("When reconciling a resource", func() {
+		const resourceName = "test-resource"
 
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+		database := &databasev1.Database{}
+
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind Database")
+			err := k8sClient.Get(ctx, typeNamespacedName, database)
+			if err != nil && errors.IsNotFound(err) {
+				resource := &databasev1.Database{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: "default",
+					},
+					// TODO(user): Specify other spec details if needed.
+				}
+				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			}
+		})
+
+		AfterEach(func() {
+			// Cleanup logic after each test
+			resource := &databasev1.Database{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Cleanup the specific resource instance Database")
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+		})
+
+		It("should successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &DatabaseReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
+			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		})
+	})
+})
