@@ -290,7 +290,7 @@ When testing operators:
 
 ### Related Topics
 - [Test-Driven Development](https://en.wikipedia.org/wiki/Test-driven_development)
-- [Table-Driven Tests in Go](https://github.com/golang/go/wiki/TableDrivenTests)
+- [Table-Driven Tests in Go](https://go.dev/wiki/TableDrivenTests)
 - [Mocking in Go](https://github.com/golang/mock)
 
 ## Next Steps
