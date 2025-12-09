@@ -37,7 +37,7 @@ The generated Dockerfile should look like:
 
 ```dockerfile
 # Build stage
-FROM golang:1.21 as builder
+FROM golang:1.24 as builder
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -293,7 +293,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24'
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3

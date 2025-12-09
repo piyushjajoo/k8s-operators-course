@@ -98,7 +98,7 @@ When you run `kubebuilder init`, it creates a Dockerfile in your project root:
 
 ```dockerfile
 # Build stage
-FROM golang:1.21 as builder
+FROM golang:1.24 as builder
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -364,7 +364,7 @@ graph LR
 
 ```dockerfile
 # Stage 1: Build
-FROM golang:1.21 AS builder
+FROM golang:1.24 AS builder
 # ... build steps ...
 
 # Stage 2: Runtime

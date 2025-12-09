@@ -113,7 +113,7 @@ flowchart TD
     RETRY --> MORE[More Load]
     
     style THROTTLE fill:#FFB6C1
-    style RATE[Rate Limit] fill:#90EE90
+    style SUCCESS fill:#90EE90
 ```
 
 ### Using Controller-Runtime's Built-in Rate Limiting
