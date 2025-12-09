@@ -9,6 +9,7 @@
 - Configure service accounts
 - Apply security best practices
 - Scan images for vulnerabilities
+- Configure Network Policies for operator isolation
 
 ## Prerequisites
 
@@ -205,55 +206,155 @@ FROM gcr.io/distroless/static:nonroot
 USER 65532:65532
 ```
 
-### Task 5.2: Add Network Policy
+## Exercise 5: Network Policy for Operator Isolation
 
-Create `config/network-policy/network-policy.yaml`:
+Network Policies restrict network traffic to/from your operator pods, providing defense in depth.
+
+### Task 5.1: Create Network Policy Directory
 
 ```bash
-mkdir -p config/network-policy
+cd ~/postgres-operator
 
-cat > config/network-policy/network-policy.yaml << 'EOF'
+# Create directory for network policy
+mkdir -p config/network-policy
+```
+
+### Task 5.2: Create the Network Policy
+
+Create the file `config/network-policy/network-policy.yaml` with the following content:
+
+```yaml
+# config/network-policy/network-policy.yaml
+# Network Policy for postgres-operator controller manager
+# Restricts network access to only what the operator needs
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: controller-manager
   namespace: system
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    app.kubernetes.io/component: network-policy
 spec:
+  # Apply to controller-manager pods
   podSelector:
     matchLabels:
       control-plane: controller-manager
   policyTypes:
   - Ingress
   - Egress
+  
+  # Ingress rules - what can connect TO the operator
+  ingress:
+  # Allow metrics scraping from any namespace (for Prometheus)
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080  # Metrics port
+  # Allow health checks from within the cluster
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8081  # Health probe port
+  
+  # Egress rules - what the operator can connect TO
   egress:
+  # Allow DNS lookups (required for service discovery)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow Kubernetes API access (required for operator functionality)
   - to:
     - namespaceSelector: {}
     ports:
     - protocol: TCP
-      port: 443  # Kubernetes API
-  - to:
-    - namespaceSelector: {}
-    ports:
+      port: 443   # Kubernetes API (HTTPS)
     - protocol: TCP
       port: 6443  # Kubernetes API (alternative port)
-EOF
 ```
 
-Add to `config/default/kustomization.yaml`:
+### Task 5.3: Create Kustomization for Network Policy
+
+Create `config/network-policy/kustomization.yaml`:
 
 ```yaml
+# config/network-policy/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 resources:
-- ../network-policy
+- network-policy.yaml
+
+# The namespace will be set by the parent kustomization
 ```
+
+### Task 5.4: Add Network Policy to Default Kustomization
+
+Edit `config/default/kustomization.yaml` to include the network policy:
+
+```bash
+# View current kustomization
+cat config/default/kustomization.yaml
+```
+
+Add `../network-policy` to the resources list:
+
+```yaml
+# In config/default/kustomization.yaml, add to resources:
+resources:
+- ../crd
+- ../rbac
+- ../manager
+- ../network-policy  # Add this line
+# ... other resources
+```
+
+### Task 5.5: Verify Network Policy Generation
+
+```bash
+# Preview the generated manifests including network policy
+kustomize build config/default | grep -A 50 "kind: NetworkPolicy"
+
+# Or deploy and verify
+make deploy IMG=postgres-operator:v0.1.0
+
+# Check network policy was created
+kubectl get networkpolicy -n postgres-operator-system
+kubectl describe networkpolicy controller-manager -n postgres-operator-system
+```
+
+### Task 5.6: Test Network Policy (Optional)
+
+To verify the network policy is working, you need a CNI that supports Network Policies (Calico, Cilium, etc.):
+
+```bash
+# Check if your cluster supports network policies
+kubectl get pods -n kube-system | grep -E "(calico|cilium|weave)"
+
+# If using kind, network policies are NOT enforced by default
+# For testing, you can install Calico:
+# kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+```
+
+**Note:** The default kind cluster does not enforce Network Policies. In production clusters with Calico/Cilium, the policy will block unauthorized traffic.
 
 ## Cleanup
 
 ```bash
-# Undeploy operator
+# Undeploy operator (this also removes the network policy)
 make undeploy
 
-# Remove network policy if added separately
+# If you need to remove network policy separately
 kubectl delete networkpolicy controller-manager -n postgres-operator-system
+
+# Uninstall CRDs
+make uninstall
 ```
 
 ## Lab Summary
@@ -264,7 +365,8 @@ In this lab, you:
 - Optimized RBAC permissions using least privilege
 - Reviewed kubebuilder's security configurations
 - Scanned images for vulnerabilities with Trivy
-- Enhanced security hardening
+- Enhanced security hardening with security contexts
+- Created Network Policies to isolate operator network traffic
 
 ## Key Learnings
 
@@ -273,8 +375,10 @@ In this lab, you:
 3. Minimize markers to match actual controller needs
 4. Kubebuilder includes security contexts by default
 5. Scan images regularly with Trivy or similar tools
-6. Add network policies for additional isolation
-7. The distroless base image is already used by kubebuilder
+6. **Network Policies** provide defense in depth by restricting traffic
+7. Operators typically only need egress to Kubernetes API (443) and DNS (53)
+8. The distroless base image is already used by kubebuilder
+9. Network Policies require a CNI that supports them (Calico, Cilium)
 
 ## Solutions
 

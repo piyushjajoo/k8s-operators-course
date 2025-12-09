@@ -1,23 +1,33 @@
 # Solution: Security Configuration from Module 7
-# This demonstrates security best practices
+# This demonstrates security best practices for operators
+#
+# Includes:
+# - Deployment with security contexts
+# - Network Policy for operator isolation
 
 ---
+# Secure Deployment Configuration
+# Apply these settings to config/manager/manager.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-operator
+  name: controller-manager
+  namespace: postgres-operator-system
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    control-plane: controller-manager
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: postgres-operator
+      control-plane: controller-manager
   template:
     metadata:
       labels:
-        app: postgres-operator
+        control-plane: controller-manager
     spec:
-      serviceAccountName: postgres-operator
-      # Security context for pod
+      serviceAccountName: controller-manager
+      # Pod-level security context
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -27,7 +37,17 @@ spec:
       containers:
       - name: manager
         image: postgres-operator:latest
-        # Security context for container
+        args:
+        - --leader-elect=false
+        - --health-probe-bind-address=:8081
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8081
+          name: health
+          protocol: TCP
+        # Container-level security context
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -36,55 +56,94 @@ spec:
           capabilities:
             drop:
             - ALL
+        # Health probes
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        # Resource limits
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        # Volume mounts for read-only root filesystem
         volumeMounts:
         - name: tmp
           mountPath: /tmp
-        - name: kube-api-access
-          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-          readOnly: true
       volumes:
       - name: tmp
         emptyDir: {}
-      - name: kube-api-access
-        projected:
-          sources:
-          - serviceAccountToken:
-              expirationSeconds: 3607
-              path: token
-          - configMap:
-              name: kube-root-ca.crt
-              items:
-              - key: ca.crt
-                path: ca.crt
-          - downwardAPI:
-              items:
-              - path: namespace
-                fieldRef:
-                  fieldPath: metadata.namespace
+      terminationGracePeriodSeconds: 10
 
 ---
+# Network Policy for Operator Isolation
+# Place in config/network-policy/network-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: postgres-operator
+  name: controller-manager
+  namespace: postgres-operator-system
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    app.kubernetes.io/component: network-policy
 spec:
+  # Apply to controller-manager pods
   podSelector:
     matchLabels:
-      app: postgres-operator
+      control-plane: controller-manager
   policyTypes:
   - Ingress
   - Egress
-  egress:
-  # Allow egress to Kubernetes API
-  - to:
+  
+  # Ingress rules - what can connect TO the operator
+  ingress:
+  # Allow metrics scraping (Prometheus)
+  - from:
     - namespaceSelector: {}
     ports:
     - protocol: TCP
-      port: 443
-  # Allow egress to DNS
+      port: 8080  # Metrics port
+  # Allow health checks
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8081  # Health probe port
+  
+  # Egress rules - what the operator can connect TO
+  egress:
+  # Allow DNS lookups (required for service discovery)
   - to:
     - namespaceSelector: {}
     ports:
     - protocol: UDP
       port: 53
+    - protocol: TCP
+      port: 53
+  # Allow Kubernetes API access (required for operator functionality)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443   # Kubernetes API (HTTPS)
+    - protocol: TCP
+      port: 6443  # Kubernetes API (alternative port)
 
+---
+# Kustomization file for network-policy directory
+# Place in config/network-policy/kustomization.yaml
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+# resources:
+# - network-policy.yaml
