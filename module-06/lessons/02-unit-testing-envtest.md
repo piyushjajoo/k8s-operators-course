@@ -337,7 +337,7 @@ When writing unit tests:
 - [Go Testing Best Practices](https://golang.org/doc/effective_go#testing)
 
 ### Related Topics
-- [Table-Driven Tests](https://github.com/golang/go/wiki/TableDrivenTests)
+- [Table-Driven Tests](https://go.dev/wiki/TableDrivenTests)
 - [Test Coverage](https://go.dev/blog/cover)
 - [Benchmarking in Go](https://golang.org/pkg/testing/#hdr-Benchmarks)
 

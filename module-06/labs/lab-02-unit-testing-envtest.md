@@ -233,30 +233,22 @@ Context("When Database is not found", func() {
 ### Task 3.2: Test Finalizer Addition
 
 ```go
-Context("When creating a Database", func() {
-    var (
-        resourceName       string
-        typeNamespacedName types.NamespacedName
-    )
-
-    BeforeEach(func() {
-        resourceName = fmt.Sprintf("test-finalizer-%d", time.Now().UnixNano())
-        typeNamespacedName = types.NamespacedName{
-            Name:      resourceName,
-            Namespace: "default",
-        }
-
-        resource := &databasev1.Database{
-            ObjectMeta: metav1.ObjectMeta{
-                Name:      resourceName,
-                Namespace: "default",
-            },
-            Spec: databasev1.DatabaseSpec{
-                Image:        "postgres:14",
-                DatabaseName: "testdb",
-                Username:     "testuser",
-                Storage: databasev1.StorageSpec{
-                    Size: "1Gi",
+var _ = Describe("Database validation", func() {
+    tests := []struct {
+        name    string
+        db      *databasev1.Database
+        wantErr bool
+    }{
+        {
+            name: "valid database",
+            db: &databasev1.Database{
+                Spec: databasev1.DatabaseSpec{
+                    Image:       "postgres:14",
+                    DatabaseName: "mydb",
+                    Username:    "admin",
+                    Storage: databasev1.StorageSpec{
+                        Size: "10Gi",
+                    },
                 },
             },
         }
