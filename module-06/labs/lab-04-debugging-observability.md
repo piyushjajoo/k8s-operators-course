@@ -413,7 +413,32 @@ kubectl delete database test-metrics
 
 ## Exercise 3: Add Kubernetes Events
 
-### Task 3.1: Add Event Recorder to Controller
+### Task 3.1: Add RBAC Permission for Events
+
+The controller needs permission to create events. Add a kubebuilder RBAC marker in `internal/controller/database_controller.go`.
+
+Find the existing RBAC markers (near the top of the file, before the `Reconcile` function) and add the events permission:
+
+```go
+// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=database.example.com,resources=databases/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=events,verbs=create;patch  // <-- ADD THIS LINE
+```
+
+Then regenerate the RBAC manifests:
+
+```bash
+cd ~/postgres-operator
+make manifests
+```
+
+This will update `config/rbac/role.yaml` to include the events permission.
+
+### Task 3.2: Add Event Recorder to Controller
 
 Update `internal/controller/database_controller.go`:
 
@@ -435,7 +460,7 @@ type DatabaseReconciler struct {
 }
 ```
 
-### Task 3.2: Update main.go to Provide Event Recorder
+### Task 3.3: Update main.go to Provide Event Recorder
 
 Update `cmd/main.go`:
 
@@ -447,7 +472,7 @@ if err := (&controller.DatabaseReconciler{
 }).SetupWithManager(mgr); err != nil {
 ```
 
-### Task 3.3: Emit Events in Controller
+### Task 3.4: Emit Events in Controller
 
 Add events at key points in your controller. Update `internal/controller/database_controller.go`:
 
@@ -495,7 +520,7 @@ func (r *DatabaseReconciler) handleDeletion(ctx context.Context, db *databasev1.
 }
 ```
 
-### Task 3.4: Update Test Files (Important!)
+### Task 3.5: Update Test Files (Important!)
 
 Since we added `Recorder` to the struct, update `internal/controller/database_controller_test.go`:
 
@@ -516,7 +541,7 @@ import (
 )
 ```
 
-### Task 3.5: Rebuild and Deploy
+### Task 3.6: Rebuild and Deploy
 
 ```
 cd ~/postgres-operator
@@ -551,7 +576,7 @@ kubectl rollout restart deployment -n postgres-operator-system postgres-operator
 kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=60s
 ```
 
-### Task 3.6: Test Events
+### Task 3.7: Test Events
 
 ```bash
 # Create a test database
@@ -586,7 +611,7 @@ LAST SEEN   TYPE     REASON    OBJECT                  MESSAGE
 15s         Normal   Ready     database/test-events    Database is ready at test-events.default.svc.cluster.local:5432
 ```
 
-### Task 3.7: Cleanup
+### Task 3.8: Cleanup
 
 ```bash
 kubectl delete database test-events

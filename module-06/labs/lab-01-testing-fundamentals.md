@@ -80,17 +80,17 @@ import (
     "os"
     "path/filepath"
     "testing"
-
+    
     . "github.com/onsi/ginkgo/v2"
     . "github.com/onsi/gomega"
-
+    
     "k8s.io/client-go/kubernetes/scheme"
     "k8s.io/client-go/rest"
     "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/envtest"
     logf "sigs.k8s.io/controller-runtime/pkg/log"
     "sigs.k8s.io/controller-runtime/pkg/log/zap"
-
+    
     databasev1 "github.com/example/postgres-operator/api/v1"
     // +kubebuilder:scaffold:imports
 )
@@ -128,7 +128,7 @@ var _ = BeforeSuite(func() {
         CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
         ErrorIfCRDPathMissing: true,
     }
-
+    
     // Retrieve the first found binary directory to allow running tests from IDEs
     if getFirstFoundEnvTestBinaryDir() != "" {
         testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
@@ -138,7 +138,7 @@ var _ = BeforeSuite(func() {
     cfg, err = testEnv.Start()
     Expect(err).NotTo(HaveOccurred())
     Expect(cfg).NotTo(BeNil())
-
+    
     k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
     Expect(err).NotTo(HaveOccurred())
     Expect(k8sClient).NotTo(BeNil())
@@ -192,15 +192,15 @@ package controller
 
 import (
     "context"
-
+    
     . "github.com/onsi/ginkgo/v2"
     . "github.com/onsi/gomega"
     "k8s.io/apimachinery/pkg/api/errors"
     "k8s.io/apimachinery/pkg/types"
     "sigs.k8s.io/controller-runtime/pkg/reconcile"
-
+    
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+    
     databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
@@ -215,8 +215,8 @@ var _ = Describe("Database Controller", func() {
             Namespace: "default", // TODO(user):Modify as needed
         }
         database := &databasev1.Database{}
-
-        BeforeEach(func() {
+    
+    BeforeEach(func() {
             By("creating the custom resource for the Kind Database")
             err := k8sClient.Get(ctx, typeNamespacedName, database)
             if err != nil && errors.IsNotFound(err) {
@@ -229,9 +229,9 @@ var _ = Describe("Database Controller", func() {
                 }
                 Expect(k8sClient.Create(ctx, resource)).To(Succeed())
             }
-        })
-
-        AfterEach(func() {
+    })
+    
+    AfterEach(func() {
             // TODO(user): Cleanup logic after each test, like removing the resource instance.
             resource := &databasev1.Database{}
             err := k8sClient.Get(ctx, typeNamespacedName, resource)

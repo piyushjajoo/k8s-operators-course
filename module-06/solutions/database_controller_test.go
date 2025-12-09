@@ -21,22 +21,22 @@ limitations under the License.
 package controller
 
 import (
-	"context"
+    "context"
 	"fmt"
 	"time"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+    
+    . "github.com/onsi/ginkgo/v2"
+    . "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	databasev1 "github.com/example/postgres-operator/api/v1"
+    
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    
+    databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
 var _ = Describe("Database Controller", func() {
@@ -51,25 +51,25 @@ var _ = Describe("Database Controller", func() {
 			Namespace: "default",
 		}
 		database := &databasev1.Database{}
-
-		BeforeEach(func() {
+    
+    BeforeEach(func() {
 			By("creating the custom resource for the Kind Database")
 			err := k8sClient.Get(ctx, typeNamespacedName, database)
 			if err != nil && errors.IsNotFound(err) {
 				resource := &databasev1.Database{
-					ObjectMeta: metav1.ObjectMeta{
+                ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
-						Namespace: "default",
-					},
-					Spec: databasev1.DatabaseSpec{
+                    Namespace: "default",
+                },
+                Spec: databasev1.DatabaseSpec{
 						Image:        "postgres:14",
 						DatabaseName: "testdb",
 						Username:     "testuser",
-						Storage: databasev1.StorageSpec{
+                    Storage: databasev1.StorageSpec{
 							Size: "1Gi",
-						},
-					},
-				}
+                    },
+                },
+            }
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
 		})
@@ -89,14 +89,14 @@ var _ = Describe("Database Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &DatabaseReconciler{
-				Client: k8sClient,
+                Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
-			}
+            }
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
+            })
+            Expect(err).NotTo(HaveOccurred())
 		})
 	})
 
@@ -115,20 +115,20 @@ var _ = Describe("Database Controller", func() {
 			}
 
 			resource := &databasev1.Database{
-				ObjectMeta: metav1.ObjectMeta{
+                ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
-				},
-				Spec: databasev1.DatabaseSpec{
+                    Namespace: "default",
+                },
+                Spec: databasev1.DatabaseSpec{
 					Image:        "postgres:14",
 					Replicas:     ptr.To(int32(1)),
 					DatabaseName: "testdb",
 					Username:     "testuser",
-					Storage: databasev1.StorageSpec{
+                    Storage: databasev1.StorageSpec{
 						Size: "1Gi",
-					},
-				},
-			}
+                    },
+                },
+            }
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 		})
 
@@ -161,22 +161,22 @@ var _ = Describe("Database Controller", func() {
 		})
 
 		It("should add finalizer on first reconcile", func() {
-			reconciler := &DatabaseReconciler{
-				Client: k8sClient,
+            reconciler := &DatabaseReconciler{
+                Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
-			}
+            }
 
 			_, err := reconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-
+            })
+            Expect(err).NotTo(HaveOccurred())
+            
 			db := &databasev1.Database{}
 			Expect(k8sClient.Get(ctx, typeNamespacedName, db)).To(Succeed())
 			Expect(db.Finalizers).To(ContainElement("database.example.com/finalizer"))
-		})
-	})
-
+        })
+    })
+    
 	Context("When progressing through provisioning", func() {
 		var (
 			resourceName       string
@@ -191,20 +191,20 @@ var _ = Describe("Database Controller", func() {
 			}
 
 			resource := &databasev1.Database{
-				ObjectMeta: metav1.ObjectMeta{
+                ObjectMeta: metav1.ObjectMeta{
 					Name:      resourceName,
-					Namespace: "default",
-				},
-				Spec: databasev1.DatabaseSpec{
+                    Namespace: "default",
+                },
+                Spec: databasev1.DatabaseSpec{
 					Image:        "postgres:14",
 					Replicas:     ptr.To(int32(1)),
 					DatabaseName: "testdb",
 					Username:     "testuser",
-					Storage: databasev1.StorageSpec{
+                    Storage: databasev1.StorageSpec{
 						Size: "1Gi",
-					},
-				},
-			}
+                    },
+                },
+            }
 			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 		})
 
@@ -219,10 +219,10 @@ var _ = Describe("Database Controller", func() {
 		})
 
 		It("should create Secret and StatefulSet", func() {
-			reconciler := &DatabaseReconciler{
-				Client: k8sClient,
+            reconciler := &DatabaseReconciler{
+                Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
-			}
+            }
 			req := reconcile.Request{NamespacedName: typeNamespacedName}
 
 			By("First reconcile: Pending -> Provisioning")
@@ -242,31 +242,31 @@ var _ = Describe("Database Controller", func() {
 			}, secret)).To(Succeed())
 			Expect(secret.Data).To(HaveKey("username"))
 			Expect(secret.Data).To(HaveKey("password"))
-
+            
 			By("Verifying StatefulSet was created")
-			statefulSet := &appsv1.StatefulSet{}
+            statefulSet := &appsv1.StatefulSet{}
 			Expect(k8sClient.Get(ctx, typeNamespacedName, statefulSet)).To(Succeed())
 			Expect(*statefulSet.Spec.Replicas).To(Equal(int32(1)))
 			Expect(statefulSet.Spec.Template.Spec.Containers[0].Image).To(Equal("postgres:14"))
-		})
-	})
-
-	Context("When Database is not found", func() {
-		It("should not return an error", func() {
-			reconciler := &DatabaseReconciler{
-				Client: k8sClient,
+        })
+    })
+    
+    Context("When Database is not found", func() {
+        It("should not return an error", func() {
+            reconciler := &DatabaseReconciler{
+                Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
-			}
-
+            }
+            
 			req := reconcile.Request{
-				NamespacedName: types.NamespacedName{
+                NamespacedName: types.NamespacedName{
 					Name:      "non-existent-database",
-					Namespace: "default",
-				},
-			}
-
-			result, err := reconciler.Reconcile(ctx, req)
-			Expect(err).NotTo(HaveOccurred())
+                    Namespace: "default",
+                },
+            }
+            
+            result, err := reconciler.Reconcile(ctx, req)
+            Expect(err).NotTo(HaveOccurred())
 			Expect(result.Requeue).To(BeFalse())
 			Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
 		})
@@ -334,6 +334,6 @@ var _ = Describe("Database Controller", func() {
 			service := &corev1.Service{}
 			Expect(k8sClient.Get(ctx, typeNamespacedName, service)).To(Succeed())
 			Expect(service.Spec.Ports[0].Port).To(Equal(int32(5432)))
-		})
-	})
+        })
+    })
 })

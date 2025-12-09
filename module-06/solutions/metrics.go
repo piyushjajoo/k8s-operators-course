@@ -23,30 +23,30 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
+    "github.com/prometheus/client_golang/prometheus"
+    "sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 var (
 	// ReconcileTotal counts the total number of reconciliations
 	ReconcileTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "database_reconcile_total",
+        prometheus.CounterOpts{
+            Name: "database_reconcile_total",
 			Help: "Total number of reconciliations per controller",
-		},
+        },
 		[]string{"result"}, // success, error, requeue
-	)
-
+    )
+    
 	// ReconcileDuration measures the duration of reconciliations
 	ReconcileDuration = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
+        prometheus.HistogramOpts{
 			Name:    "database_reconcile_duration_seconds",
 			Help:    "Duration of reconciliations in seconds",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"result"},
-	)
-
+            Buckets: prometheus.DefBuckets,
+        },
+        []string{"result"},
+    )
+    
 	// DatabasesTotal tracks the current number of Database resources
 	DatabasesTotal = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -58,22 +58,22 @@ var (
 
 	// DatabaseInfo provides information about each database
 	DatabaseInfo = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
+        prometheus.GaugeOpts{
 			Name: "database_info",
 			Help: "Information about Database resources",
-		},
+        },
 		[]string{"name", "namespace", "image", "phase"},
-	)
+    )
 )
 
 func init() {
 	// Register custom metrics with the global registry
-	metrics.Registry.MustRegister(
+    metrics.Registry.MustRegister(
 		ReconcileTotal,
 		ReconcileDuration,
 		DatabasesTotal,
 		DatabaseInfo,
-	)
+    )
 }
 
 // Usage in Reconcile function:
@@ -81,22 +81,22 @@ func init() {
 // func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 //     start := time.Now()
 //     reconcileResult := "success"
-//
+//     
 //     // Defer metrics recording
 //     defer func() {
 //         duration := time.Since(start).Seconds()
 //         ReconcileDuration.WithLabelValues(reconcileResult).Observe(duration)
 //         ReconcileTotal.WithLabelValues(reconcileResult).Inc()
 //     }()
-//
+//     
 //     // ... reconciliation logic ...
-//
+//     
 //     // On error, update the result label
 //     if err != nil {
 //         reconcileResult = "error"
 //         return ctrl.Result{}, err
 //     }
-//
+//     
 //     // Record database info
 //     DatabaseInfo.WithLabelValues(
 //         db.Name,

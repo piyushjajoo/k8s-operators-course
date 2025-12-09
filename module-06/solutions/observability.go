@@ -23,7 +23,29 @@ limitations under the License.
 package controller
 
 // =============================================================================
-// PART 1: Controller Struct with Event Recorder
+// PART 1: Add RBAC Permission for Events
+// =============================================================================
+//
+// Add this kubebuilder marker near the other RBAC markers in your controller:
+//
+// // +kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
+//
+// Then regenerate manifests:
+//
+//   make manifests
+//
+// This updates config/rbac/role.yaml to include:
+//
+//   - apiGroups:
+//     - ""
+//     resources:
+//     - events
+//     verbs:
+//     - create
+//     - patch
+
+// =============================================================================
+// PART 2: Controller Struct with Event Recorder
 // =============================================================================
 //
 // Update your DatabaseReconciler struct to include the event recorder:
@@ -39,7 +61,7 @@ package controller
 // }
 
 // =============================================================================
-// PART 2: Update main.go to Provide Event Recorder
+// PART 3: Update main.go to Provide Event Recorder
 // =============================================================================
 //
 // In cmd/main.go, update the controller setup:
@@ -54,7 +76,7 @@ package controller
 // }
 
 // =============================================================================
-// PART 3: Structured Logging Patterns
+// PART 4: Structured Logging Patterns
 // =============================================================================
 //
 // Use log.FromContext(ctx) for consistent logging:
@@ -87,7 +109,7 @@ package controller
 // }
 
 // =============================================================================
-// PART 4: Event Emission Patterns
+// PART 5: Event Emission Patterns
 // =============================================================================
 //
 // Events provide user-visible information in `kubectl describe`:
@@ -130,7 +152,7 @@ package controller
 // }
 
 // =============================================================================
-// PART 5: Update Tests to Include Recorder
+// PART 6: Update Tests to Include Recorder
 // =============================================================================
 //
 // When testing, provide a fake recorder:
@@ -146,7 +168,7 @@ package controller
 // }
 
 // =============================================================================
-// PART 6: View Events
+// PART 7: View Events
 // =============================================================================
 //
 // Users can see events with kubectl:
