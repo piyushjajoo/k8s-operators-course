@@ -427,7 +427,7 @@ When configuring RBAC and security with kubebuilder:
 ### Related Topics
 - [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Security Contexts](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-- [Image Scanning Tools](https://kubernetes.io/docs/concepts/security/image-scanning/)
+- [Image Security](https://kubernetes.io/docs/concepts/security/application-security-checklist/#image-security)
 
 ## Next Steps
 
