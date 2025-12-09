@@ -4,11 +4,16 @@ This directory contains complete, working solutions for Module 6 labs.
 
 ## Files
 
+### Testing (Labs 1-3)
 - **suite_test.go**: Complete test suite setup with envtest (for `internal/controller/`)
 - **database_controller_test.go**: Complete unit test examples
 - **integration_test.go**: Complete integration test examples (combines suite + tests)
+
+### Observability (Lab 4)
 - **metrics.go**: Custom Prometheus metrics (copy to `internal/controller/metrics.go`)
 - **observability.go**: Patterns for structured logging and event emission
+- **metrics_reader_role_binding.yaml**: RBAC binding for metrics access (copy to `config/rbac/`)
+- **rbac_kustomization.yaml**: Updated kustomization including metrics binding
 
 ## Usage
 
@@ -68,12 +73,23 @@ ginkgo -v -skip="webhook" ./test/integration
 ### 3. For observability
 
 ```bash
-# Copy metrics code to internal/controller/metrics.go
+# Step 1: Add RBAC for metrics access
+cp metrics_reader_role_binding.yaml ~/postgres-operator/config/rbac/metrics_reader_role_binding.yaml
+
+# Step 2: Update config/rbac/kustomization.yaml to include the new file
+# Add this line after 'metrics_reader_role.yaml':
+#   - metrics_reader_role_binding.yaml
+# (See rbac_kustomization.yaml for the complete file)
+
+# Step 3: Copy metrics code to internal/controller/metrics.go
 cp metrics.go ~/postgres-operator/internal/controller/metrics.go
 
-# Add event recorder to your controller struct
-# Update Reconcile function with logging and events
-# Metrics will be exposed at /metrics endpoint
+# Step 4: Add event recorder to your controller struct (see observability.go)
+# Step 5: Update Reconcile function with metrics and events
+
+# Step 6: Redeploy the operator
+cd ~/postgres-operator
+make deploy IMG=<your-image>
 ```
 
 ## Key Points

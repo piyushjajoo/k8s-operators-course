@@ -91,7 +91,68 @@ kubectl delete database test-logging
 
 ## Exercise 2: Add Prometheus Metrics
 
-### Task 2.1: Create Metrics File
+### Task 2.1: Add Metrics RBAC Binding
+
+The Kubebuilder scaffolding creates a `metrics-reader` ClusterRole but doesn't bind it to anyone. We need to create the binding so the ServiceAccount can access its own metrics.
+
+Create `config/rbac/metrics_reader_role_binding.yaml`:
+
+```bash
+cat > ~/postgres-operator/config/rbac/metrics_reader_role_binding.yaml << 'EOF'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: metrics-reader-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metrics-reader
+subjects:
+- kind: ServiceAccount
+  name: controller-manager
+  namespace: system
+EOF
+```
+
+Update `config/rbac/kustomization.yaml` to include the new file:
+
+```bash
+cat > ~/postgres-operator/config/rbac/kustomization.yaml << 'EOF'
+resources:
+# All RBAC will be applied under this service account in
+# the deployment namespace. You may comment out this resource
+# if your manager will use a service account that exists at
+# runtime. Be sure to update RoleBinding and ClusterRoleBinding
+# subjects if changing service account names.
+- service_account.yaml
+- role.yaml
+- role_binding.yaml
+- leader_election_role.yaml
+- leader_election_role_binding.yaml
+# The following RBAC configurations are used to protect
+# the metrics endpoint with authn/authz. These configurations
+# ensure that only authorized users and service accounts
+# can access the metrics endpoint. Comment the following
+# permissions if you want to disable this protection.
+# More info: https://book.kubebuilder.io/reference/metrics.html
+- metrics_auth_role.yaml
+- metrics_auth_role_binding.yaml
+- metrics_reader_role.yaml
+- metrics_reader_role_binding.yaml
+# For each CRD, "Admin", "Editor" and "Viewer" roles are scaffolded by
+# default, aiding admins in cluster management. Those roles are
+# not used by the postgres-operator itself. You can comment the following lines
+# if you do not want those helpers be installed with your Project.
+- database_admin_role.yaml
+- database_editor_role.yaml
+- database_viewer_role.yaml
+EOF
+```
+
+### Task 2.2: Create Metrics File
 
 Create `internal/controller/metrics.go`:
 
@@ -171,7 +232,7 @@ func init() {
 EOF
 ```
 
-### Task 2.2: Update Controller to Use Metrics
+### Task 2.3: Update Controller to Use Metrics
 
 Add metrics instrumentation to your `Reconcile` function. Update `internal/controller/database_controller.go`:
 
@@ -227,7 +288,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
     ).Set(1)
 ```
 
-### Task 2.3: Rebuild and Deploy
+### Task 2.4: Rebuild and Deploy
 
 ```bash
 cd ~/postgres-operator
@@ -259,7 +320,7 @@ kubectl rollout restart deployment -n postgres-operator-system postgres-operator
 kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=60s
 ```
 
-### Task 2.4: Test Metrics
+### Task 2.5: Test Metrics
 
 The metrics endpoint uses HTTPS with authentication by default.
 
@@ -340,7 +401,7 @@ database_reconcile_duration_seconds_bucket{result="success",le="0.005"} 2
 database_info{image="postgres:14",name="test-metrics",namespace="default",phase="Provisioning"} 1
 ```
 
-### Task 2.5: Cleanup
+### Task 2.6: Cleanup
 
 ```bash
 # Stop port-forward
@@ -670,6 +731,8 @@ In this lab, you:
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
+- [Metrics RBAC Binding](../solutions/metrics_reader_role_binding.yaml) - ClusterRoleBinding for metrics access
+- [RBAC Kustomization](../solutions/rbac_kustomization.yaml) - Updated kustomization with metrics binding
 - [Metrics Implementation](../solutions/metrics.go) - Custom Prometheus metrics
 - [Observability Examples](../solutions/observability.go) - Logging and events patterns
 

@@ -1,0 +1,26 @@
+# Solution: Metrics Reader Role Binding from Module 6 Lab 4
+# Location: config/rbac/metrics_reader_role_binding.yaml
+#
+# This ClusterRoleBinding grants the controller's ServiceAccount permission
+# to read the /metrics endpoint. The Kubebuilder scaffolding creates the
+# metrics-reader ClusterRole but doesn't bind it - you must add this binding.
+#
+# Note: The 'name: controller-manager' and 'namespace: system' are placeholders
+# that kustomize transforms using namePrefix and namespace from config/default/kustomization.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: metrics-reader-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metrics-reader
+subjects:
+- kind: ServiceAccount
+  name: controller-manager
+  namespace: system
+
