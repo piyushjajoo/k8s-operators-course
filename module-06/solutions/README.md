@@ -7,8 +7,8 @@ This directory contains complete, working solutions for Module 6 labs.
 - **suite_test.go**: Complete test suite setup with envtest (for `internal/controller/`)
 - **database_controller_test.go**: Complete unit test examples
 - **integration_test.go**: Complete integration test examples (combines suite + tests)
-- **metrics.go**: Prometheus metrics implementation
-- **observability.go**: Structured logging and event emission examples
+- **metrics.go**: Custom Prometheus metrics (copy to `internal/controller/metrics.go`)
+- **observability.go**: Patterns for structured logging and event emission
 
 ## Usage
 
