@@ -190,20 +190,30 @@ make manifests
 ### Task 4.2: Rebuild and Deploy
 
 ```bash
-# Rebuild the image
+# Rebuild the image (for docker)
 make docker-build IMG=postgres-operator:latest
+
+# Rebuild the image (for podman)
+make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 
 # For Docker:
 kind load docker-image postgres-operator:latest --name k8s-operators-course
 
 # For Podman:
-# podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
-# kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
-# rm /tmp/postgres-operator.tar
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
 
-# Redeploy
+# Redeploy for Docker
 make deploy IMG=postgres-operator:latest
-# Or for Podman: make deploy IMG=localhost/postgres-operator:latest
+
+# Redeploy for Podman
+make deploy IMG=localhost/postgres-operator:latest
+
+# If you already have existing operator deployed from previous lab, restart the deployment
+kubectl rollout restart deploy -n postgres-operator-system   postgres-operator-controller-manager
+
+# in the operator logs you should see statements of registering validating and mutating webhooks
 ```
 
 ### Task 4.3: Verify Both Webhooks are Registered
