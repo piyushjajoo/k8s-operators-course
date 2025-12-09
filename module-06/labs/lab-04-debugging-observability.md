@@ -794,10 +794,23 @@ quit (q)             - Exit debugger
 ```bash
 cd ~/postgres-operator
 
-# Make sure latest version is deployed
+# For Docker: Make sure latest version is deployed
 make docker-build IMG=postgres-operator:latest
 kind load docker-image postgres-operator:latest
 make deploy IMG=postgres-operator:latest
+
+# For Podman
+# Build with podman (note: image will be localhost/postgres-operator:latest)
+make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+# For podman: Load image into kind (save to tarball, then load)
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
+# For podman: Deploy operator - use localhost/ prefix to match the loaded image
+make deploy IMG=localhost/postgres-operator:latest
+
+# Redeploy
+kubectl rollout restart deployment -n postgres-operator-system postgres-operator-controller-manager
 
 # Wait for deployment
 kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=120s
