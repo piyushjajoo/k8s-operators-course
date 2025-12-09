@@ -385,7 +385,7 @@ jobs:
           go install github.com/onsi/ginkgo/v2/ginkgo@latest
       
       - name: Create cluster
-        run: kind create cluster --wait 60s
+        run: kind create cluster --image kindest/node:v1.32.0 --wait 60s
       
       - name: Build Docker image
         run: make docker-build IMG=${{ env.IMG }}
