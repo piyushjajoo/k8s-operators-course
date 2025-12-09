@@ -178,22 +178,6 @@ if _, exists := database.Labels["managed-by"]; !exists {
 // If already exists, doesn't add again
 ```
 
-### Task 3.2: Test Idempotency
-
-```bash
-# Create resource
-kubectl apply -f config/samples/database_v1_database.yaml
-
-# Get the resource (should have defaults)
-kubectl get database -o yaml
-
-# Apply again (should be idempotent)
-kubectl apply -f config/samples/database_v1_database.yaml
-
-# Check - should be the same
-kubectl get database -o yaml
-```
-
 ## Exercise 4: Deploy and Test Mutating Webhook
 
 ### Task 4.1: Generate Manifests
