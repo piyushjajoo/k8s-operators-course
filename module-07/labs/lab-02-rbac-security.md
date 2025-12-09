@@ -206,143 +206,145 @@ FROM gcr.io/distroless/static:nonroot
 USER 65532:65532
 ```
 
-## Exercise 5: Network Policy for Operator Isolation
+## Exercise 5: Enable Network Policies
 
-Network Policies restrict network traffic to/from your operator pods, providing defense in depth.
+Kubebuilder already generates Network Policies for your operator! Let's review and enable them.
 
-### Task 5.1: Create Network Policy Directory
+### Task 5.1: Review Generated Network Policies
+
+Kubebuilder creates network policies in `config/network-policy/`:
 
 ```bash
 cd ~/postgres-operator
 
-# Create directory for network policy
-mkdir -p config/network-policy
+# List the generated network policy files
+ls -la config/network-policy/
+
+# Review the metrics traffic policy
+cat config/network-policy/allow-metrics-traffic.yaml
+
+# Review the webhook traffic policy  
+cat config/network-policy/allow-webhook-traffic.yaml
 ```
 
-### Task 5.2: Create the Network Policy
+**What Kubebuilder generates:**
 
-Create the file `config/network-policy/network-policy.yaml` with the following content:
+1. **`allow-metrics-traffic.yaml`** - Controls access to metrics endpoint:
+   - Only allows ingress from namespaces labeled `metrics: enabled`
+   - Restricts to port 8443 (HTTPS metrics)
+
+2. **`allow-webhook-traffic.yaml`** - Controls access to webhook server:
+   - Only allows ingress from namespaces labeled `webhook: enabled`
+   - Restricts to port 443 (webhook HTTPS)
+
+### Task 5.2: Understand the Network Policies
+
+Review the metrics policy:
 
 ```yaml
-# config/network-policy/network-policy.yaml
-# Network Policy for postgres-operator controller manager
-# Restricts network access to only what the operator needs
+# config/network-policy/allow-metrics-traffic.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: controller-manager
+  name: allow-metrics-traffic
   namespace: system
-  labels:
-    app.kubernetes.io/name: postgres-operator
-    app.kubernetes.io/component: network-policy
 spec:
-  # Apply to controller-manager pods
   podSelector:
     matchLabels:
       control-plane: controller-manager
+      app.kubernetes.io/name: postgres-operator
   policyTypes:
-  - Ingress
-  - Egress
-  
-  # Ingress rules - what can connect TO the operator
+    - Ingress
   ingress:
-  # Allow metrics scraping from any namespace (for Prometheus)
-  - from:
-    - namespaceSelector: {}
-    ports:
-    - protocol: TCP
-      port: 8080  # Metrics port
-  # Allow health checks from within the cluster
-  - from:
-    - namespaceSelector: {}
-    ports:
-    - protocol: TCP
-      port: 8081  # Health probe port
-  
-  # Egress rules - what the operator can connect TO
-  egress:
-  # Allow DNS lookups (required for service discovery)
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow Kubernetes API access (required for operator functionality)
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: TCP
-      port: 443   # Kubernetes API (HTTPS)
-    - protocol: TCP
-      port: 6443  # Kubernetes API (alternative port)
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            metrics: enabled  # Only from namespaces with this label
+      ports:
+        - port: 8443
+          protocol: TCP
 ```
 
-### Task 5.3: Create Kustomization for Network Policy
+**Key points:**
+- Applies to pods with `control-plane: controller-manager` label
+- Only allows ingress (incoming traffic)
+- Requires source namespace to have `metrics: enabled` label
+- This means Prometheus must run in a labeled namespace to scrape metrics
 
-Create `config/network-policy/kustomization.yaml`:
+### Task 5.3: Enable Network Policies in Kustomization
 
-```yaml
-# config/network-policy/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-- network-policy.yaml
-
-# The namespace will be set by the parent kustomization
-```
-
-### Task 5.4: Add Network Policy to Default Kustomization
-
-Edit `config/default/kustomization.yaml` to include the network policy:
+Network policies are commented out by default. Enable them:
 
 ```bash
-# View current kustomization
-cat config/default/kustomization.yaml
+# View the current kustomization
+cat config/default/kustomization.yaml | grep -A 5 "NETWORK POLICY"
 ```
 
-Add `../network-policy` to the resources list:
+You'll see:
+```yaml
+# [NETWORK POLICY] Protect the /metrics endpoint and Webhook Server with NetworkPolicy.
+#- ../network-policy
+```
+
+Edit `config/default/kustomization.yaml` and uncomment the network-policy line:
 
 ```yaml
-# In config/default/kustomization.yaml, add to resources:
-resources:
-- ../crd
-- ../rbac
-- ../manager
-- ../network-policy  # Add this line
-# ... other resources
+# [NETWORK POLICY] Protect the /metrics endpoint and Webhook Server with NetworkPolicy.
+- ../network-policy
 ```
 
-### Task 5.5: Verify Network Policy Generation
+### Task 5.4: Deploy with Network Policies
 
 ```bash
-# Preview the generated manifests including network policy
-kustomize build config/default | grep -A 50 "kind: NetworkPolicy"
-
-# Or deploy and verify
+# Deploy the operator with network policies enabled
 make deploy IMG=postgres-operator:v0.1.0
 
-# Check network policy was created
+# Verify network policies were created
 kubectl get networkpolicy -n postgres-operator-system
-kubectl describe networkpolicy controller-manager -n postgres-operator-system
+
+# View the network policies
+kubectl describe networkpolicy -n postgres-operator-system
 ```
 
-### Task 5.6: Test Network Policy (Optional)
+Expected output:
+```
+NAME                    POD-SELECTOR                                                    AGE
+allow-metrics-traffic   app.kubernetes.io/name=postgres-operator,control-plane=...     10s
+allow-webhook-traffic   app.kubernetes.io/name=postgres-operator,control-plane=...     10s
+```
 
-To verify the network policy is working, you need a CNI that supports Network Policies (Calico, Cilium, etc.):
+### Task 5.5: Label Namespaces for Access
+
+For Prometheus to scrape metrics and webhooks to work, label the appropriate namespaces:
 
 ```bash
-# Check if your cluster supports network policies
-kubectl get pods -n kube-system | grep -E "(calico|cilium|weave)"
+# Label namespace where Prometheus runs (to allow metrics scraping)
+kubectl label namespace monitoring metrics=enabled
 
-# If using kind, network policies are NOT enforced by default
-# For testing, you can install Calico:
-# kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+# Label namespaces where you'll create Database CRs (for webhook access)
+kubectl label namespace default webhook=enabled
+
+# Verify labels
+kubectl get namespaces --show-labels | grep -E "(metrics|webhook)"
 ```
 
-**Note:** The default kind cluster does not enforce Network Policies. In production clusters with Calico/Cilium, the policy will block unauthorized traffic.
+### Task 5.6: Test Network Policy Enforcement (Optional)
+
+Network Policies require a CNI that supports them (Calico, Cilium, etc.):
+
+```bash
+# Check if your cluster has a CNI that supports network policies
+kubectl get pods -n kube-system | grep -E "(calico|cilium|weave)"
+
+# Test: Try to access metrics from an unlabeled namespace (should fail with CNI)
+kubectl run test-curl --rm -it --image=curlimages/curl --restart=Never -- \
+  curl -k https://postgres-operator-controller-manager-metrics-service.postgres-operator-system:8443/metrics
+
+# Now label the namespace and try again (should work)
+kubectl label namespace default metrics=enabled
+```
+
+**Note:** The default kind cluster does NOT enforce Network Policies. In production clusters with Calico/Cilium, unlabeled namespaces will be blocked.
 
 ## Cleanup
 
@@ -366,7 +368,8 @@ In this lab, you:
 - Reviewed kubebuilder's security configurations
 - Scanned images for vulnerabilities with Trivy
 - Enhanced security hardening with security contexts
-- Created Network Policies to isolate operator network traffic
+- Enabled kubebuilder-generated Network Policies
+- Labeled namespaces to allow metrics and webhook traffic
 
 ## Key Learnings
 
@@ -375,10 +378,11 @@ In this lab, you:
 3. Minimize markers to match actual controller needs
 4. Kubebuilder includes security contexts by default
 5. Scan images regularly with Trivy or similar tools
-6. **Network Policies** provide defense in depth by restricting traffic
-7. Operators typically only need egress to Kubernetes API (443) and DNS (53)
-8. The distroless base image is already used by kubebuilder
-9. Network Policies require a CNI that supports them (Calico, Cilium)
+6. **Kubebuilder generates Network Policies** in `config/network-policy/`
+7. Enable network policies by uncommenting `../network-policy` in kustomization
+8. Label namespaces with `metrics: enabled` or `webhook: enabled` to allow access
+9. The distroless base image is already used by kubebuilder
+10. Network Policies require a CNI that supports them (Calico, Cilium)
 
 ## Solutions
 

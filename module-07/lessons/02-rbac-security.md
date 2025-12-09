@@ -229,78 +229,91 @@ volumes:
 
 Network Policies are essential for **defense in depth** - they control network traffic to and from your operator pods, limiting the blast radius if an attacker compromises your operator.
 
-#### Why Network Policies for Operators?
+#### Kubebuilder-Generated Network Policies
+
+**Good news!** Kubebuilder automatically generates network policies in `config/network-policy/`:
+
+```
+config/network-policy/
+├── allow-metrics-traffic.yaml   # Controls metrics endpoint access
+├── allow-webhook-traffic.yaml   # Controls webhook server access
+└── kustomization.yaml
+```
+
+These are **disabled by default**. To enable them, uncomment in `config/default/kustomization.yaml`:
+
+```yaml
+# [NETWORK POLICY] Protect the /metrics endpoint and Webhook Server
+- ../network-policy  # Uncomment this line
+```
+
+#### How Kubebuilder's Network Policies Work
 
 ```mermaid
 graph TB
-    OPERATOR[Operator Pod]
+    subgraph "Operator Namespace"
+        OPERATOR[Controller Manager Pod]
+    end
     
-    OPERATOR -->|Needs| API[Kubernetes API :443]
-    OPERATOR -->|Needs| DNS[DNS :53]
-    OPERATOR -.->|Block| INTERNET[Internet]
-    OPERATOR -.->|Block| OTHER[Other Pods]
+    subgraph "Labeled Namespaces"
+        PROM[Prometheus<br/>metrics: enabled]
+        APP[App Namespace<br/>webhook: enabled]
+    end
+    
+    subgraph "Unlabeled Namespaces"
+        OTHER[Other Pods<br/>❌ Blocked]
+    end
+    
+    PROM -->|Port 8443| OPERATOR
+    APP -->|Port 443| OPERATOR
+    OTHER -.->|Blocked| OPERATOR
     
     style OPERATOR fill:#FFB6C1
-    style API fill:#90EE90
-    style DNS fill:#90EE90
-    style INTERNET fill:#FF6B6B
+    style PROM fill:#90EE90
+    style APP fill:#90EE90
     style OTHER fill:#FF6B6B
 ```
 
-**Operators typically only need:**
-- **Egress to Kubernetes API** (port 443/6443) - to watch and manage resources
-- **Egress to DNS** (port 53) - for service discovery
-- **No ingress** (unless serving webhooks or metrics)
+**Kubebuilder's approach:**
+- **Metrics access**: Only namespaces labeled `metrics: enabled` can scrape metrics (port 8443)
+- **Webhook access**: Only namespaces labeled `webhook: enabled` can use webhooks (port 443)
 
-**Everything else should be blocked!**
-
-#### Network Policy Structure
+#### Kubebuilder Network Policy Example
 
 ```yaml
+# config/network-policy/allow-metrics-traffic.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: controller-manager
-  namespace: postgres-operator-system
+  name: allow-metrics-traffic
+  namespace: system
 spec:
-  # Select which pods this policy applies to
   podSelector:
     matchLabels:
       control-plane: controller-manager
-  
-  # What types of traffic to control
+      app.kubernetes.io/name: postgres-operator
   policyTypes:
-  - Ingress
-  - Egress
-  
-  # Ingress rules (incoming traffic)
+    - Ingress
   ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: prometheus
-    ports:
-    - protocol: TCP
-      port: 8080  # Metrics port (if enabled)
-  
-  # Egress rules (outgoing traffic)
-  egress:
-  # Allow DNS lookups
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow Kubernetes API access
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: TCP
-      port: 443
-    - protocol: TCP
-      port: 6443
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            metrics: enabled  # Only from labeled namespaces
+      ports:
+        - port: 8443
+          protocol: TCP
+```
+
+#### Labeling Namespaces
+
+For the policies to allow traffic, label your namespaces:
+
+```bash
+# Allow Prometheus to scrape metrics
+kubectl label namespace monitoring metrics=enabled
+
+# Allow webhook traffic from namespaces where you create CRs
+kubectl label namespace default webhook=enabled
 ```
 
 #### Key Concepts
@@ -310,26 +323,7 @@ spec:
 | `podSelector` | Selects pods the policy applies to (empty = all pods in namespace) |
 | `policyTypes` | Which direction to control: `Ingress`, `Egress`, or both |
 | `ingress.from` | Who can send traffic TO the selected pods |
-| `egress.to` | Where the selected pods can send traffic |
 | `namespaceSelector` | Match pods in namespaces with specific labels |
-| `podSelector` (in rules) | Match specific pods within allowed namespaces |
-
-#### Default Deny Pattern
-
-For maximum security, start with **deny all** and explicitly allow only what's needed:
-
-```yaml
-# Deny all ingress (no incoming traffic allowed)
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-ingress
-spec:
-  podSelector: {}  # Applies to all pods
-  policyTypes:
-  - Ingress
-  # No ingress rules = deny all ingress
-```
 
 **Important:** Network Policies require a CNI plugin that supports them (Calico, Cilium, Weave, etc.). The default Kubernetes networking (kubenet) does NOT enforce Network Policies!
 
@@ -403,8 +397,8 @@ When configuring RBAC and security with kubebuilder:
 - Remove unnecessary markers to minimize permissions
 - Use the distroless base image (already in kubebuilder Dockerfile)
 - Configure security contexts in `config/manager/manager.yaml`
-- **Create `config/network-policy/` directory with NetworkPolicy manifests**
-- **Add network-policy to `config/default/kustomization.yaml` resources**
+- **Enable network policies by uncommenting `../network-policy` in `config/default/kustomization.yaml`**
+- **Label namespaces with `metrics: enabled` and `webhook: enabled` as needed**
 - Scan images for vulnerabilities before deployment
 - **Test network policies in a cluster with CNI support (Calico, Cilium)**
 
