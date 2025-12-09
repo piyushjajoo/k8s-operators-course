@@ -121,7 +121,6 @@ else
     # - serviceMonitorSelectorNilUsesHelmValues=false: Empty selector means "select all"
     #   (instead of defaulting to only 'release: prometheus' labeled ServiceMonitors)
     # - podMonitorSelectorNilUsesHelmValues=false: Same for PodMonitors
-    # - serviceMonitorNamespaceSelector empty: Discover from all namespaces
     helm install prometheus prometheus-community/kube-prometheus-stack \
         --namespace monitoring \
         --create-namespace \
@@ -136,10 +135,8 @@ else
         --set alertmanager.enabled=false \
         --set nodeExporter.enabled=false \
         --set kubeStateMetrics.enabled=true \
-        --set 'prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false' \
-        --set 'prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false' \
-        --set 'prometheus.prometheusSpec.serviceMonitorNamespaceSelector={}' \
-        --set 'prometheus.prometheusSpec.podMonitorNamespaceSelector={}' \
+        --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+        --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false \
         --wait \
         --timeout 300s
 
