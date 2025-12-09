@@ -105,14 +105,23 @@ echo "Installing Prometheus stack..."
 # Check if Helm is installed
 if ! command -v helm &> /dev/null; then
     echo "Warning: Helm is not installed. Skipping Prometheus installation."
-    echo "Install Helm and run: helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace"
+    echo "Install Helm and run the prometheus install command from scripts/setup-kind-cluster.sh"
     PROMETHEUS_INSTALLED="no"
 else
     # Add prometheus-community Helm repo
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm repo update
 
-    # Install kube-prometheus-stack with minimal resources for kind
+    # Install kube-prometheus-stack with settings optimized for the course:
+    # - Minimal resources for kind
+    # - ServiceMonitor discovery from ALL namespaces (not just release: prometheus labeled)
+    # - PodMonitor discovery from ALL namespaces
+    # 
+    # Key settings for operator development:
+    # - serviceMonitorSelectorNilUsesHelmValues=false: Empty selector means "select all"
+    #   (instead of defaulting to only 'release: prometheus' labeled ServiceMonitors)
+    # - podMonitorSelectorNilUsesHelmValues=false: Same for PodMonitors
+    # - serviceMonitorNamespaceSelector empty: Discover from all namespaces
     helm install prometheus prometheus-community/kube-prometheus-stack \
         --namespace monitoring \
         --create-namespace \
@@ -127,6 +136,10 @@ else
         --set alertmanager.enabled=false \
         --set nodeExporter.enabled=false \
         --set kubeStateMetrics.enabled=true \
+        --set 'prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false' \
+        --set 'prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false' \
+        --set 'prometheus.prometheusSpec.serviceMonitorNamespaceSelector={}' \
+        --set 'prometheus.prometheusSpec.podMonitorNamespaceSelector={}' \
         --wait \
         --timeout 300s
 
@@ -136,6 +149,7 @@ else
     PROMETHEUS_INSTALLED="yes"
     
     echo "Prometheus stack installed!"
+    echo "  - Configured to discover ServiceMonitors from ALL namespaces"
     echo "  - Prometheus UI: kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090"
     echo "  - Grafana UI: kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
     echo "  - Grafana credentials: admin / prom-operator"

@@ -401,9 +401,11 @@ kubectl get servicemonitor -n postgres-operator-system
 
 Expected output:
 ```
-NAME                                 AGE
+NAME                                                 AGE
 postgres-operator-controller-manager-metrics-monitor   10s
 ```
+
+**Note:** The course setup script (`scripts/setup-kind-cluster.sh`) configures Prometheus to discover ServiceMonitors from all namespaces without requiring specific labels. If you're using a different Prometheus installation, you may need to add `release: prometheus` label to your ServiceMonitor.
 
 ### Task 5.7: Verify Prometheus Can Scrape Metrics
 
@@ -430,10 +432,20 @@ Open your browser and go to: **http://localhost:9090**
 2. Look for a target with `serviceMonitor/postgres-operator-system/` in the name
 3. The **State** should show `UP` (green)
 
-If the target shows `DOWN`, check:
+If the target doesn't appear or shows `DOWN`, check:
+- Is the ServiceMonitor deployed? (`kubectl get servicemonitor -n postgres-operator-system`)
 - Is the monitoring namespace labeled? (`kubectl get ns monitoring --show-labels`)
-- Is the ServiceMonitor deployed? (`kubectl get servicemonitor -A`)
 - Are network policies blocking access?
+- Is Prometheus configured to discover all ServiceMonitors?
+
+```bash
+# Check if Prometheus discovers all ServiceMonitors (should be empty selector)
+kubectl get prometheus -n monitoring -o jsonpath='{.items[0].spec.serviceMonitorSelector}'
+# Empty {} means it discovers all ServiceMonitors
+
+# If it shows 'release: prometheus', upgrade Prometheus with the course setup settings
+# or add 'release: prometheus' label to your ServiceMonitor
+```
 
 #### Step 4: Query Operator Metrics
 
@@ -536,8 +548,9 @@ In this lab, you:
 8. Label namespaces with `metrics: enabled` or `webhook: enabled` to allow access
 9. **Kubebuilder generates ServiceMonitor** in `config/prometheus/` - enable it!
 10. Use Prometheus UI **Status → Targets** to verify scraping is working
-11. The distroless base image is already used by kubebuilder
-12. Network Policies require a CNI that supports them (Calico, Cilium)
+11. The course setup script configures Prometheus to discover all ServiceMonitors
+12. The distroless base image is already used by kubebuilder
+13. Network Policies require a CNI that supports them (Calico, Cilium)
 
 ## Solutions
 
