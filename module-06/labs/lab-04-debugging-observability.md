@@ -261,8 +261,12 @@ kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n po
 
 ### Task 2.4: Test Metrics
 
+The metrics endpoint uses authentication by default. There are two ways to access it:
+
+**Option A: Use ServiceAccount token (recommended for testing)**
+
 ```bash
-# Create a test database
+# Create a test database first
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -280,16 +284,47 @@ EOF
 # Wait for it to be reconciled
 sleep 30
 
+# Get the ServiceAccount token for metrics access
+TOKEN=$(kubectl create token -n postgres-operator-system postgres-operator-controller-manager)
+
 # Port forward to the metrics endpoint
-# Note: Metrics are on port 8443 with HTTPS by default in newer Kubebuilder
 kubectl port-forward -n postgres-operator-system svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
+sleep 2
 
-# Query metrics (with TLS skip for self-signed cert)
-curl -k https://localhost:8443/metrics 2>/dev/null | grep database_
+# Query metrics with the token
+curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep database_
 
-# Or if metrics are on HTTP:
-# kubectl port-forward -n postgres-operator-system deployment/postgres-operator-controller-manager 8080:8080 &
-# curl http://localhost:8080/metrics | grep database_
+# Stop port-forward
+pkill -f "port-forward.*8443"
+```
+
+**Option B: Use kubectl exec to access metrics from inside the cluster**
+
+```bash
+# Run curl from inside a pod that has access
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
+  curl -k https://postgres-operator-controller-manager-metrics-service.postgres-operator-system.svc:8443/metrics
+
+# Note: This may also require auth depending on your RBAC setup
+```
+
+**Option C: Temporarily disable secure metrics for testing**
+
+If you want simpler access during development, you can disable secure metrics by adding this to the manager deployment:
+
+```bash
+# Edit the deployment to add --metrics-secure=false
+kubectl patch deployment -n postgres-operator-system postgres-operator-controller-manager \
+  --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--metrics-secure=false"}]'
+
+# Wait for rollout
+kubectl rollout status deployment -n postgres-operator-system postgres-operator-controller-manager
+
+# Now you can access without auth (uses HTTP on port 8080)
+kubectl port-forward -n postgres-operator-system deployment/postgres-operator-controller-manager 8080:8080 &
+sleep 2
+curl http://localhost:8080/metrics | grep database_
+pkill -f "port-forward.*8080"
 ```
 
 **Expected output:**
@@ -598,11 +633,12 @@ echo "=== 3. Checking Database Status ==="
 kubectl get database observability-test -o jsonpath='{.status}' | jq .
 
 echo ""
-echo "=== 4. Checking Metrics (if available) ==="
-# This depends on your metrics configuration
+echo "=== 4. Checking Metrics ==="
+# Get token for metrics access
+TOKEN=$(kubectl create token -n postgres-operator-system postgres-operator-controller-manager 2>/dev/null)
 kubectl port-forward -n postgres-operator-system svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
 sleep 2
-curl -k https://localhost:8443/metrics 2>/dev/null | grep -E "^database_" | head -20
+curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep -E "^database_" | head -20
 pkill -f "port-forward.*8443"
 ```
 
@@ -629,7 +665,8 @@ In this lab, you:
 4. **Events are user-facing** - Use `Normal` for success, `Warning` for errors
 5. **Update tests** - When adding fields to reconciler struct, update test files too
 6. **Delve debugging** - Use `ENABLE_WEBHOOKS=false` for local debugging
-7. **Metrics endpoint** - Modern Kubebuilder uses HTTPS on port 8443 by default
+7. **Secure metrics** - Modern Kubebuilder uses HTTPS with auth on port 8443; use ServiceAccount token to access
+8. **Disable secure metrics for dev** - Add `--metrics-secure=false` flag for easier local testing
 
 ## Solutions
 
