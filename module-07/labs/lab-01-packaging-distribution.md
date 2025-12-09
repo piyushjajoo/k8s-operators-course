@@ -12,7 +12,7 @@
 
 ## Prerequisites
 
-- Completion of [Module 6](../module-06/README.md)
+- Completion of [Module 6](../../module-06/README.md)
 - Database operator ready
 - Docker or Podman installed
 - Access to container registry (or use kind for local)
