@@ -724,8 +724,11 @@ cd ~/postgres-operator
 # Delete the test database
 kubectl delete database debug-test
 
-# Redeploy the operator
+# For docker: Deploy operator
 make deploy IMG=postgres-operator:latest
+
+# For podman: Deploy operator - use localhost/ prefix to match the loaded image
+make deploy IMG=localhost/postgres-operator:latest
 
 # Wait for it to be ready
 kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=60s
