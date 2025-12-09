@@ -438,7 +438,7 @@ helm install postgres-operator postgres-operator/postgres-operator
 | `leaderElection.enabled` | Enable leader election | `false` |
 | `resources.limits.cpu` | CPU limit | `500m` |
 | `resources.limits.memory` | Memory limit | `128Mi` |
-```
+
 
 ### Task 4.4: Test the Workflow Locally (Optional)
 
