@@ -61,7 +61,7 @@ kubectl wait --for=condition=Available deployment/cert-manager-cainjector -n cer
 cd ~/postgres-operator
 
 # Check cert-manager configuration
-cat config/certmanager/certificate.yaml
+cat config/certmanager/certificate-*.yaml
 ```
 
 This defines a Certificate resource that cert-manager will use to generate TLS certificates for the webhook.
