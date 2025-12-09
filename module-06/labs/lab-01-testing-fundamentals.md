@@ -14,7 +14,7 @@
 
 - Completion of [Module 5](../../module-05/README.md)
 - Database operator from Module 3/4/5
-- Go 1.21+ installed
+- Go 1.24+ installed
 - Understanding of Go testing
 
 ## Exercise 1: Install Testing Tools
