@@ -19,7 +19,7 @@ sequenceDiagram
     API->>Webhook: AdmissionRequest
     Webhook->>Logic: Mutate Resource
     Logic->>Logic: Apply Changes
-    Logic-->>Webhook: JSON Patch
+    Logic-->>Webhook: Modified Object
     Webhook->>Webhook: Build Response
     Webhook-->>API: AdmissionResponse with Patch
     API->>API: Apply Patch
@@ -30,119 +30,134 @@ sequenceDiagram
 
 ## Creating Mutating Webhook
 
-Create mutating webhook with kubebuilder:
+If starting fresh, create mutating webhook with kubebuilder:
 
 ```bash
 # Create mutating webhook
 kubebuilder create webhook --group database --version v1 --kind Database --defaulting
 ```
 
-This generates the mutating webhook handler.
+If you already have a validating webhook (from Lab 5.2), add the defaulter to your existing webhook file manually.
 
 ## Webhook Handler Structure
 
-The generated mutating webhook handler:
+The generated mutating webhook in `internal/webhook/v1/database_webhook.go` uses the `CustomDefaulter` interface:
 
 ```go
-// +kubebuilder:webhook:path=/mutate-database-example-com-v1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=mdatabase.kb.io
+package v1
 
-var _ webhook.Defaulter = &Database{}
+import (
+    "context"
+    "fmt"
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Database) Default() {
-    // Defaulting logic
+    "k8s.io/apimachinery/pkg/runtime"
+    ctrl "sigs.k8s.io/controller-runtime"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
+    "sigs.k8s.io/controller-runtime/pkg/webhook"
+
+    databasev1 "github.com/example/postgres-operator/api/v1"
+)
+
+var databaselog = logf.Log.WithName("database-resource")
+
+// SetupDatabaseWebhookWithManager registers the webhook for Database in the manager.
+func SetupDatabaseWebhookWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewWebhookManagedBy(mgr).For(&databasev1.Database{}).
+        WithValidator(&DatabaseCustomValidator{}).
+        WithDefaulter(&DatabaseCustomDefaulter{}).
+        Complete()
+}
+
+// +kubebuilder:webhook:path=/mutate-database-example-com-v1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=mdatabase-v1.kb.io,admissionReviewVersions=v1
+
+// DatabaseCustomDefaulter struct is responsible for setting default values.
+type DatabaseCustomDefaulter struct {}
+
+var _ webhook.CustomDefaulter = &DatabaseCustomDefaulter{}
+
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type Database.
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Defaulting for Database", "name", database.GetName())
+
+    // Defaulting logic here
+    return nil
 }
 ```
+
+**Key points:**
+- Uses `webhook.CustomDefaulter` interface with a separate struct
+- `Default` method receives `context.Context` and `runtime.Object`
+- Type-assert `runtime.Object` to your actual resource type
+- Register with `.WithDefaulter(&DatabaseCustomDefaulter{})`
 
 ## Implementing Defaulting
 
 ### Example: Set Default Values
 
 ```go
-func (r *Database) Default() {
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Defaulting for Database", "name", database.GetName())
+
     // Set default image if not specified
-    if r.Spec.Image == "" {
-        r.Spec.Image = "postgres:14"
+    if database.Spec.Image == "" {
+        database.Spec.Image = "postgres:14"
     }
-    
+
     // Set default replicas if not specified
-    if r.Spec.Replicas == nil {
+    if database.Spec.Replicas == nil {
         replicas := int32(1)
-        r.Spec.Replicas = &replicas
+        database.Spec.Replicas = &replicas
     }
-    
+
     // Set default storage class if not specified
-    if r.Spec.Storage.StorageClass == "" {
-        r.Spec.Storage.StorageClass = "standard"
+    if database.Spec.Storage.StorageClass == "" {
+        database.Spec.Storage.StorageClass = "standard"
     }
+
+    return nil
 }
 ```
 
 ### Example: Context-Aware Defaults
 
 ```go
-func (r *Database) Default() {
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+
     // Set defaults based on namespace
-    if r.Namespace == "production" {
-        if r.Spec.Replicas == nil {
+    if database.Namespace == "production" {
+        if database.Spec.Replicas == nil {
             replicas := int32(3)  // More replicas in production
-            r.Spec.Replicas = &replicas
+            database.Spec.Replicas = &replicas
         }
     } else {
-        if r.Spec.Replicas == nil {
+        if database.Spec.Replicas == nil {
             replicas := int32(1)  // Single replica in dev
-            r.Spec.Replicas = &replicas
+            database.Spec.Replicas = &replicas
         }
     }
-    
+
     // Set image based on environment
-    if r.Spec.Image == "" {
-        if r.Namespace == "production" {
-            r.Spec.Image = "postgres:14"  // Stable version
+    if database.Spec.Image == "" {
+        if database.Namespace == "production" {
+            database.Spec.Image = "postgres:14"  // Stable version
         } else {
-            r.Spec.Image = "postgres:latest"  // Latest in dev
+            database.Spec.Image = "postgres:latest"  // Latest in dev
         }
     }
-}
-```
 
-## Mutation Strategies
-
-### Strategy 1: Direct Modification
-
-Kubebuilder handles patching automatically when you modify the object:
-
-```go
-func (r *Database) Default() {
-    // Just modify the object
-    if r.Spec.Image == "" {
-        r.Spec.Image = "postgres:14"
-    }
-    // Kubebuilder creates the patch automatically
-}
-```
-
-### Strategy 2: JSON Patch
-
-For more control, you can return JSON patches directly:
-
-```go
-func (r *Database) Default() (admission.Warnings, error) {
-    patches := []jsonpatch.Operation{}
-    
-    if r.Spec.Image == "" {
-        patches = append(patches, jsonpatch.Operation{
-            Operation: "add",
-            Path:      "/spec/image",
-            Value:     "postgres:14",
-        })
-    }
-    
-    patchBytes, _ := json.Marshal(patches)
-    return nil, &admission.Response{
-        Patches: patchBytes,
-        PatchType: &[]admissionv1.PatchType{admissionv1.PatchTypeJSONPatch}[0],
-    }
+    return nil
 }
 ```
 
@@ -164,32 +179,29 @@ graph LR
 ### Pattern 2: Add Required Fields
 
 ```go
-func (r *Database) Default() {
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+
     // Add labels if missing
-    if r.Labels == nil {
-        r.Labels = make(map[string]string)
+    if database.Labels == nil {
+        database.Labels = make(map[string]string)
     }
-    r.Labels["managed-by"] = "database-operator"
-    
+    if _, exists := database.Labels["managed-by"]; !exists {
+        database.Labels["managed-by"] = "database-operator"
+    }
+
     // Add annotations
-    if r.Annotations == nil {
-        r.Annotations = make(map[string]string)
+    if database.Annotations == nil {
+        database.Annotations = make(map[string]string)
     }
-    r.Annotations["database.example.com/version"] = "v1"
-}
-```
-
-### Pattern 3: Normalize Values
-
-```go
-func (r *Database) Default() {
-    // Normalize image tag
-    if strings.HasSuffix(r.Spec.Image, ":latest") {
-        r.Spec.Image = strings.Replace(r.Spec.Image, ":latest", ":14", 1)
+    if _, exists := database.Annotations["database.example.com/version"]; !exists {
+        database.Annotations["database.example.com/version"] = "v1"
     }
-    
-    // Normalize storage size (ensure uppercase)
-    r.Spec.Storage.Size = strings.ToUpper(r.Spec.Storage.Size)
+
+    return nil
 }
 ```
 
@@ -217,20 +229,27 @@ graph TB
 Mutations must be **idempotent** - applying them multiple times should have the same effect:
 
 ```go
-func (r *Database) Default() {
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+
     // Idempotent: Safe to call multiple times
-    if r.Spec.Image == "" {
-        r.Spec.Image = "postgres:14"
+    if database.Spec.Image == "" {
+        database.Spec.Image = "postgres:14"
     }
     // If already set, doesn't change
-    
+
     // NOT idempotent: Would keep appending
-    // r.Spec.Tags = append(r.Spec.Tags, "default")  // BAD!
-    
+    // database.Spec.Tags = append(database.Spec.Tags, "default")  // BAD!
+
     // Idempotent: Check before adding
-    if !contains(r.Spec.Tags, "default") {
-        r.Spec.Tags = append(r.Spec.Tags, "default")
+    if !contains(database.Spec.Tags, "default") {
+        database.Spec.Tags = append(database.Spec.Tags, "default")
     }
+
+    return nil
 }
 ```
 
@@ -238,18 +257,19 @@ func (r *Database) Default() {
 
 - **Mutating webhooks** modify resources before validation
 - Run **before** validating webhooks
-- Use for **setting defaults** and **adding fields**
-- Kubebuilder **automatically creates patches** from object modifications
+- Use `webhook.CustomDefaulter` interface with separate struct
+- `Default` method receives `context.Context` and `runtime.Object`
+- Register with `.WithDefaulter(&DatabaseCustomDefaulter{})`
 - Mutations must be **idempotent**
 - Provide **sensible defaults** based on context
-- **Normalize values** for consistency
 
 ## Understanding for Building Operators
 
 When implementing mutating webhooks:
+- Add to existing webhook file in `internal/webhook/v1/`
+- Use separate `CustomDefaulter` struct
 - Set defaults for optional fields
 - Add required fields automatically
-- Normalize values for consistency
 - Make mutations idempotent
 - Consider context (namespace, labels, etc.)
 - Keep mutations simple and predictable
@@ -280,4 +300,3 @@ When implementing mutating webhooks:
 Now that you understand mutating webhooks, let's learn about deploying webhooks and managing certificates.
 
 **Navigation:** [← Previous: Validating Webhooks](02-validating-webhooks.md) | [Module Overview](../README.md) | [Next: Webhook Deployment →](04-webhook-deployment.md)
-

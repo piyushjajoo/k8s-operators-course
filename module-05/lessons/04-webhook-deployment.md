@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Webhooks require TLS certificates to secure communication with the API server. Managing these certificates can be complex, but kubebuilder and cert-manager make it easier. In this lesson, you'll learn how to deploy webhooks and manage certificates for both local development and production.
+Webhooks require TLS certificates to secure communication with the API server. Managing these certificates can be complex, but kubebuilder and cert-manager make it easier. In this lesson, you'll learn how to deploy webhooks and manage certificates.
 
 ## Webhook Service Architecture
 
@@ -25,9 +25,34 @@ graph TB
     style CERT fill:#90EE90
 ```
 
-## Certificate Management Flow
+## Why Webhooks Require In-Cluster Deployment
 
-Here's how certificates are managed:
+Unlike controller logic, webhooks cannot easily run locally with `make run`:
+
+```mermaid
+graph TB
+    LOCAL[Local Development]
+    
+    LOCAL --> CONTROLLER[Controller Logic]
+    LOCAL --> WEBHOOK[Webhook Logic]
+    
+    CONTROLLER --> WORKS[✓ make run works]
+    WEBHOOK --> PROBLEM[✗ API server can't reach localhost]
+    
+    WEBHOOK --> SOLUTION[Deploy to cluster]
+    
+    style WORKS fill:#90EE90
+    style PROBLEM fill:#FFB6C1
+    style SOLUTION fill:#90EE90
+```
+
+**The issue:** The Kubernetes API server needs to call your webhook over HTTPS. When running locally, the API server (inside the cluster) cannot reach your localhost.
+
+**The solution:** Deploy the operator to the cluster where the API server can reach it.
+
+## Certificate Management with cert-manager
+
+cert-manager is the recommended solution for webhook certificates:
 
 ```mermaid
 sequenceDiagram
@@ -38,72 +63,12 @@ sequenceDiagram
     
     Operator->>CertMgr: Request Certificate
     CertMgr->>CertMgr: Generate Certificate
-    CertMgr->>Webhook: Store Certificate
-    CertMgr->>API: Update CA Bundle
+    CertMgr->>Webhook: Store Certificate in Secret
+    CertMgr->>API: Inject CA Bundle into WebhookConfig
     API->>Webhook: Validate Certificate
     Webhook-->>API: Valid Connection
     
     Note over CertMgr: Auto-renewal handled
-```
-
-## Certificate Management Strategies
-
-### Strategy 1: cert-manager (Production)
-
-```mermaid
-graph TB
-    CERT_MGR[cert-manager]
-    
-    CERT_MGR --> ISSUER[Issuer]
-    CERT_MGR --> CERTIFICATE[Certificate]
-    CERT_MGR --> SECRET[Secret]
-    
-    ISSUER --> SELF_SIGNED[Self-Signed]
-    ISSUER --> CA[CA Issuer]
-    
-    CERTIFICATE --> AUTO[Auto-Renewal]
-    CERTIFICATE --> SECRET
-    
-    style CERT_MGR fill:#90EE90
-    style AUTO fill:#FFB6C1
-```
-
-**Advantages:**
-- Automatic certificate generation
-- Auto-renewal
-- Production-ready
-- Supports various issuers
-
-### Strategy 2: Manual Certificates (Development)
-
-```mermaid
-graph LR
-    MANUAL[Manual Generation] --> CERT[Certificate]
-    CERT --> SECRET[Create Secret]
-    SECRET --> WEBHOOK[Webhook Config]
-    
-    style MANUAL fill:#FFE4B5
-```
-
-**Advantages:**
-- Simple for development
-- No dependencies
-- Full control
-
-**Disadvantages:**
-- Manual renewal
-- Not production-ready
-
-### Strategy 3: Kubebuilder Certificates (Local Dev)
-
-Kubebuilder provides tools for local development:
-
-```bash
-# Generate certificates
-make certs
-
-# Install certs
-make install-cert
 ```
 
 ## Setting Up cert-manager
@@ -112,203 +77,146 @@ make install-cert
 
 ```bash
 # Install cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
 
 # Wait for cert-manager to be ready
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
+kubectl wait --for=condition=Available deployment/cert-manager -n cert-manager --timeout=120s
+kubectl wait --for=condition=Available deployment/cert-manager-webhook -n cert-manager --timeout=120s
+kubectl wait --for=condition=Available deployment/cert-manager-cainjector -n cert-manager --timeout=120s
 ```
 
-### Step 2: Create Issuer
+> **Note:** The course's `scripts/setup-kind-cluster.sh` installs cert-manager automatically.
+
+### Step 2: Kubebuilder Integration
+
+Kubebuilder projects come pre-configured for cert-manager. Check `config/default/kustomization.yaml`:
 
 ```yaml
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: selfsigned-issuer
-  namespace: default
-spec:
-  selfSigned: {}
+resources:
+- ../crd
+- ../rbac
+- ../manager
+- ../webhook
+- ../certmanager  # Enables cert-manager integration
 ```
 
-### Step 3: Create Certificate
+The `config/certmanager/` directory contains:
+- Certificate resources
+- Issuer configuration
+- CA injection annotations
 
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: database-webhook-cert
-  namespace: default
-spec:
-  secretName: database-webhook-cert
-  issuerRef:
-    name: selfsigned-issuer
-    kind: Issuer
-  dnsNames:
-  - database-webhook-service.default.svc
-  - database-webhook-service.default.svc.cluster.local
+## Deploying Webhooks
+
+### Step 1: Build the Image
+
+```bash
+# Build container image
+make docker-build IMG=postgres-operator:latest
+
+# For Podman:
+# make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 ```
 
-## Webhook Service Setup
+### Step 2: Load into Kind
 
-### Step 1: Create Service
+```bash
+# For Docker:
+kind load docker-image postgres-operator:latest --name k8s-operators-course
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: database-webhook-service
-  namespace: default
-spec:
-  ports:
-  - port: 443
-    targetPort: 9443
-  selector:
-    control-plane: controller-manager
+# For Podman:
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
 ```
 
-### Step 2: Update Webhook Configuration
+### Step 3: Deploy
 
-The webhook configuration references the service:
+```bash
+# Deploy to cluster
+make deploy IMG=postgres-operator:latest
 
-```yaml
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: database-validating-webhook-configuration
-webhooks:
-- name: vdatabase.kb.io
-  clientConfig:
-    service:
-      name: database-webhook-service
-      namespace: default
-      path: /validate-database-example-com-v1-database
-    caBundle: <CA_BUNDLE>
+# For Podman:
+# make deploy IMG=localhost/postgres-operator:latest
 ```
 
-## Local Development Setup
+## What Gets Deployed
 
-For local development, you need to handle certificates differently:
+When you run `make deploy`, kustomize creates:
 
 ```mermaid
 graph TB
-    LOCAL[Local Development]
+    DEPLOY[make deploy]
     
-    LOCAL --> OPTION1[Option 1: cert-manager]
-    LOCAL --> OPTION2[Option 2: kubebuilder certs]
-    LOCAL --> OPTION3[Option 3: Self-signed]
+    DEPLOY --> CRD[CRDs]
+    DEPLOY --> RBAC[RBAC Resources]
+    DEPLOY --> MANAGER[Manager Deployment]
+    DEPLOY --> WEBHOOK[Webhook Configuration]
+    DEPLOY --> CERT[Certificate Resources]
     
-    OPTION1 --> KIND[Use with kind]
-    OPTION2 --> SIMPLE[Simple setup]
-    OPTION3 --> MANUAL[Manual management]
+    CERT --> ISSUER[Issuer]
+    CERT --> CERTIFICATE[Certificate]
+    CERT --> SECRET[TLS Secret]
     
-    style OPTION2 fill:#90EE90
+    style DEPLOY fill:#90EE90
 ```
 
-### Using Kubebuilder for Local Dev
+## Verifying Deployment
+
+### Check Pods
 
 ```bash
-# Generate certificates
-make certs
-
-# This creates:
-# - certs/cert-manager/certificates/
-# - certs/cert-manager/webhookcerts.yaml
-
-# Install certificates
-make install-cert
-
-# Run webhook server
-make run
+kubectl get pods -n postgres-operator-system
 ```
 
-## Webhook Deployment
-
-### Deployment Manifest
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: database-controller-manager
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      control-plane: controller-manager
-  template:
-    metadata:
-      labels:
-        control-plane: controller-manager
-    spec:
-      containers:
-      - name: manager
-        image: database-operator:latest
-        ports:
-        - containerPort: 9443
-          name: webhook-server
-        volumeMounts:
-        - name: cert
-          mountPath: /tmp/k8s-webhook-server/serving-certs
-          readOnly: true
-      volumes:
-      - name: cert
-        secret:
-          secretName: database-webhook-cert
-```
-
-## Testing Webhooks Locally
-
-### Option 1: Run with make run
+### Check Webhooks
 
 ```bash
-# Generate certs
-make certs
-
-# Install certs
-make install-cert
-
-# Run operator (webhook runs in same process)
-make run
+kubectl get validatingwebhookconfigurations
+kubectl get mutatingwebhookconfigurations
 ```
 
-### Option 2: Deploy to Cluster
+### Check Certificates
 
 ```bash
-# Build and deploy
-make docker-build docker-push
-make deploy
-
-# Webhook runs in cluster
+kubectl get certificate -n postgres-operator-system
+kubectl get secret -n postgres-operator-system | grep tls
 ```
 
-## Certificate Rotation
-
-Certificates need to be rotated periodically:
+## Development Workflow
 
 ```mermaid
 graph LR
-    CERT1[Certificate 1] --> EXPIRES[Expires]
-    EXPIRES --> RENEW[Renew]
-    RENEW --> CERT2[Certificate 2]
-    CERT2 --> UPDATE[Update Webhook Config]
+    CODE[Write Code] --> BUILD[make docker-build]
+    BUILD --> LOAD[kind load]
+    LOAD --> DEPLOY[make deploy]
+    DEPLOY --> TEST[Test Webhooks]
+    TEST --> CODE
     
-    style RENEW fill:#90EE90
-    style UPDATE fill:#FFB6C1
+    style CODE fill:#FFE4B5
+    style TEST fill:#90EE90
 ```
 
-**cert-manager** handles this automatically!
+For rapid iteration:
+
+```bash
+# After code changes, redeploy
+make docker-build IMG=postgres-operator:latest
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
+```
 
 ## Troubleshooting Webhooks
 
 ### Common Issues
 
-1. **Certificate errors:**
+1. **Certificate not ready:**
    ```bash
-   # Check certificate
-   kubectl get certificate database-webhook-cert
+   # Check certificate status
+   kubectl get certificate -n postgres-operator-system
+   kubectl describe certificate -n postgres-operator-system
    
-   # Check secret
-   kubectl get secret database-webhook-cert
+   # Check cert-manager logs
+   kubectl logs -n cert-manager deployment/cert-manager
    ```
 
 2. **Webhook not called:**
@@ -317,42 +225,65 @@ graph LR
    kubectl get validatingwebhookconfiguration
    kubectl get mutatingwebhookconfiguration
    
-   # Check service
-   kubectl get service database-webhook-service
+   # Check if CA bundle is injected
+   kubectl get validatingwebhookconfiguration -o yaml | grep caBundle
    ```
 
 3. **Connection refused:**
    ```bash
    # Check webhook pod logs
-   kubectl logs -l control-plane=controller-manager
+   kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager
    
    # Check service endpoints
-   kubectl get endpoints database-webhook-service
+   kubectl get endpoints -n postgres-operator-system
    ```
+
+4. **Image pull errors:**
+   ```bash
+   # Check pod events
+   kubectl describe pod -n postgres-operator-system -l control-plane=controller-manager
+   
+   # Ensure imagePullPolicy is IfNotPresent for local images
+   ```
+
+## Certificate Rotation
+
+cert-manager handles certificate rotation automatically:
+
+```mermaid
+graph LR
+    CERT1[Certificate] --> MONITOR[Monitor Expiry]
+    MONITOR --> RENEW[Auto-Renew Before Expiry]
+    RENEW --> CERT2[New Certificate]
+    CERT2 --> UPDATE[Update Secret]
+    UPDATE --> RELOAD[Webhook Reloads]
+    
+    style RENEW fill:#90EE90
+```
+
+Default renewal is 30 days before expiry.
 
 ## Key Takeaways
 
-- **Webhooks require TLS certificates** for security
+- **Webhooks require TLS certificates** for secure communication
+- **Webhooks need in-cluster deployment** - `make run` doesn't work for webhooks
 - **cert-manager** provides automatic certificate management
-- **Kubebuilder** simplifies local development
-- **Webhook service** must be accessible from API server
-- **CA bundle** must match the certificate
+- **Kubebuilder projects** come pre-configured for cert-manager
+- Use `make deploy` workflow: build → load → deploy
 - **Certificate rotation** is handled automatically by cert-manager
-- **Local development** uses different certificate strategies
 
 ## Understanding for Building Operators
 
 When deploying webhooks:
-- Use cert-manager for production
-- Use kubebuilder certs for local dev
-- Ensure service is accessible
-- Keep certificates up to date
-- Test webhook connectivity
-- Monitor certificate expiration
+- Use cert-manager for automatic certificate management
+- Deploy to cluster for webhook testing (not `make run`)
+- Ensure cert-manager is installed before deploying
+- Check certificate status when troubleshooting
+- Use `kubectl rollout restart` for quick redeployments
 
 ## Related Lab
 
-- [Lab 5.4: Certificate Management](../labs/lab-04-webhook-deployment.md) - Hands-on exercises for this lesson
+- [Lab 5.4: Webhook Deployment and Certificates](../labs/lab-04-webhook-deployment.md) - Hands-on exercises for this lesson
 
 ## References
 
@@ -382,4 +313,3 @@ Congratulations! You've completed Module 5. You now understand:
 In [Module 6](../../module-06/README.md), you'll learn about testing and debugging operators.
 
 **Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)
-

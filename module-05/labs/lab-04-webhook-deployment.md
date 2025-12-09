@@ -1,147 +1,173 @@
-# Lab 5.4: Certificate Management
+# Lab 5.4: Webhook Deployment and Certificates
 
 **Related Lesson:** [Lesson 5.4: Webhook Deployment and Certificates](../lessons/04-webhook-deployment.md)  
 **Navigation:** [← Previous Lab: Mutating Webhooks](lab-03-mutating-webhooks.md) | [Module Overview](../README.md)
 
 ## Objectives
 
-- Set up certificate management
-- Configure webhook service
-- Test webhooks locally
-- Understand certificate rotation
+- Understand certificate requirements for webhooks
+- Deploy operator with webhooks to cluster
+- Configure cert-manager for certificate management
+- Troubleshoot webhook issues
 
 ## Prerequisites
 
 - Completion of [Lab 5.3](lab-03-mutating-webhooks.md)
 - Database operator with webhooks
 - Understanding of TLS and certificates
+- kind cluster with cert-manager installed (from `scripts/setup-kind-cluster.sh`)
 
-## Exercise 1: Local Development Certificates
+## Understanding Webhook Certificate Requirements
 
-### Task 1.1: Generate Certificates with Kubebuilder
+Webhooks require TLS certificates because the Kubernetes API server communicates with webhooks over HTTPS. The certificate must be trusted by the API server.
+
+**Two approaches:**
+1. **cert-manager (Recommended)** - Automatically manages certificates in the cluster
+2. **Manual certificates** - For special cases only
+
+> **Note:** The kubebuilder-generated project is already configured to work with cert-manager. The `config/default/kustomization.yaml` includes cert-manager resources.
+
+## Exercise 1: Verify Cert-Manager Setup
+
+### Task 1.1: Check Cert-Manager is Running
 
 ```bash
-# Navigate to your operator
-cd ~/postgres-operator
+# If you used scripts/setup-kind-cluster.sh, cert-manager is already installed
+kubectl get pods -n cert-manager
 
-# Generate certificates
-make certs
-
-# Check what was created
-ls -la config/certmanager/
-
-# Install certificates
-make install-cert
+# Should show:
+# cert-manager-xxx          Running
+# cert-manager-cainjector-xxx   Running
+# cert-manager-webhook-xxx      Running
 ```
 
-### Task 1.2: Examine Certificate Setup
+### Task 1.2: Install Cert-Manager (if not installed)
 
 ```bash
-# Check certificate manifests
-cat config/certmanager/kustomization.yaml
-
-# Check certificate resources
-cat config/certmanager/certificates/*.yaml
-```
-
-## Exercise 2: Set Up cert-manager (Optional for Production)
-
-### Task 2.1: Install cert-manager
-
-```bash
-# Install cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+# Only if cert-manager is not running
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
 
 # Wait for cert-manager to be ready
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
+kubectl wait --for=condition=Available deployment/cert-manager -n cert-manager --timeout=120s
+kubectl wait --for=condition=Available deployment/cert-manager-webhook -n cert-manager --timeout=120s
+kubectl wait --for=condition=Available deployment/cert-manager-cainjector -n cert-manager --timeout=120s
 ```
 
-### Task 2.2: Create Issuer
+## Exercise 2: Examine Kubebuilder's Cert-Manager Configuration
+
+### Task 2.1: Check Certificate Configuration
 
 ```bash
-# Create self-signed issuer
-cat <<EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: selfsigned-issuer
-  namespace: default
-spec:
-  selfSigned: {}
-EOF
+cd ~/postgres-operator
 
-# Verify issuer
-kubectl get issuer selfsigned-issuer
+# Check cert-manager configuration
+cat config/certmanager/certificate.yaml
 ```
 
-### Task 2.3: Create Certificate
+This defines a Certificate resource that cert-manager will use to generate TLS certificates for the webhook.
+
+### Task 2.2: Check Kustomization
 
 ```bash
-# Create certificate
-cat <<EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: database-webhook-cert
-  namespace: default
-spec:
-  secretName: database-webhook-cert
-  issuerRef:
-    name: selfsigned-issuer
-    kind: Issuer
-  dnsNames:
-  - database-webhook-service.default.svc
-  - database-webhook-service.default.svc.cluster.local
-EOF
-
-# Wait for certificate
-kubectl wait --for=condition=ready certificate/database-webhook-cert --timeout=60s
-
-# Check certificate
-kubectl get certificate database-webhook-cert
-kubectl get secret database-webhook-cert
+# Check how cert-manager is integrated
+cat config/default/kustomization.yaml
 ```
 
-## Exercise 3: Configure Webhook Service
+The `config/default/kustomization.yaml` should include `../certmanager` to enable cert-manager integration.
 
-### Task 3.1: Check Service Configuration
+## Exercise 3: Deploy Operator with Webhooks
+
+### Task 3.1: Build the Operator Image
 
 ```bash
-# Check if service exists
-kubectl get service database-webhook-service
+cd ~/postgres-operator
 
-# If not, check generated manifests
-cat config/webhook/manifests.yaml | grep -A 20 "kind: Service"
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# For Podman users:
+# make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 ```
 
-### Task 3.2: Verify Service Endpoints
+### Task 3.2: Load Image into Kind
 
 ```bash
-# Create service if needed (kubebuilder should generate it)
+# For Docker:
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# For Podman:
+# podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+# kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+# rm /tmp/postgres-operator.tar
+```
+
+### Task 3.3: Deploy to Cluster
+
+```bash
+# Deploy operator with webhooks
+make deploy IMG=postgres-operator:latest
+
+# For Podman users:
+# make deploy IMG=localhost/postgres-operator:latest
+```
+
+### Task 3.4: Verify Deployment
+
+```bash
+# Check deployment
+kubectl get deployment -n postgres-operator-system
+
+# Check pods
+kubectl get pods -n postgres-operator-system
+
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=120s
+```
+
+## Exercise 4: Verify Webhook Configuration
+
+### Task 4.1: Check Webhook Configurations
+
+```bash
+# Check validating webhook
+kubectl get validatingwebhookconfigurations
+
+# Check mutating webhook  
+kubectl get mutatingwebhookconfigurations
+
+# Get details
+kubectl describe validatingwebhookconfiguration postgres-operator-validating-webhook-configuration
+```
+
+### Task 4.2: Check Certificates
+
+```bash
+# Check certificate was created by cert-manager
+kubectl get certificate -n postgres-operator-system
+
+# Check certificate status
+kubectl describe certificate -n postgres-operator-system
+
+# Check the secret containing TLS certs
+kubectl get secret -n postgres-operator-system | grep tls
+```
+
+### Task 4.3: Check Webhook Service
+
+```bash
+# Check webhook service
+kubectl get service -n postgres-operator-system
+
 # Check service endpoints
-kubectl get endpoints database-webhook-service
-
-# Should point to operator pods
+kubectl get endpoints -n postgres-operator-system
 ```
 
-## Exercise 4: Test Webhook Locally
+## Exercise 5: Test Webhooks
 
-### Task 4.1: Run Operator with Webhooks
-
-```bash
-# Generate certs
-make certs
-make install-cert
-
-# Run operator
-make run
-```
-
-### Task 4.2: Test Webhook Connectivity
+### Task 5.1: Test Mutating Webhook (Defaults)
 
 ```bash
-# In another terminal, test webhook
-# Create a Database resource
+# Create resource with minimal spec
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -154,93 +180,98 @@ spec:
     size: 10Gi
 EOF
 
-# Check if defaults were applied (mutating webhook)
+# Check if defaults were applied
+echo "Image (should be defaulted):"
 kubectl get database webhook-test -o jsonpath='{.spec.image}'
 echo
 
-# Check if validation worked (validating webhook)
-# Try invalid resource
+echo "Replicas (should be defaulted):"
+kubectl get database webhook-test -o jsonpath='{.spec.replicas}'
+echo
+
+echo "Labels (should include managed-by):"
+kubectl get database webhook-test -o jsonpath='{.metadata.labels}'
+echo
+```
+
+### Task 5.2: Test Validating Webhook (Rejection)
+
+```bash
+# Try to create invalid resource
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: invalid-test
 spec:
-  image: nginx:latest  # Invalid
+  image: nginx:latest  # Invalid - not a postgres image
   databaseName: mydb
   username: admin
   storage:
     size: 10Gi
 EOF
 
+# Should be rejected with validation error
+```
+
+### Task 5.3: Test Update Validation
+
+```bash
+# Try to reduce storage (should fail)
+kubectl patch database webhook-test --type merge -p '{"spec":{"storage":{"size":"5Gi"}}}'
+
 # Should be rejected
-```
-
-## Exercise 5: Deploy to Cluster
-
-### Task 5.1: Build and Deploy
-
-```bash
-# Build image
-make docker-build IMG=database-operator:latest
-
-# For kind, load image
-kind load docker-image database-operator:latest --name k8s-operators-course
-
-# Deploy
-make deploy IMG=database-operator:latest
-```
-
-### Task 5.2: Verify Deployment
-
-```bash
-# Check deployment
-kubectl get deployment database-controller-manager
-
-# Check pods
-kubectl get pods -l control-plane=controller-manager
-
-# Check webhook service
-kubectl get service database-webhook-service
-
-# Check webhook configurations
-kubectl get validatingwebhookconfiguration
-kubectl get mutatingwebhookconfiguration
 ```
 
 ## Exercise 6: Troubleshoot Webhook Issues
 
-### Task 6.1: Check Certificate Status
+### Task 6.1: Check Operator Logs
 
 ```bash
-# Check certificate
-kubectl get certificate database-webhook-cert
+# Get operator logs
+kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager
+
+# Look for webhook-related messages
+kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager | grep -i webhook
+```
+
+### Task 6.2: Check Certificate Status
+
+```bash
+# Check certificate status
+kubectl get certificate -n postgres-operator-system -o wide
+
+# Describe for details
+kubectl describe certificate -n postgres-operator-system
+
+# Check cert-manager logs if certificate not ready
+kubectl logs -n cert-manager deployment/cert-manager
+```
+
+### Task 6.3: Common Issues and Fixes
+
+**Issue: Certificate not ready**
+```bash
+# Check cert-manager is running
+kubectl get pods -n cert-manager
 
 # Check certificate events
-kubectl describe certificate database-webhook-cert
-
-# Check secret
-kubectl get secret database-webhook-cert -o yaml
+kubectl describe certificate -n postgres-operator-system
 ```
 
-### Task 6.2: Check Webhook Configuration
-
+**Issue: Webhook connection refused**
 ```bash
-# Get webhook configuration
-kubectl get validatingwebhookconfiguration -o yaml
+# Check service endpoints
+kubectl get endpoints -n postgres-operator-system
 
-# Check CA bundle
-kubectl get validatingwebhookconfiguration -o jsonpath='{.items[0].webhooks[0].clientConfig.caBundle}' | base64 -d
+# Check pod is running
+kubectl get pods -n postgres-operator-system
 ```
 
-### Task 6.3: Check Webhook Logs
-
+**Issue: CA bundle mismatch**
 ```bash
-# Check operator logs
-kubectl logs -l control-plane=controller-manager
-
-# Look for webhook-related errors
-kubectl logs -l control-plane=controller-manager | grep -i webhook
+# Check CA bundle in webhook config
+kubectl get validatingwebhookconfiguration -o jsonpath='{.items[0].webhooks[0].clientConfig.caBundle}' | base64 -d | openssl x509 -text -noout | head -20
 ```
 
 ## Cleanup
@@ -249,30 +280,28 @@ kubectl logs -l control-plane=controller-manager | grep -i webhook
 # Delete test resources
 kubectl delete databases --all
 
-# Uninstall operator
+# Undeploy operator
 make undeploy
-
-# Remove cert-manager (if installed)
-kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
 ```
 
 ## Lab Summary
 
 In this lab, you:
-- Set up certificate management
-- Configured webhook service
-- Tested webhooks locally
-- Deployed webhooks to cluster
-- Troubleshot webhook issues
+- Verified cert-manager setup
+- Examined kubebuilder's cert-manager integration
+- Deployed operator with webhooks to cluster
+- Verified webhook configuration and certificates
+- Tested webhook functionality
+- Learned troubleshooting techniques
 
 ## Key Learnings
 
-1. Webhooks require TLS certificates
-2. Kubebuilder simplifies local certificate generation
-3. cert-manager handles production certificates
-4. Webhook service routes to operator pods
-5. Certificates must match CA bundle in webhook config
-6. Webhook connectivity issues need troubleshooting
+1. Webhooks require TLS certificates - API server must trust them
+2. cert-manager automatically manages certificates in the cluster
+3. Kubebuilder projects are pre-configured for cert-manager
+4. Webhooks cannot easily work with `make run` (requires in-cluster deployment)
+5. Use `kubectl describe` and logs for troubleshooting
+6. Certificate issues are common - check cert-manager status first
 
 ## Solutions
 
@@ -286,9 +315,9 @@ You've completed Module 5! You now understand:
 - Admission control and webhooks
 - Validating webhooks for custom validation
 - Mutating webhooks for defaulting
-- Certificate management and deployment
+- Certificate management with cert-manager
+- Webhook deployment and troubleshooting
 
 In Module 6, you'll learn about testing and debugging operators!
 
 **Navigation:** [← Previous Lab: Mutating Webhooks](lab-03-mutating-webhooks.md) | [Related Lesson](../lessons/04-webhook-deployment.md) | [Module Overview](../README.md)
-

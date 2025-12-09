@@ -5,7 +5,7 @@
 
 ## Objectives
 
-- Scaffold mutating webhook
+- Add mutating webhook to existing validating webhook
 - Implement defaulting logic
 - Test mutation scenarios
 - Ensure idempotency
@@ -16,174 +16,224 @@
 - Database operator with validating webhook
 - Understanding of defaulting patterns
 
-## Exercise 1: Scaffold Mutating Webhook
+## Exercise 1: Add Mutating Webhook
 
-### Task 1.1: Create Mutating Webhook
+Since we already created a validating webhook in Lab 5.2, our webhook file already exists at `internal/webhook/v1/database_webhook.go`. We'll add the mutating (defaulting) logic to this file.
 
-```bash
-# Navigate to your operator
-cd ~/postgres-operator
+> **Note:** If you were starting fresh, you would run:
+> ```bash
+> kubebuilder create webhook --group database --version v1 --kind Database --defaulting
+> ```
+> But since we already have a webhook, we'll add the defaulter manually.
 
-# Create mutating webhook
-kubebuilder create webhook \
-  --group database \
-  --version v1 \
-  --kind Database \
-  --defaulting
+### Task 1.1: Understand the CustomDefaulter Interface
+
+The new kubebuilder pattern uses `webhook.CustomDefaulter` interface:
+
+```go
+type CustomDefaulter interface {
+    Default(ctx context.Context, obj runtime.Object) error
+}
 ```
 
-**Observe:**
-- What was added to database_types.go?
-- What webhook marker was created?
+### Task 1.2: Add Defaulter to Webhook Setup
 
-### Task 1.2: Examine Generated Code
+Edit `internal/webhook/v1/database_webhook.go` to update the webhook setup function:
 
-```bash
-# Check for Default method
-cat api/v1/database_webhook.go | grep -A 10 "Default"
+```go
+// SetupDatabaseWebhookWithManager registers the webhook for Database in the manager.
+func SetupDatabaseWebhookWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewWebhookManagedBy(mgr).For(&databasev1.Database{}).
+        WithValidator(&DatabaseCustomValidator{}).
+        WithDefaulter(&DatabaseCustomDefaulter{}).
+        Complete()
+}
+```
 
-# Check webhook marker
-cat api/v1/database_webhook.go | grep "kubebuilder:webhook.*mutating"
+### Task 1.3: Add the Defaulter Struct and Marker
+
+Add the following to `internal/webhook/v1/database_webhook.go`:
+
+```go
+// +kubebuilder:webhook:path=/mutate-database-example-com-v1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=mdatabase-v1.kb.io,admissionReviewVersions=v1
+
+// DatabaseCustomDefaulter struct is responsible for setting default values on the Database resource.
+type DatabaseCustomDefaulter struct {
+    // Add fields as needed for defaulting
+}
+
+var _ webhook.CustomDefaulter = &DatabaseCustomDefaulter{}
 ```
 
 ## Exercise 2: Implement Defaulting Logic
 
 ### Task 2.1: Add Default Method
 
-Edit `api/v1/database_webhook.go`:
+Add the `Default` method to `internal/webhook/v1/database_webhook.go`:
 
 ```go
-// +kubebuilder:webhook:path=/mutate-database-example-com-v1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=database.example.com,resources=databases,verbs=create;update,versions=v1,name=mdatabase.kb.io
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type Database.
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Defaulting for Database", "name", database.GetName())
 
-var _ webhook.Defaulter = &Database{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Database) Default() {
-    databaseLog.Info("default", "name", r.Name)
-    
     // Set default image if not specified
-    if r.Spec.Image == "" {
-        r.Spec.Image = "postgres:14"
+    if database.Spec.Image == "" {
+        database.Spec.Image = "postgres:14"
     }
-    
+
     // Set default replicas if not specified
-    if r.Spec.Replicas == nil {
+    if database.Spec.Replicas == nil {
         replicas := int32(1)
-        r.Spec.Replicas = &replicas
+        database.Spec.Replicas = &replicas
     }
-    
+
     // Set default storage class if not specified
-    if r.Spec.Storage.StorageClass == "" {
-        r.Spec.Storage.StorageClass = "standard"
+    if database.Spec.Storage.StorageClass == "" {
+        database.Spec.Storage.StorageClass = "standard"
     }
+
+    return nil
 }
 ```
 
 ### Task 2.2: Add Context-Aware Defaults
 
+Enhance the Default method with namespace-based defaults:
+
 ```go
-func (r *Database) Default() {
-    databaseLog.Info("default", "name", r.Name)
-    
+func (d *DatabaseCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    database, ok := obj.(*databasev1.Database)
+    if !ok {
+        return fmt.Errorf("expected a Database object but got %T", obj)
+    }
+    databaselog.Info("Defaulting for Database", "name", database.GetName())
+
     // Set defaults based on namespace
-    if r.Namespace == "production" {
+    if database.Namespace == "production" {
         // Production defaults
-        if r.Spec.Image == "" {
-            r.Spec.Image = "postgres:14"  // Stable version
+        if database.Spec.Image == "" {
+            database.Spec.Image = "postgres:14"  // Stable version
         }
-        if r.Spec.Replicas == nil {
+        if database.Spec.Replicas == nil {
             replicas := int32(3)  // More replicas
-            r.Spec.Replicas = &replicas
+            database.Spec.Replicas = &replicas
         }
     } else {
         // Development defaults
-        if r.Spec.Image == "" {
-            r.Spec.Image = "postgres:latest"
+        if database.Spec.Image == "" {
+            database.Spec.Image = "postgres:latest"
         }
-        if r.Spec.Replicas == nil {
+        if database.Spec.Replicas == nil {
             replicas := int32(1)
-            r.Spec.Replicas = &replicas
+            database.Spec.Replicas = &replicas
         }
     }
-    
+
     // Common defaults
-    if r.Spec.Storage.StorageClass == "" {
-        r.Spec.Storage.StorageClass = "standard"
+    if database.Spec.Storage.StorageClass == "" {
+        database.Spec.Storage.StorageClass = "standard"
     }
-    
-    // Add labels
-    if r.Labels == nil {
-        r.Labels = make(map[string]string)
+
+    // Add labels (idempotent)
+    if database.Labels == nil {
+        database.Labels = make(map[string]string)
     }
-    r.Labels["managed-by"] = "database-operator"
-    
-    // Add annotations
-    if r.Annotations == nil {
-        r.Annotations = make(map[string]string)
+    if _, exists := database.Labels["managed-by"]; !exists {
+        database.Labels["managed-by"] = "database-operator"
     }
-    r.Annotations["database.example.com/version"] = "v1"
+
+    // Add annotations (idempotent)
+    if database.Annotations == nil {
+        database.Annotations = make(map[string]string)
+    }
+    if _, exists := database.Annotations["database.example.com/version"]; !exists {
+        database.Annotations["database.example.com/version"] = "v1"
+    }
+
+    return nil
 }
 ```
 
 ## Exercise 3: Ensure Idempotency
 
-### Task 3.1: Make Defaults Idempotent
+### Task 3.1: Understand Idempotency
+
+Mutations must be **idempotent** - applying them multiple times should have the same effect:
 
 ```go
-func (r *Database) Default() {
-    // Idempotent: Only set if not already set
-    if r.Spec.Image == "" {
-        r.Spec.Image = "postgres:14"
-    }
-    // If already set, don't change it
-    
-    // Idempotent: Check before adding to slice
-    if r.Labels == nil {
-        r.Labels = make(map[string]string)
-    }
-    if _, exists := r.Labels["managed-by"]; !exists {
-        r.Labels["managed-by"] = "database-operator"
-    }
-    // If already exists, don't add again
+// Idempotent: Only set if not already set
+if database.Spec.Image == "" {
+    database.Spec.Image = "postgres:14"
 }
+// If already set, doesn't change
+
+// Idempotent: Check before adding to map
+if _, exists := database.Labels["managed-by"]; !exists {
+    database.Labels["managed-by"] = "database-operator"
+}
+// If already exists, doesn't add again
 ```
 
 ### Task 3.2: Test Idempotency
 
 ```bash
 # Create resource
-kubectl apply -f database.yaml
+kubectl apply -f config/samples/database_v1_database.yaml
 
 # Get the resource (should have defaults)
-kubectl get database test-db -o yaml
+kubectl get database -o yaml
 
 # Apply again (should be idempotent)
-kubectl apply -f database.yaml
+kubectl apply -f config/samples/database_v1_database.yaml
 
 # Check - should be the same
-kubectl get database test-db -o yaml
+kubectl get database -o yaml
 ```
 
-## Exercise 4: Test Mutating Webhook
+## Exercise 4: Deploy and Test Mutating Webhook
 
-### Task 4.1: Generate and Install
+### Task 4.1: Generate Manifests
 
 ```bash
-# Generate manifests
+# Generate manifests (includes new mutating webhook)
 make manifests
-
-# Generate certificates
-make certs
-make install-cert
-
-# Run operator
-make run
 ```
 
-### Task 4.2: Test Minimal Resource
+### Task 4.2: Rebuild and Deploy
 
 ```bash
-# Create resource with minimal spec
+# Rebuild the image
+make docker-build IMG=postgres-operator:latest
+
+# For Docker:
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# For Podman:
+# podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+# kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+# rm /tmp/postgres-operator.tar
+
+# Redeploy
+make deploy IMG=postgres-operator:latest
+# Or for Podman: make deploy IMG=localhost/postgres-operator:latest
+```
+
+### Task 4.3: Verify Both Webhooks are Registered
+
+```bash
+# Check both webhooks are configured
+kubectl get validatingwebhookconfigurations
+kubectl get mutatingwebhookconfigurations
+```
+
+### Task 4.4: Test Minimal Resource
+
+```bash
+# Create resource with minimal spec (missing image, replicas)
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -198,21 +248,26 @@ spec:
 EOF
 
 # Check defaults were applied
+echo "Image:"
 kubectl get database minimal-db -o jsonpath='{.spec.image}'
 echo
+echo "Replicas:"
 kubectl get database minimal-db -o jsonpath='{.spec.replicas}'
 echo
+echo "Storage Class:"
 kubectl get database minimal-db -o jsonpath='{.spec.storage.storageClass}'
 echo
+echo "Managed-by label:"
 kubectl get database minimal-db -o jsonpath='{.metadata.labels.managed-by}'
 echo
 ```
 
-### Task 4.3: Test Namespace-Based Defaults
+### Task 4.5: Test Namespace-Based Defaults
 
 ```bash
 # Create in production namespace
-kubectl create namespace production
+kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
+
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -226,26 +281,15 @@ spec:
     size: 10Gi
 EOF
 
-# Check production defaults
+# Check production defaults (should be 3 replicas)
+echo "Production replicas:"
 kubectl get database prod-db -n production -o jsonpath='{.spec.replicas}'
-echo  # Should be 3
+echo
 
-# Create in default namespace
-kubectl apply -f - <<EOF
-apiVersion: database.example.com/v1
-kind: Database
-metadata:
-  name: dev-db
-spec:
-  databaseName: mydb
-  username: admin
-  storage:
-    size: 10Gi
-EOF
-
-# Check dev defaults
-kubectl get database dev-db -o jsonpath='{.spec.replicas}'
-echo  # Should be 1
+# Check default namespace (should be 1 replica from earlier test)
+echo "Default namespace replicas:"
+kubectl get database minimal-db -o jsonpath='{.spec.replicas}'
+echo
 ```
 
 ## Exercise 5: Test Mutation Order
@@ -254,14 +298,13 @@ echo  # Should be 1
 
 ```bash
 # Create resource that would fail validation without defaults
+# (missing image, but mutating webhook will set it to postgres:14)
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
 metadata:
   name: test-order
 spec:
-  # Missing image - should be defaulted by mutating webhook
-  # Then validated by validating webhook
   databaseName: mydb
   username: admin
   storage:
@@ -271,6 +314,8 @@ EOF
 # Should succeed because:
 # 1. Mutating webhook sets image to postgres:14
 # 2. Validating webhook validates it's a postgres image
+kubectl get database test-order -o jsonpath='{.spec.image}'
+echo
 ```
 
 ## Cleanup
@@ -278,14 +323,14 @@ EOF
 ```bash
 # Delete test resources
 kubectl delete databases --all -A
-kubectl delete namespace production 2>/dev/null || true
+kubectl delete namespace production --ignore-not-found
 ```
 
 ## Lab Summary
 
 In this lab, you:
-- Scaffolded mutating webhook
-- Implemented defaulting logic
+- Added mutating webhook to existing validating webhook
+- Implemented defaulting logic using `CustomDefaulter` interface
 - Added context-aware defaults
 - Ensured idempotency
 - Tested mutation scenarios
@@ -293,12 +338,13 @@ In this lab, you:
 
 ## Key Learnings
 
-1. Mutating webhooks modify resources before validation
-2. Default() method sets defaults
-3. Defaults can be context-aware (namespace, etc.)
-4. Mutations must be idempotent
-5. Mutating webhooks run before validating webhooks
-6. Kubebuilder handles patching automatically
+1. Add mutating webhook to existing `internal/webhook/v1/database_webhook.go`
+2. Use `webhook.CustomDefaulter` interface with separate struct
+3. `Default` method receives `context.Context` and `runtime.Object`
+4. Register defaulter with `.WithDefaulter(&DatabaseCustomDefaulter{})`
+5. Defaults can be context-aware (namespace, etc.)
+6. Mutations must be idempotent
+7. Mutating webhooks run before validating webhooks
 
 ## Solutions
 
@@ -310,4 +356,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's learn about certificate management and deployment!
 
 **Navigation:** [← Previous Lab: Validating Webhooks](lab-02-validating-webhooks.md) | [Related Lesson](../lessons/03-mutating-webhooks.md) | [Next Lab: Webhook Deployment →](lab-04-webhook-deployment.md)
-
