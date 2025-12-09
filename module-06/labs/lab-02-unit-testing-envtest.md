@@ -234,21 +234,30 @@ Context("When Database is not found", func() {
 
 ```go
 var _ = Describe("Database validation", func() {
-    tests := []struct {
-        name    string
-        db      *databasev1.Database
-        wantErr bool
-    }{
-        {
-            name: "valid database",
-            db: &databasev1.Database{
-                Spec: databasev1.DatabaseSpec{
-                    Image:       "postgres:14",
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
+    var (
+        ctx               context.Context
+        typeNamespacedName types.NamespacedName
+    )
+
+    BeforeEach(func() {
+        ctx = context.Background()
+        typeNamespacedName = types.NamespacedName{
+            Name:      "test-database",
+            Namespace: "default",
+        }
+        
+        // Create the database resource
+        resource := &databasev1.Database{
+            ObjectMeta: metav1.ObjectMeta{
+                Name:      typeNamespacedName.Name,
+                Namespace: typeNamespacedName.Namespace,
+            },
+            Spec: databasev1.DatabaseSpec{
+                Image:        "postgres:14",
+                DatabaseName: "mydb",
+                Username:     "admin",
+                Storage: databasev1.StorageSpec{
+                    Size: "10Gi",
                 },
             },
         }
