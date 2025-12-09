@@ -853,6 +853,17 @@ kubectl port-forward -n postgres-operator-system deployment/postgres-operator-co
 sleep 2
 curl -s http://localhost:8080/metrics 2>/dev/null | grep -E "^database_" | head -20 || echo "Metrics not available (secure metrics may be enabled)"
 pkill -f "port-forward.*8080" 2>/dev/null
+
+# If secure metrics are enabled, use below
+# Get a token for the ServiceAccount
+TOKEN=$(kubectl create token -n postgres-operator-system postgres-operator-controller-manager)
+# Port forward to the metrics service
+kubectl port-forward -n postgres-operator-system svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
+sleep 2
+# Query metrics with the token
+curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep database_
+# Stop port-forward
+pkill -f "port-forward.*8443"
 ```
 
 ### Task 5.3: Cleanup
