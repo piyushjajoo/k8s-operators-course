@@ -640,6 +640,9 @@ make undeploy
 
 # Verify it's gone
 kubectl get pods -n postgres-operator-system
+
+# Reinstall CRDs (undeploy removes them)
+make install
 ```
 
 ### Task 4.3: Debug with Delve
