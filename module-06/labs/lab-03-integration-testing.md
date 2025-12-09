@@ -38,34 +38,35 @@ ginkgo bootstrap
 Create `test/integration/suite_test.go`:
 
 ```go
-package integration
+package integration_test
 
 import (
-    . "github.com/onsi/ginkgo/v2"
-    . "github.com/onsi/gomega"
-    
-    "sigs.k8s.io/controller-runtime/pkg/client"
-    "sigs.k8s.io/controller-runtime/pkg/client/config"
+	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 var (
-    k8sClient client.Client
+	k8sClient client.Client
 )
 
 func TestIntegration(t *testing.T) {
-    RegisterFailHandler(Fail)
-    RunSpecs(t, "Integration Suite")
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Integration Suite")
 }
 
 var _ = BeforeSuite(func() {
-    By("setting up integration test environment")
-    
-    cfg, err := config.GetConfig()
-    Expect(err).NotTo(HaveOccurred())
-    
-    k8sClient, err = client.New(cfg, client.Options{})
-    Expect(err).NotTo(HaveOccurred())
-    Expect(k8sClient).NotTo(BeNil())
+	By("setting up integration test environment")
+
+	cfg, err := config.GetConfig()
+	Expect(err).NotTo(HaveOccurred())
+
+	k8sClient, err = client.New(cfg, client.Options{})
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
 })
 ```
 
