@@ -296,8 +296,11 @@ Edit `config/default/kustomization.yaml` and uncomment the network-policy line:
 ### Task 5.4: Deploy with Network Policies
 
 ```bash
-# Deploy the operator with network policies enabled
+# For Docker: Deploy the operator with network policies enabled
 make deploy IMG=postgres-operator:v0.1.0
+
+# For Podman: Deploy operator - use localhost/ prefix to match the loaded image
+make deploy IMG=localhost/postgres-operator:latest
 
 # Verify network policies were created
 kubectl get networkpolicy -n postgres-operator-system
