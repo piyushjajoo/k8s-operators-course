@@ -323,7 +323,7 @@ When debugging and adding observability:
 - [Observability Engineering](https://www.oreilly.com/library/view/observability-engineering/9781492076438/)
 
 ### Related Topics
-- [Structured Logging](https://www.structuredlogs.org/)
+- [Logging Best Practices](https://www.cncf.io/blog/2023/07/03/kubernetes-logging-best-practices/)
 - [Prometheus Best Practices](https://prometheus.io/docs/practices/)
 - [OpenTelemetry](https://opentelemetry.io/)
 
