@@ -8,7 +8,7 @@
 - Write unit tests for reconciliation logic
 - Test resource creation and updates
 - Test error cases
-- Use table-driven tests
+- Understand state machine testing patterns
 - Achieve good test coverage
 
 ## Prerequisites
@@ -17,112 +17,188 @@
 - Test environment set up
 - Database operator ready
 
-## Exercise 1: Test Resource Creation
+## Understanding the Controller
 
-### Task 1.1: Test StatefulSet Creation
+Before writing tests, understand that the `DatabaseReconciler` uses a **state machine pattern** with phases:
+- `Pending` → `Provisioning` → `Configuring` → `Deploying` → `Verifying` → `Ready`
 
-Add to `internal/controller/database_controller_test.go`:
+Each `Reconcile()` call advances the state by one phase. This means multiple reconcile calls are needed to fully provision a database.
+
+## Exercise 1: Test Basic Reconciliation
+
+### Task 1.1: Test Initial State Transition
+
+Update `internal/controller/database_controller_test.go` to add a new test Context. Note how we use unique resource names with `GenerateName` to avoid conflicts between tests:
 
 ```go
-Context("When reconciling a Database", func() {
-    It("should create a StatefulSet", func() {
-        // Arrange
-        db := &databasev1.Database{
+Context("When reconciling a new Database", func() {
+    var (
+        resourceName      string
+        typeNamespacedName types.NamespacedName
+    )
+
+    BeforeEach(func() {
+        // Generate unique name for each test
+        resourceName = fmt.Sprintf("test-db-%d", time.Now().UnixNano())
+        typeNamespacedName = types.NamespacedName{
+            Name:      resourceName,
+            Namespace: "default",
+        }
+
+        // Create the Database resource
+        resource := &databasev1.Database{
             ObjectMeta: metav1.ObjectMeta{
-                Name:      "test-db",
+                Name:      resourceName,
                 Namespace: "default",
             },
             Spec: databasev1.DatabaseSpec{
-                Image:       "postgres:14",
-                Replicas:    pointer.Int32(1),
-                DatabaseName: "mydb",
-                Username:    "admin",
+                Image:        "postgres:14",
+                Replicas:     ptr.To(int32(1)),
+                DatabaseName: "testdb",
+                Username:     "testuser",
                 Storage: databasev1.StorageSpec{
-                    Size: "10Gi",
+                    Size: "1Gi",
                 },
             },
         }
-        Expect(k8sClient.Create(ctx, db)).To(Succeed())
-        
-        // Act
-        reconciler := &DatabaseReconciler{
-            Client: k8sClient,
-            Scheme: scheme.Scheme,
+        Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+    })
+
+    AfterEach(func() {
+        // Cleanup
+        resource := &databasev1.Database{}
+        err := k8sClient.Get(ctx, typeNamespacedName, resource)
+        if err == nil {
+            // Remove finalizer to allow deletion
+            resource.Finalizers = nil
+            _ = k8sClient.Update(ctx, resource)
+            _ = k8sClient.Delete(ctx, resource)
         }
-        _, err := reconciler.Reconcile(ctx, ctrl.Request{
-            NamespacedName: types.NamespacedName{
-                Name:      "test-db",
-                Namespace: "default",
-            },
+    })
+
+    It("should transition from Pending to Provisioning", func() {
+        By("Reconciling the created resource")
+        controllerReconciler := &DatabaseReconciler{
+            Client: k8sClient,
+            Scheme: k8sClient.Scheme(),
+        }
+
+        // First reconcile: Pending -> Provisioning
+        _, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+            NamespacedName: typeNamespacedName,
         })
-        
-        // Assert
         Expect(err).NotTo(HaveOccurred())
-        
-        statefulSet := &appsv1.StatefulSet{}
-        Expect(k8sClient.Get(ctx, types.NamespacedName{
-            Name:      "test-db",
-            Namespace: "default",
-        }, statefulSet)).To(Succeed())
-        
-        Expect(statefulSet.Spec.Replicas).To(Equal(pointer.Int32(1)))
-        Expect(statefulSet.Spec.Template.Spec.Containers[0].Image).To(Equal("postgres:14"))
+
+        // Verify status was updated
+        db := &databasev1.Database{}
+        Expect(k8sClient.Get(ctx, typeNamespacedName, db)).To(Succeed())
+        Expect(db.Status.Phase).To(Equal("Provisioning"))
+        Expect(db.Status.Ready).To(BeFalse())
     })
 })
 ```
 
-## Exercise 2: Test Resource Updates
-
-### Task 2.1: Test StatefulSet Update
+**Required imports** (add to your import block):
 
 ```go
-Context("When updating a Database", func() {
-    It("should update the StatefulSet", func() {
-        // Create initial Database
-        db := &databasev1.Database{
+import (
+    "context"
+    "fmt"
+    "time"
+
+    . "github.com/onsi/ginkgo/v2"
+    . "github.com/onsi/gomega"
+    "k8s.io/apimachinery/pkg/api/errors"
+    "k8s.io/apimachinery/pkg/types"
+    "k8s.io/utils/ptr"
+    "sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    appsv1 "k8s.io/api/apps/v1"
+    corev1 "k8s.io/api/core/v1"
+
+    databasev1 "github.com/example/postgres-operator/api/v1"
+)
+```
+
+## Exercise 2: Test Resource Creation Through State Machine
+
+### Task 2.1: Test StatefulSet Creation
+
+The StatefulSet is created during the `Provisioning` phase. Test this by running multiple reconcile calls:
+
+```go
+Context("When progressing through provisioning", func() {
+    var (
+        resourceName       string
+        typeNamespacedName types.NamespacedName
+    )
+
+    BeforeEach(func() {
+        resourceName = fmt.Sprintf("test-provision-%d", time.Now().UnixNano())
+        typeNamespacedName = types.NamespacedName{
+            Name:      resourceName,
+            Namespace: "default",
+        }
+
+        resource := &databasev1.Database{
             ObjectMeta: metav1.ObjectMeta{
-                Name:      "test-db",
+                Name:      resourceName,
                 Namespace: "default",
             },
             Spec: databasev1.DatabaseSpec{
-                Image:       "postgres:14",
-                Replicas:    pointer.Int32(1),
-                DatabaseName: "mydb",
-                Username:    "admin",
+                Image:        "postgres:14",
+                Replicas:     ptr.To(int32(1)),
+                DatabaseName: "testdb",
+                Username:     "testuser",
                 Storage: databasev1.StorageSpec{
-                    Size: "10Gi",
+                    Size: "1Gi",
                 },
             },
         }
-        Expect(k8sClient.Create(ctx, db)).To(Succeed())
-        
+        Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+    })
+
+    AfterEach(func() {
+        resource := &databasev1.Database{}
+        err := k8sClient.Get(ctx, typeNamespacedName, resource)
+        if err == nil {
+            resource.Finalizers = nil
+            _ = k8sClient.Update(ctx, resource)
+            _ = k8sClient.Delete(ctx, resource)
+        }
+    })
+
+    It("should create Secret and StatefulSet", func() {
         reconciler := &DatabaseReconciler{
             Client: k8sClient,
-            Scheme: scheme.Scheme,
+            Scheme: k8sClient.Scheme(),
         }
-        
-        req := ctrl.Request{
-            NamespacedName: types.NamespacedName{
-                Name:      "test-db",
-                Namespace: "default",
-            },
-        }
-        
-        // Reconcile to create StatefulSet
-        reconciler.Reconcile(ctx, req)
-        
-        // Update Database
-        Expect(k8sClient.Get(ctx, req.NamespacedName, db)).To(Succeed())
-        db.Spec.Replicas = pointer.Int32(3)
-        Expect(k8sClient.Update(ctx, db)).To(Succeed())
-        
-        // Reconcile again
-        reconciler.Reconcile(ctx, req)
-        
-        // Verify StatefulSet updated
+        req := reconcile.Request{NamespacedName: typeNamespacedName}
+
+        By("First reconcile: Pending -> Provisioning")
+        _, err := reconciler.Reconcile(ctx, req)
+        Expect(err).NotTo(HaveOccurred())
+
+        By("Second reconcile: Creates Secret and StatefulSet")
+        _, err = reconciler.Reconcile(ctx, req)
+        Expect(err).NotTo(HaveOccurred())
+
+        By("Verifying Secret was created")
+        secret := &corev1.Secret{}
+        secretName := fmt.Sprintf("%s-credentials", resourceName)
+        Expect(k8sClient.Get(ctx, types.NamespacedName{
+            Name:      secretName,
+            Namespace: "default",
+        }, secret)).To(Succeed())
+        Expect(secret.Data).To(HaveKey("username"))
+        Expect(secret.Data).To(HaveKey("password"))
+
+        By("Verifying StatefulSet was created")
         statefulSet := &appsv1.StatefulSet{}
-        Expect(k8sClient.Get(ctx, req.NamespacedName, statefulSet)).To(Succeed())
-        Expect(statefulSet.Spec.Replicas).To(Equal(pointer.Int32(3)))
+        Expect(k8sClient.Get(ctx, typeNamespacedName, statefulSet)).To(Succeed())
+        Expect(*statefulSet.Spec.Replicas).To(Equal(int32(1)))
+        Expect(statefulSet.Spec.Template.Spec.Containers[0].Image).To(Equal("postgres:14"))
     })
 })
 ```
@@ -136,73 +212,153 @@ Context("When Database is not found", func() {
     It("should not return an error", func() {
         reconciler := &DatabaseReconciler{
             Client: k8sClient,
-            Scheme: scheme.Scheme,
+            Scheme: k8sClient.Scheme(),
         }
-        
-        req := ctrl.Request{
+
+        req := reconcile.Request{
             NamespacedName: types.NamespacedName{
-                Name:      "non-existent",
+                Name:      "non-existent-database",
                 Namespace: "default",
             },
         }
-        
+
         result, err := reconciler.Reconcile(ctx, req)
         Expect(err).NotTo(HaveOccurred())
-        Expect(result).To(Equal(ctrl.Result{}))
+        Expect(result.Requeue).To(BeFalse())
+        Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
     })
 })
 ```
 
-## Exercise 4: Table-Driven Tests
-
-### Task 4.1: Test Multiple Scenarios
+### Task 3.2: Test Finalizer Addition
 
 ```go
-Describe("Database validation", func() {
-    tests := []struct {
-        name    string
-        db      *databasev1.Database
-        wantErr bool
-    }{
-        {
-            name: "valid database",
-            db: &databasev1.Database{
-                Spec: databasev1.DatabaseSpec{
-                    Image:       "postgres:14",
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
+Context("When creating a Database", func() {
+    var (
+        resourceName       string
+        typeNamespacedName types.NamespacedName
+    )
+
+    BeforeEach(func() {
+        resourceName = fmt.Sprintf("test-finalizer-%d", time.Now().UnixNano())
+        typeNamespacedName = types.NamespacedName{
+            Name:      resourceName,
+            Namespace: "default",
+        }
+
+        resource := &databasev1.Database{
+            ObjectMeta: metav1.ObjectMeta{
+                Name:      resourceName,
+                Namespace: "default",
+            },
+            Spec: databasev1.DatabaseSpec{
+                Image:        "postgres:14",
+                DatabaseName: "testdb",
+                Username:     "testuser",
+                Storage: databasev1.StorageSpec{
+                    Size: "1Gi",
                 },
             },
-            wantErr: false,
-        },
-        {
-            name: "missing image",
-            db: &databasev1.Database{
-                Spec: databasev1.DatabaseSpec{
-                    DatabaseName: "mydb",
-                    Username:    "admin",
-                    Storage: databasev1.StorageSpec{
-                        Size: "10Gi",
-                    },
-                },
-            },
-            wantErr: true,
-        },
-    }
-    
-    for _, tt := range tests {
-        It(tt.name, func() {
-            err := k8sClient.Create(ctx, tt.db)
-            if tt.wantErr {
-                Expect(err).To(HaveOccurred())
-            } else {
-                Expect(err).NotTo(HaveOccurred())
-            }
+        }
+        Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+    })
+
+    AfterEach(func() {
+        resource := &databasev1.Database{}
+        err := k8sClient.Get(ctx, typeNamespacedName, resource)
+        if err == nil {
+            resource.Finalizers = nil
+            _ = k8sClient.Update(ctx, resource)
+            _ = k8sClient.Delete(ctx, resource)
+        }
+    })
+
+    It("should add finalizer on first reconcile", func() {
+        reconciler := &DatabaseReconciler{
+            Client: k8sClient,
+            Scheme: k8sClient.Scheme(),
+        }
+
+        _, err := reconciler.Reconcile(ctx, reconcile.Request{
+            NamespacedName: typeNamespacedName,
         })
-    }
+        Expect(err).NotTo(HaveOccurred())
+
+        db := &databasev1.Database{}
+        Expect(k8sClient.Get(ctx, typeNamespacedName, db)).To(Succeed())
+        Expect(db.Finalizers).To(ContainElement("database.example.com/finalizer"))
+    })
+})
+```
+
+## Exercise 4: Test Service Creation
+
+### Task 4.1: Test Service Creation in Configuring Phase
+
+```go
+Context("When in Configuring phase", func() {
+    var (
+        resourceName       string
+        typeNamespacedName types.NamespacedName
+    )
+
+    BeforeEach(func() {
+        resourceName = fmt.Sprintf("test-service-%d", time.Now().UnixNano())
+        typeNamespacedName = types.NamespacedName{
+            Name:      resourceName,
+            Namespace: "default",
+        }
+
+        resource := &databasev1.Database{
+            ObjectMeta: metav1.ObjectMeta{
+                Name:      resourceName,
+                Namespace: "default",
+            },
+            Spec: databasev1.DatabaseSpec{
+                Image:        "postgres:14",
+                DatabaseName: "testdb",
+                Username:     "testuser",
+                Storage: databasev1.StorageSpec{
+                    Size: "1Gi",
+                },
+            },
+        }
+        Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+    })
+
+    AfterEach(func() {
+        resource := &databasev1.Database{}
+        err := k8sClient.Get(ctx, typeNamespacedName, resource)
+        if err == nil {
+            resource.Finalizers = nil
+            _ = k8sClient.Update(ctx, resource)
+            _ = k8sClient.Delete(ctx, resource)
+        }
+    })
+
+    It("should create Service", func() {
+        reconciler := &DatabaseReconciler{
+            Client: k8sClient,
+            Scheme: k8sClient.Scheme(),
+        }
+        req := reconcile.Request{NamespacedName: typeNamespacedName}
+
+        By("Progress through states to Configuring")
+        // Pending -> Provisioning
+        _, _ = reconciler.Reconcile(ctx, req)
+        // Provisioning: creates Secret + StatefulSet, stays in Provisioning
+        _, _ = reconciler.Reconcile(ctx, req)
+        // Provisioning -> Configuring (StatefulSet exists)
+        _, _ = reconciler.Reconcile(ctx, req)
+        // Configuring: creates Service
+        _, err := reconciler.Reconcile(ctx, req)
+        Expect(err).NotTo(HaveOccurred())
+
+        By("Verifying Service was created")
+        service := &corev1.Service{}
+        Expect(k8sClient.Get(ctx, typeNamespacedName, service)).To(Succeed())
+        Expect(service.Spec.Ports[0].Port).To(Equal(int32(5432)))
+    })
 })
 ```
 
@@ -212,54 +368,58 @@ Describe("Database validation", func() {
 
 ```bash
 # Run tests with coverage
+make test
+
+# Or run with coverage profile
 go test -coverprofile=coverage.out ./internal/controller/...
 
-# View coverage
+# View coverage summary
 go tool cover -func=coverage.out
 
 # Generate HTML report
 go tool cover -html=coverage.out -o coverage.html
+open coverage.html  # macOS
 ```
 
 ### Task 5.2: Improve Coverage
 
 Add tests for:
-- Service creation
-- Status updates
-- Error handling
-- Edge cases
+- Deletion handling with finalizer cleanup
+- Status condition updates
+- Different replica counts
+- Image changes
 
 ## Cleanup
 
-```bash
-# Tests should clean up automatically
-# Verify no resources left
-```
+The `AfterEach` blocks in each test Context handle cleanup automatically by:
+1. Removing finalizers (to allow deletion)
+2. Deleting the test Database resource
 
 ## Lab Summary
 
 In this lab, you:
-- Wrote unit tests for reconciliation
-- Tested resource creation
-- Tested resource updates
-- Tested error cases
-- Used table-driven tests
+- Wrote unit tests following the Kubebuilder scaffolding pattern
+- Tested state machine transitions
+- Tested resource creation (Secret, StatefulSet, Service)
+- Tested error cases (missing resources)
+- Tested finalizer addition
 - Checked test coverage
 
 ## Key Learnings
 
-1. Unit tests verify reconciliation logic
-2. Test both success and error cases
-3. Table-driven tests organize multiple scenarios
-4. Coverage helps identify gaps
-5. envtest provides real Kubernetes API
-6. Gomega provides rich assertions
+1. **State machine testing** - Controllers with phases need multiple reconcile calls
+2. **Use unique resource names** - Avoid test conflicts with unique names per test
+3. **Proper cleanup** - Remove finalizers before deletion in `AfterEach`
+4. **Use `k8sClient.Scheme()`** - Not `scheme.Scheme` for reconciler initialization
+5. **Use `reconcile.Request`** - The standard type for test requests
+6. **Use `k8s.io/utils/ptr`** - For pointer helpers like `ptr.To(int32(1))`
+7. **envtest provides real API** - Tests run against actual Kubernetes API server
 
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
 - [Test Suite Setup](../solutions/suite_test.go) - Complete test suite with envtest
-- [Unit Test Examples](../solutions/database_controller_test.go) - Complete unit test examples
+- [Unit Test Examples](../solutions/database_controller_test.go) - Basic controller test structure
 
 ## Next Steps
 
