@@ -721,9 +721,6 @@ Back in Delve, the breakpoint should hit:
 ```bash
 cd ~/postgres-operator
 
-# Delete the test database
-kubectl delete database debug-test
-
 # For docker: Deploy operator
 make deploy IMG=postgres-operator:latest
 
@@ -732,6 +729,9 @@ make deploy IMG=localhost/postgres-operator:latest
 
 # Wait for it to be ready
 kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=60s
+
+# Delete the test database
+kubectl delete database debug-test
 ```
 
 ### Task 4.5: VS Code Debugging (Alternative)
