@@ -633,10 +633,12 @@ dlv version
 ### Task 4.2: Prepare for Local Debugging
 
 ```bash
-# Scale down the deployed operator to avoid conflicts
-kubectl scale deployment -n postgres-operator-system postgres-operator-controller-manager --replicas=0
+cd ~/postgres-operator
 
-# Verify it's stopped
+# Undeploy the operator (removes deployment, webhooks, and RBAC)
+make undeploy
+
+# Verify it's gone
 kubectl get pods -n postgres-operator-system
 ```
 
@@ -714,11 +716,13 @@ Back in Delve, the breakpoint should hit:
 ### Task 4.4: Cleanup Debug Session
 
 ```bash
+cd ~/postgres-operator
+
 # Delete the test database
 kubectl delete database debug-test
 
-# Scale the operator back up
-kubectl scale deployment -n postgres-operator-system postgres-operator-controller-manager --replicas=1
+# Redeploy the operator
+make deploy IMG=postgres-operator:latest
 
 # Wait for it to be ready
 kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=60s
