@@ -183,19 +183,37 @@ if _, exists := database.Labels["managed-by"]; !exists {
 ### Task 4.1: Generate Manifests
 
 ```bash
-# Generate manifests (includes new mutating webhook)
+# Generate manifests (includes new mutating webhook configuration)
 make manifests
+
+# Verify mutating webhook manifest was generated
+grep -l "mutating" config/webhook/manifests.yaml
 ```
 
-### Task 4.2: Rebuild and Deploy
+### Task 4.2: Undeploy Existing Operator
+
+Since we added a new webhook, we need to fully redeploy (not just restart) so the new MutatingWebhookConfiguration gets created and cert-manager can inject the CA bundle:
 
 ```bash
-# Rebuild the image (for docker)
+# Remove existing deployment
+make undeploy
+
+# Wait for resources to be deleted
+kubectl get all -n postgres-operator-system
+# Should show "No resources found"
+```
+
+### Task 4.3: Rebuild and Deploy
+
+```bash
+# Rebuild the image
+# For Docker:
 make docker-build IMG=postgres-operator:latest
 
-# Rebuild the image (for podman)
+# For Podman:
 make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 
+# Load image into kind
 # For Docker:
 kind load docker-image postgres-operator:latest --name k8s-operators-course
 
@@ -204,27 +222,43 @@ podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
 kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
 rm /tmp/postgres-operator.tar
 
-# Redeploy for Docker
+# Deploy
+# For Docker:
 make deploy IMG=postgres-operator:latest
 
-# Redeploy for Podman
+# For Podman:
 make deploy IMG=localhost/postgres-operator:latest
-
-# If you already have existing operator deployed from previous lab, restart the deployment
-kubectl rollout restart deploy -n postgres-operator-system   postgres-operator-controller-manager
-
-# in the operator logs you should see statements of registering validating and mutating webhooks
 ```
 
-### Task 4.3: Verify Both Webhooks are Registered
+### Task 4.4: Wait for Certificates
+
+cert-manager needs time to generate certificates and inject the CA bundle:
+
+```bash
+# Wait for certificate to be ready
+kubectl get certificate -n postgres-operator-system -w
+
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod -l control-plane=controller-manager \
+  -n postgres-operator-system --timeout=120s
+
+# Check operator logs - should see both webhooks registered
+kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager | grep -i webhook
+```
+
+### Task 4.5: Verify Both Webhooks are Registered
 
 ```bash
 # Check both webhooks are configured
 kubectl get validatingwebhookconfigurations
 kubectl get mutatingwebhookconfigurations
+
+# You should see both:
+# - postgres-operator-validating-webhook-configuration
+# - postgres-operator-mutating-webhook-configuration
 ```
 
-### Task 4.4: Test Minimal Resource
+### Task 4.6: Test Minimal Resource
 
 ```bash
 # Create resource with minimal spec (missing image, replicas)
@@ -256,7 +290,7 @@ kubectl get database minimal-db -o jsonpath='{.metadata.labels.managed-by}'
 echo
 ```
 
-### Task 4.5: Test Namespace-Based Defaults
+### Task 4.7: Test Namespace-Based Defaults
 
 ```bash
 # Create in production namespace
