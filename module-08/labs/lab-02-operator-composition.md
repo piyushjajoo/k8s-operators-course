@@ -435,6 +435,15 @@ kubectl logs -n postgres-operator-system deployment/postgres-operator-controller
 > 
 > Ensure `imagePullPolicy: IfNotPresent` is set and the image name matches what's loaded in kind.
 
+Rollout restart the deployment if you were using existing kind cluster from previous labs which already had the operator deployed -
+
+```
+# restart the deployment to pickup newly pushed image
+kubectl rollout restart deploy -n postgres-operator-system   postgres-operator-controller-manager
+
+# check status of the deployment
+kubectl rollout status deploy -n postgres-operator-system   postgres-operator-controller-manager
+```
 ### Task 4.2: Create Database with Backup
 
 ```bash
