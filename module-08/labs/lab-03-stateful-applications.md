@@ -67,8 +67,9 @@ RUN apt-get update && \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN useradd -r -u 65532 -g 65532 -m -s /bin/bash nonroot
+# Create non-root user and group
+RUN groupadd -r -g 65532 nonroot && \
+    useradd -r -u 65532 -g nonroot -m -s /bin/bash nonroot
 
 WORKDIR /
 COPY --from=builder /workspace/manager .
