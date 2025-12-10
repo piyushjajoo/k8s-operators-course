@@ -280,10 +280,16 @@ The metrics endpoint requires authentication with a bearer token. We'll use a Se
 
 ```bash
 # Deploy operator if not already deployed
-# For Docker:
+# For Docker: Build and Deploy the operator with network policies enabled
+make docker-build IMG=postgres-operator:latest
+kind load docker-image postgres-operator:latest --name k8s-operators-course
 make deploy IMG=postgres-operator:latest
 
-# For Podman:
+# For Podman: Build and Deploy operator - use localhost/ prefix to match the loaded image
+make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
 make deploy IMG=localhost/postgres-operator:latest
 
 # Port forward to metrics endpoint (using HTTPS on port 8443)
