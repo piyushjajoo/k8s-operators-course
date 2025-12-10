@@ -58,8 +58,11 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}, db)
 	if errors.IsNotFound(err) {
 		log.Info("Database not found, waiting", "database", rst.Spec.DatabaseRef.Name)
+		// Re-read restore to ensure we have the latest version
+		if getErr := r.Get(ctx, req.NamespacedName, rst); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		rst.Status.Phase = "Pending"
-		rst.Status.Message = fmt.Sprintf("Waiting for database %s to be created", rst.Spec.DatabaseRef.Name)
 		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 			Type:    "RestoreReady",
 			Status:  metav1.ConditionFalse,
@@ -67,6 +70,9 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Message: fmt.Sprintf("Waiting for database %s to be created", rst.Spec.DatabaseRef.Name),
 		})
 		if updateErr := r.Status().Update(ctx, rst); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 			return ctrl.Result{}, updateErr
 		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
@@ -78,8 +84,11 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// Check if database is ready
 	if db.Status.Phase != "Ready" {
 		log.Info("Database not ready, waiting", "database", db.Name, "phase", db.Status.Phase)
+		// Re-read restore to ensure we have the latest version
+		if getErr := r.Get(ctx, req.NamespacedName, rst); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		rst.Status.Phase = "Pending"
-		rst.Status.Message = fmt.Sprintf("Waiting for database %s to be ready (current phase: %s)", db.Name, db.Status.Phase)
 		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 			Type:    "RestoreReady",
 			Status:  metav1.ConditionFalse,
@@ -87,6 +96,9 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Message: fmt.Sprintf("Waiting for database %s to be ready (current phase: %s)", db.Name, db.Status.Phase),
 		})
 		if updateErr := r.Status().Update(ctx, rst); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 			return ctrl.Result{}, updateErr
 		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
@@ -100,8 +112,11 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}, backup)
 	if errors.IsNotFound(err) {
 		log.Info("Backup not found, waiting", "backup", rst.Spec.BackupRef.Name)
+		// Re-read restore to ensure we have the latest version
+		if getErr := r.Get(ctx, req.NamespacedName, rst); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		rst.Status.Phase = "Pending"
-		rst.Status.Message = fmt.Sprintf("Waiting for backup %s to be created", rst.Spec.BackupRef.Name)
 		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 			Type:    "RestoreReady",
 			Status:  metav1.ConditionFalse,
@@ -109,6 +124,9 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Message: fmt.Sprintf("Waiting for backup %s to be created", rst.Spec.BackupRef.Name),
 		})
 		if updateErr := r.Status().Update(ctx, rst); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 			return ctrl.Result{}, updateErr
 		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
@@ -120,8 +138,11 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// Check backup is completed
 	if backup.Status.Phase != "Completed" {
 		log.Info("Waiting for backup to complete", "backup", backup.Name, "phase", backup.Status.Phase)
+		// Re-read restore to ensure we have the latest version
+		if getErr := r.Get(ctx, req.NamespacedName, rst); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		rst.Status.Phase = "Pending"
-		rst.Status.Message = fmt.Sprintf("Waiting for backup %s to complete (current phase: %s)", backup.Name, backup.Status.Phase)
 		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 			Type:    "RestoreReady",
 			Status:  metav1.ConditionFalse,
@@ -129,21 +150,38 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Message: fmt.Sprintf("Waiting for backup %s to complete (current phase: %s)", backup.Name, backup.Status.Phase),
 		})
 		if updateErr := r.Status().Update(ctx, rst); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 			return ctrl.Result{}, updateErr
 		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	// Perform restore
-	return r.performRestore(ctx, db, backup, rst)
+	return r.performRestore(ctx, req, db, backup, rst)
 }
 
-func (r *RestoreReconciler) performRestore(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup, rst *databasev1.Restore) (ctrl.Result, error) {
+func (r *RestoreReconciler) performRestore(ctx context.Context, req ctrl.Request, db *databasev1.Database, backup *databasev1.Backup, rst *databasev1.Restore) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
+
+	// Re-read restore to ensure we have the latest version before updating
+	if err := r.Get(ctx, req.NamespacedName, rst); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Check if already completed or in progress
+	if rst.Status.Phase == "Completed" {
+		log.Info("Restore already completed, skipping", "restore", rst.Name)
+		return ctrl.Result{}, nil
+	}
+	if rst.Status.Phase == "InProgress" {
+		log.Info("Restore already in progress, skipping", "restore", rst.Name)
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
 
 	// Update status to in progress
 	rst.Status.Phase = "InProgress"
-	rst.Status.Message = "Restore in progress"
 	meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 		Type:    "RestoreReady",
 		Status:  metav1.ConditionFalse,
@@ -151,21 +189,32 @@ func (r *RestoreReconciler) performRestore(ctx context.Context, db *databasev1.D
 		Message: "Restore in progress",
 	})
 	if err := r.Status().Update(ctx, rst); err != nil {
+		if errors.IsConflict(err) {
+			return ctrl.Result{Requeue: true}, nil
+		}
 		return ctrl.Result{}, err
 	}
 
 	// Get backup location from Backup status
 	if backup.Status.BackupLocation == "" {
 		err := fmt.Errorf("backup location not available in backup %s", backup.Name)
+		// Re-read restore before updating status on error
+		if getErr := r.Get(ctx, req.NamespacedName, rst); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		rst.Status.Phase = "Failed"
-		rst.Status.Message = err.Error()
 		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 			Type:    "RestoreReady",
 			Status:  metav1.ConditionFalse,
 			Reason:  "BackupLocationMissing",
 			Message: err.Error(),
 		})
-		r.Status().Update(ctx, rst)
+		if updateErr := r.Status().Update(ctx, rst); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				return ctrl.Result{Requeue: true}, nil
+			}
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -174,15 +223,28 @@ func (r *RestoreReconciler) performRestore(ctx context.Context, db *databasev1.D
 	err := restorePkg.PerformRestore(ctx, r.Client, db, backup.Status.BackupLocation)
 	if err != nil {
 		log.Error(err, "Restore failed", "database", db.Name, "backup", backup.Name)
+		// Re-read restore before updating status on error
+		if getErr := r.Get(ctx, req.NamespacedName, rst); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		rst.Status.Phase = "Failed"
-		rst.Status.Message = fmt.Sprintf("Restore failed: %v", err)
 		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 			Type:    "RestoreReady",
 			Status:  metav1.ConditionFalse,
 			Reason:  "RestoreFailed",
 			Message: err.Error(),
 		})
-		r.Status().Update(ctx, rst)
+		if updateErr := r.Status().Update(ctx, rst); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				return ctrl.Result{Requeue: true}, nil
+			}
+			return ctrl.Result{}, updateErr
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Re-read restore before final status update
+	if err := r.Get(ctx, req.NamespacedName, rst); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -190,7 +252,6 @@ func (r *RestoreReconciler) performRestore(ctx context.Context, db *databasev1.D
 	rst.Status.Phase = "Completed"
 	now := metav1.Now()
 	rst.Status.RestoreTime = &now
-	rst.Status.Message = "Restore completed successfully"
 	meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
 		Type:    "RestoreReady",
 		Status:  metav1.ConditionTrue,
@@ -199,7 +260,14 @@ func (r *RestoreReconciler) performRestore(ctx context.Context, db *databasev1.D
 	})
 
 	log.Info("Restore completed", "database", db.Name, "backup", backup.Name)
-	return ctrl.Result{}, r.Status().Update(ctx, rst)
+	if err := r.Status().Update(ctx, rst); err != nil {
+		if errors.IsConflict(err) {
+			log.Info("Conflict updating restore status, requeuing", "restore", rst.Name)
+			return ctrl.Result{Requeue: true}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -32,9 +32,6 @@ type RestoreStatus struct {
 	// RestoreTime is when the restore completed
 	RestoreTime *metav1.Time `json:"restoreTime,omitempty"`
 
-	// Message provides additional information about the current phase
-	Message string `json:"message,omitempty"`
-
 	// Conditions represent the latest observations of the Restore's state
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
