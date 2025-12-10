@@ -312,7 +312,11 @@ make generate manifests
 
 ## Exercise 3: Use Status Conditions
 
-### Task 3.1: Set Condition in Backup
+Status conditions provide a standardized way for operators to communicate state. This exercise shows how the Backup controller sets conditions and how the Database controller reads them.
+
+### Task 3.1: Set Condition in Backup Controller
+
+Edit `internal/controller/backup_controller.go` to set conditions when backup completes:
 
 ```go
 func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (ctrl.Result, error) {
@@ -331,7 +335,11 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 }
 ```
 
-### Task 3.2: Check Condition in Database
+> **Note:** If you copied the complete controller from `solutions/backup-operator.go`, this is already implemented.
+
+### Task 3.2: Check Condition in Database Controller
+
+Add a helper function to `internal/controller/database_controller.go` that checks the Backup condition:
 
 ```go
 func (r *DatabaseReconciler) checkBackupCondition(ctx context.Context, db *databasev1.Database) error {
