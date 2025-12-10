@@ -156,7 +156,8 @@ type ClusterDatabaseStatus struct {
 ### Task 1.5: Generate and Apply CRD
 
 ```bash
-# Generate CRD manifests
+# Generate code and CRD manifests
+make generate
 make manifests
 
 # Verify the CRD was generated with cluster scope
