@@ -159,6 +159,11 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
         return ctrl.Result{}, client.IgnoreNotFound(err)
     }
     
+    // Skip if already completed
+    if backup.Status.Phase == "Completed" {
+        return ctrl.Result{}, nil
+    }
+    
     // Get Database
     db := &databasev1.Database{}
     err := r.Get(ctx, client.ObjectKey{
@@ -167,7 +172,9 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
     }, db)
     
     if errors.IsNotFound(err) {
-        // Database not found, wait
+        // Database not found - set Pending status and wait
+        backup.Status.Phase = "Pending"
+        r.Status().Update(ctx, backup)
         return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
     }
     if err != nil {
@@ -176,6 +183,9 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
     
     // Check if database is ready
     if db.Status.Phase != "Ready" {
+        // Database not ready - set Pending status and wait
+        backup.Status.Phase = "Pending"
+        r.Status().Update(ctx, backup)
         return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
     }
     
@@ -444,10 +454,12 @@ kubectl rollout restart deploy -n postgres-operator-system   postgres-operator-c
 # check status of the deployment
 kubectl rollout status deploy -n postgres-operator-system   postgres-operator-controller-manager
 ```
-### Task 4.2: Create Database with Backup
+### Task 4.2: Create Database and Backup
+
+First, create the Database. The Backup will wait for it to be ready:
 
 ```bash
-# Create Database
+# Create Database first
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -460,11 +472,9 @@ spec:
   username: admin
   storage:
     size: "1Gi"
-  backupRef:
-    name: my-database-backup
 EOF
 
-# Create Backup
+# Create Backup (references the Database)
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Backup
@@ -477,6 +487,8 @@ spec:
 EOF
 ```
 
+> **Note:** The Backup references the Database via `databaseRef`. The Backup controller will wait for the Database to be Ready before performing the backup. The `backupRef` field on Database (from Task 2.1) is optional and used for advanced scenarios like restore-before-provision.
+
 ### Task 4.3: Verify Coordination
 
 ```bash
@@ -486,8 +498,8 @@ kubectl get database my-database -o yaml
 # Check Backup status
 kubectl get backup my-database-backup -o yaml
 
-# Verify operators coordinate
-kubectl logs -l control-plane=controller-manager | grep -i backup
+# Verify operators coordinate (check operator logs)
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i backup
 ```
 
 ## Cleanup

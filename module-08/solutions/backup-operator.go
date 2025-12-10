@@ -36,9 +36,16 @@ type BackupReconciler struct {
 
 // Reconcile handles Backup resources
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	backup := &databasev1.Backup{}
 	if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Skip if already completed
+	if backup.Status.Phase == "Completed" {
+		return ctrl.Result{}, nil
 	}
 
 	// Get Database
@@ -49,7 +56,18 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}, db)
 
 	if errors.IsNotFound(err) {
-		// Database not found, wait
+		// Database not found, set pending status and wait
+		log.Info("Database not found, waiting", "database", backup.Spec.DatabaseRef.Name)
+		backup.Status.Phase = "Pending"
+		meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
+			Type:    "BackupReady",
+			Status:  metav1.ConditionFalse,
+			Reason:  "DatabaseNotFound",
+			Message: fmt.Sprintf("Waiting for database %s to be created", backup.Spec.DatabaseRef.Name),
+		})
+		if updateErr := r.Status().Update(ctx, backup); updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
@@ -59,6 +77,17 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// Check if database is ready
 	if db.Status.Phase != "Ready" {
+		log.Info("Database not ready, waiting", "database", db.Name, "phase", db.Status.Phase)
+		backup.Status.Phase = "Pending"
+		meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
+			Type:    "BackupReady",
+			Status:  metav1.ConditionFalse,
+			Reason:  "DatabaseNotReady",
+			Message: fmt.Sprintf("Waiting for database %s to be ready (current phase: %s)", db.Name, db.Status.Phase),
+		})
+		if updateErr := r.Status().Update(ctx, backup); updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
