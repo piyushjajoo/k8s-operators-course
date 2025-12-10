@@ -15,9 +15,10 @@ This directory contains complete, working solutions for Module 8 labs.
 - **operator-coordination.go**: Operator coordination examples
 
 ### Lab 8.3 - Stateful Application Management
-- **backup.go**: Backup functionality implementation
-- **restore.go**: Restore functionality implementation
-- **rolling-update.go**: Rolling update handling
+- **restore_types.go**: Restore API type definitions (scaffold with kubebuilder)
+- **backup.go**: Backup functionality implementation (`internal/backup/`)
+- **restore.go**: Restore functionality implementation (`internal/restore/`)
+- **rolling-update.go**: Rolling update handling for Database controller
 
 ## Usage
 
@@ -71,9 +72,24 @@ Key concepts demonstrated:
 
 ### For Stateful Applications (Lab 8.3)
 
-- Integrate `backup.go` for backup functionality
-- Use `restore.go` for restore operations
-- Handle rolling updates with `rolling-update.go`
+Use kubebuilder to scaffold the Restore API, then reference the solutions:
+
+```bash
+# 1. Scaffold the Restore API (same group as Database and Backup)
+kubebuilder create api --group database --version v1 --kind Restore --resource --controller
+
+# 2. Reference restore_types.go for type definitions
+# 3. Create backup package: mkdir -p internal/backup && cp backup.go internal/backup/
+# 4. Create restore package: mkdir -p internal/restore && cp restore.go internal/restore/
+# 5. Reference rolling-update.go for Database controller enhancements
+```
+
+Key concepts demonstrated:
+- Backup uses `pg_dump` to create SQL backups
+- Restore uses `psql` to restore from backups
+- Restore controller coordinates with both Database and Backup
+- Rolling updates wait for all replicas to be ready
+- Data consistency checks verify replication status
 
 ## Comparison: Database vs ClusterDatabase
 
