@@ -288,7 +288,7 @@ watch kubectl get pdb -n postgres-operator-system
 - `ALLOWED DISRUPTIONS` changes as pods are terminated/created
 - At least 2 pods remain `Running` throughout the rollout
 
-### Task 5.4: Understand How PDB Interacts with Rollouts
+### Task 5.4: Understand How PDB Works with Rollouts
 
 Let's understand the math behind PDB:
 
@@ -300,53 +300,62 @@ kubectl get pdb -n postgres-operator-system
 # With 3 healthy pods and minAvailable=2: 3 - 2 = 1 disruption allowed
 ```
 
-**Why `minAvailable=3` doesn't block rollouts:**
-1. New pod (4th) is created and becomes healthy
-2. Now `currentHealthy=4`, so `allowedDisruptions = 4 - 3 = 1`
-3. One old pod can be terminated → rollout proceeds!
+**Important:** PDB does NOT block rollouts! Here's why:
 
-To truly block a rollout, you'd need `minAvailable > replicas`:
+1. Initial: 3 healthy pods, `minAvailable=2`, `allowedDisruptions=1`
+2. Rollout starts: new pod created → 4 healthy
+3. `allowedDisruptions = 4 - 2 = 2` → old pod terminated
+4. Now 3 healthy (2 old + 1 new), `allowedDisruptions = 1`
+5. Another new pod created → 4 healthy → old pod terminated
+6. Repeat until complete
+
+**PDB ensures pods are replaced ONE AT A TIME, not all at once!**
+
+### What PDB Actually Protects Against
+
+PDB protects against **external disruptions**, not deployment rollouts:
 
 ```bash
-# Scale down to 2 replicas first
-kubectl scale deployment/postgres-operator-controller-manager -n postgres-operator-system --replicas=2
-kubectl wait --for=condition=available deployment/postgres-operator-controller-manager -n postgres-operator-system
+# PDB protects against these scenarios:
 
-# Set minAvailable=2 (equal to replicas)
-kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
-  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 2}]'
+# 1. Node drain (cluster maintenance)
+kubectl drain <node-name> --ignore-daemonsets
+# PDB prevents draining if it would violate minAvailable
 
-# Check PDB - ALLOWED DISRUPTIONS should be 0
-kubectl get pdb -n postgres-operator-system
-# 2 healthy - 2 minimum = 0 allowed
+# 2. Cluster Autoscaler scale-down
+# Autoscaler won't remove a node if it would violate PDB
 
-# Try rollout restart - this WILL get stuck
-kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
+# 3. Pod eviction due to resource pressure
+# Kubelet respects PDB when evicting pods
 
-# Watch - new pod created, but old pods can't be terminated
-kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+# 4. Manual eviction API calls
+# Tools using eviction API respect PDB
+```
 
-# You'll see 3 pods (2 old + 1 new), rollout stuck
-# The deployment waits for allowedDisruptions > 0
+### Verify PDB Rate-Limits Disruptions
 
-# Check rollout status - it will be waiting
-kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system --timeout=30s
-# Waiting for deployment "postgres-operator-controller-manager" rollout to finish: 1 old replicas are pending termination...
+Watch a rollout to see PDB ensuring pods are replaced one at a time:
 
-# Fix by reducing minAvailable
-kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
-  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 1}]'
-
-# Now rollout can complete
-kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system
-
-# Restore to 3 replicas and minAvailable=2
+```bash
+# Ensure we have 3 replicas and minAvailable=2
 kubectl scale deployment/postgres-operator-controller-manager -n postgres-operator-system --replicas=3
 kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
   --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 2}]'
+
+# Wait for stable state
+sleep 10
+
+# Watch pods during rollout - notice they're replaced ONE at a time
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w &
+
+# Trigger rollout
+kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
+
+# Watch the rollout - pods replaced sequentially, not all at once
+# Press Ctrl+C when done watching
 ```
 
-**Key insight:** PDB blocks disruptions when `minAvailable >= currentHealthy`. During rollouts, new pods increase `currentHealthy`, which increases `allowedDisruptions`.
+**Without PDB**, Kubernetes might terminate multiple pods simultaneously during disruptions. **With PDB**, it ensures `minAvailable` pods always remain running.
 
 ### Understanding PDB Behavior
 
