@@ -355,7 +355,7 @@ Key points:
 make build
 
 # Generate and install CRDs
-make manifests install
+make generate manifests install
 
 # Run the operator locally
 make run
