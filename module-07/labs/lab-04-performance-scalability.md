@@ -31,6 +31,7 @@ import (
     "k8s.io/client-go/util/workqueue"
     ctrl "sigs.k8s.io/controller-runtime"
     "sigs.k8s.io/controller-runtime/pkg/controller"
+    "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -42,8 +43,8 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
         WithOptions(controller.Options{
             // Limit concurrent reconciliations
             MaxConcurrentReconciles: 2,
-            // Custom rate limiter for requeue
-            RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(
+            // Custom rate limiter for requeue (typed for controller-runtime v0.19+)
+            RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
                 time.Millisecond*5,    // Base delay
                 time.Second*1000,      // Max delay
             ),
