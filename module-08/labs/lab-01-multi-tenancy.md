@@ -189,81 +189,53 @@ kubectl get crd clusterdatabases.database.example.com -o jsonpath='{.spec.scope}
 
 ## Exercise 2: Implement ClusterDatabase Controller
 
-### Task 2.1: Update Controller Logic
+### Task 2.1: Copy Complete Controller Implementation
 
-Edit `internal/controller/clusterdatabase_controller.go`:
+The ClusterDatabase controller is similar to your existing Database controller, but with key differences for cluster-scoped resources. Rather than writing it from scratch, copy the complete implementation from the solutions file:
 
+```bash
+# Copy the complete controller implementation
+cp path/to/solutions/clusterdatabase-controller.go internal/controller/clusterdatabase_controller.go
+```
+
+Or, if you prefer to type it yourself, copy the complete controller from:
+**[solutions/clusterdatabase-controller.go](../solutions/clusterdatabase-controller.go)**
+
+The complete controller includes:
+- `Reconcile()` - Main reconciliation loop
+- `validateNamespace()` - Validates target namespace exists
+- `checkQuota()` - Checks resource quotas
+- `reconcileSecret()` - Creates credentials Secret in target namespace
+- `reconcileStatefulSet()` - Creates StatefulSet in target namespace
+- `reconcileService()` - Creates Service in target namespace
+- `updateStatus()` - Updates ClusterDatabase status
+
+### Task 2.2: Understand Key Differences from Database Controller
+
+Here are the key differences in the ClusterDatabase controller:
+
+**1. Target Namespace Field:**
 ```go
-package controller
+// Database controller uses implicit namespace from the resource
+namespace := db.Namespace
 
-import (
-    "context"
-    "fmt"
+// ClusterDatabase controller uses explicit targetNamespace
+namespace := db.Spec.TargetNamespace
+```
 
-    corev1 "k8s.io/api/core/v1"
-    "k8s.io/apimachinery/pkg/api/errors"
-    "k8s.io/apimachinery/pkg/runtime"
-    ctrl "sigs.k8s.io/controller-runtime"
-    "sigs.k8s.io/controller-runtime/pkg/client"
-    "sigs.k8s.io/controller-runtime/pkg/log"
+**2. No OwnerReferences (use labels instead):**
+```go
+// Database controller can use OwnerReferences
+ctrl.SetControllerReference(db, statefulSet, r.Scheme)
 
-    databasev1 "github.com/example/postgres-operator/api/v1"
-)
+// ClusterDatabase controller CANNOT - use labels instead
+statefulSet.Labels["clusterdatabase"] = db.Name
+statefulSet.Labels["tenant"] = db.Spec.Tenant
+```
 
-type ClusterDatabaseReconciler struct {
-    client.Client
-    Scheme *runtime.Scheme
-}
-
-// +kubebuilder:rbac:groups=database.example.com,resources=clusterdatabases,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=database.example.com,resources=clusterdatabases/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=database.example.com,resources=clusterdatabases/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch
-// +kubebuilder:rbac:groups=core,resources=resourcequotas,verbs=get;list;watch
-
-func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    logger := log.FromContext(ctx)
-
-    // Fetch ClusterDatabase (cluster-scoped, no namespace in request)
-    db := &databasev1.ClusterDatabase{}
-    if err := r.Get(ctx, req.NamespacedName, db); err != nil {
-        return ctrl.Result{}, client.IgnoreNotFound(err)
-    }
-
-    logger.Info("Reconciling ClusterDatabase",
-        "name", db.Name,
-        "targetNamespace", db.Spec.TargetNamespace,
-        "tenant", db.Spec.Tenant)
-
-    // Validate target namespace exists
-    if err := r.validateNamespace(ctx, db.Spec.TargetNamespace); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // Check quota for the target namespace
-    if err := r.checkQuota(ctx, db.Spec.TargetNamespace); err != nil {
-        logger.Error(err, "Quota exceeded")
-        return ctrl.Result{}, err
-    }
-
-    // Reconcile resources in target namespace
-    // (Similar to Database controller but creates in targetNamespace)
-    if err := r.reconcileSecret(ctx, db); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    if err := r.reconcileStatefulSet(ctx, db); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    if err := r.reconcileService(ctx, db); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // Update status
-    return ctrl.Result{}, r.updateStatus(ctx, db)
-}
-
+**3. Namespace Validation:**
+```go
+// ClusterDatabase must validate target namespace exists
 func (r *ClusterDatabaseReconciler) validateNamespace(ctx context.Context, namespace string) error {
     ns := &corev1.Namespace{}
     if err := r.Get(ctx, client.ObjectKey{Name: namespace}, ns); err != nil {
@@ -274,17 +246,11 @@ func (r *ClusterDatabaseReconciler) validateNamespace(ctx context.Context, names
     }
     return nil
 }
-
-func (r *ClusterDatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-    return ctrl.NewControllerManagedBy(mgr).
-        For(&databasev1.ClusterDatabase{}).
-        Complete(r)
-}
 ```
 
-### Task 2.2: Verify Controller is Registered
+### Task 2.3: Verify Controller is Registered
 
-Kubebuilder automatically registers the controller in `cmd/main.go`. Verify:
+Kubebuilder automatically registers the controller in `cmd/main.go`. Verify it looks like this:
 
 ```go
 // This should already be added by kubebuilder
@@ -297,7 +263,19 @@ if err = (&controller.ClusterDatabaseReconciler{
 }
 ```
 
+### Task 2.4: Build and Verify
+
+```bash
+# Ensure the code compiles
+make build
+
+# If there are any compilation errors, verify you copied the complete
+# controller from the solutions file
+```
+
 ## Exercise 3: Handle Resource Quotas
+
+The `checkQuota` function is already included in the solutions file you copied. Let's understand how it works and test it.
 
 ### Task 3.1: Create Resource Quota
 
@@ -315,9 +293,9 @@ spec:
     clusterdatabases.database.example.com: "5"
 ```
 
-### Task 3.2: Implement Quota Checking
+### Task 3.2: Understand Quota Checking
 
-Add to your controller:
+The `checkQuota` function in your controller (from solutions) works like this:
 
 ```go
 func (r *ClusterDatabaseReconciler) checkQuota(ctx context.Context, namespace string) error {
@@ -361,11 +339,21 @@ func (r *ClusterDatabaseReconciler) checkQuota(ctx context.Context, namespace st
 }
 ```
 
+Key points:
+- Checks if a ResourceQuota exists in the target namespace
+- Counts all ClusterDatabases targeting that namespace (cluster-wide list, then filter)
+- Returns error if quota would be exceeded
+
 ## Exercise 4: Test Multi-Tenant Scenarios
+
+> **Prerequisites:** Ensure you have completed Exercise 2 (copied the complete controller from solutions) and your code compiles with `make build`.
 
 ### Task 4.1: Run the Operator
 
 ```bash
+# Verify code compiles
+make build
+
 # Generate and install CRDs
 make manifests install
 
@@ -470,9 +458,11 @@ kubectl get clusterdatabases          # Shows cluster-scoped
 
 ## Exercise 5: Understanding Ownership Limitations
 
+The solutions file already implements these patterns. This exercise explains the concepts so you understand what's happening.
+
 ### Task 5.1: Cluster-Scoped Owner Restrictions
 
-Important: Cluster-scoped resources **cannot** use `OwnerReferences` to own namespace-scoped resources. Instead, use labels:
+Important: Cluster-scoped resources **cannot** use `OwnerReferences` to own namespace-scoped resources. The solutions file uses labels instead:
 
 ```go
 // In ClusterDatabaseReconciler
@@ -498,9 +488,9 @@ func (r *ClusterDatabaseReconciler) reconcileStatefulSet(ctx context.Context, db
 }
 ```
 
-### Task 5.2: Implement Cleanup with Finalizers
+### Task 5.2: Cleanup with Finalizers
 
-Since we can't use OwnerReferences for automatic garbage collection, use finalizers:
+Since we can't use OwnerReferences for automatic garbage collection, the solutions file implements finalizers. Here's how they work:
 
 ```go
 const clusterDatabaseFinalizer = "database.example.com/clusterdatabase-finalizer"
@@ -555,6 +545,37 @@ func (r *ClusterDatabaseReconciler) cleanupManagedResources(ctx context.Context,
     return r.DeleteAllOf(ctx, &corev1.Secret{},
         client.InNamespace(db.Spec.TargetNamespace), labelSelector)
 }
+```
+
+### Task 5.3: Test Cleanup Behavior
+
+```bash
+# Create a ClusterDatabase
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: ClusterDatabase
+metadata:
+  name: test-cleanup
+spec:
+  targetNamespace: tenant-1
+  tenant: tenant-1
+  image: postgres:14
+  replicas: 1
+  databaseName: testdb
+  username: admin
+  storage:
+    size: "5Gi"
+EOF
+
+# Verify resources were created
+kubectl get statefulsets -n tenant-1
+
+# Delete the ClusterDatabase
+kubectl delete clusterdatabase test-cleanup
+
+# Verify resources were cleaned up by the finalizer
+kubectl get statefulsets -n tenant-1
+# The StatefulSet should be deleted
 ```
 
 ## Cleanup
