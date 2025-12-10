@@ -456,6 +456,10 @@ metadata:
 spec:
   image: postgres:14
   replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: "1Gi"
   backupRef:
     name: my-database-backup
 EOF
