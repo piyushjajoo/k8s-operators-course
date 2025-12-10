@@ -1,5 +1,9 @@
 // Solution: Restore Implementation from Module 8
 // This demonstrates restore functionality for stateful applications
+//
+// IMPORTANT: This implementation uses psql which requires PostgreSQL client tools
+// to be installed in your operator container image. Update your Dockerfile to include
+// postgresql-client package. See the Dockerfile example in this solutions directory.
 
 package restore
 
@@ -10,9 +14,12 @@ import (
 	"os/exec"
 
 	databasev1 "github.com/example/postgres-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func PerformRestore(ctx context.Context, db *databasev1.Database, backupLocation string) error {
+func PerformRestore(ctx context.Context, k8sClient client.Client, db *databasev1.Database, backupLocation string) error {
 	// Load backup from storage
 	backupData, err := loadFromStorage(backupLocation)
 	if err != nil {
@@ -25,17 +32,45 @@ func PerformRestore(ctx context.Context, db *databasev1.Database, backupLocation
 		return fmt.Errorf("database endpoint not available")
 	}
 
+	// Get password from Secret
+	secretName := db.Status.SecretName
+	if secretName == "" {
+		// Fallback to default secret name pattern if SecretName not set in status
+		secretName = fmt.Sprintf("%s-credentials", db.Name)
+	}
+
+	secret := &corev1.Secret{}
+	err = k8sClient.Get(ctx, client.ObjectKey{
+		Name:      secretName,
+		Namespace: db.Namespace,
+	}, secret)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("secret %s not found", secretName)
+		}
+		return fmt.Errorf("failed to get secret: %w", err)
+	}
+
+	// Extract password from Secret
+	passwordBytes, exists := secret.Data["password"]
+	if !exists {
+		return fmt.Errorf("password key not found in secret %s", secretName)
+	}
+	password := string(passwordBytes)
+
 	// Stop database if needed (application-specific)
 	if err := stopDatabase(ctx, db); err != nil {
 		return fmt.Errorf("failed to stop database: %v", err)
 	}
 
-	// Perform restore
+	// Perform restore with password from Secret
 	cmd := exec.CommandContext(ctx, "psql",
 		"-h", endpoint,
 		"-U", db.Spec.Username,
 		"-d", db.Spec.DatabaseName)
 
+	// Set password as environment variable for psql
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PGPASSWORD=%s", password))
 	cmd.Stdin = bytes.NewReader(backupData)
 
 	output, err := cmd.CombinedOutput()

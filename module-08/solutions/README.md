@@ -19,6 +19,7 @@ This directory contains complete, working solutions for Module 8 labs.
 - **backup.go**: Backup functionality implementation (`internal/backup/`)
 - **restore.go**: Restore functionality implementation (`internal/restore/`)
 - **rolling-update.go**: Rolling update handling for Database controller
+- **Dockerfile**: Dockerfile with PostgreSQL client tools for backup/restore functionality
 
 ## Usage
 
@@ -81,7 +82,8 @@ kubebuilder create api --group database --version v1 --kind Restore --resource -
 # 2. Reference restore_types.go for type definitions
 # 3. Create backup package: mkdir -p internal/backup && cp backup.go internal/backup/
 # 4. Create restore package: mkdir -p internal/restore && cp restore.go internal/restore/
-# 5. Reference rolling-update.go for Database controller enhancements
+# 5. Update Dockerfile to include PostgreSQL client tools (see Dockerfile in solutions)
+# 6. Reference rolling-update.go for Database controller enhancements
 ```
 
 Key concepts demonstrated:
@@ -90,6 +92,8 @@ Key concepts demonstrated:
 - Restore controller coordinates with both Database and Backup
 - Rolling updates wait for all replicas to be ready
 - Data consistency checks verify replication status
+
+**Important:** Since backup/restore uses `pg_dump` and `psql`, you must update your Dockerfile to include PostgreSQL client tools. The default distroless image doesn't include these tools. See the `Dockerfile` solution for an example using `debian:bookworm-slim` with `postgresql-client` installed.
 
 ## Comparison: Database vs ClusterDatabase
 

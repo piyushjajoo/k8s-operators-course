@@ -40,26 +40,83 @@ The backup package includes:
 - `saveToStorage()` - Uploads backup to S3/PVC
 - `PerformScheduledBackup()` - Handles scheduled backups
 
+> **Important:** The backup implementation uses `pg_dump` which requires PostgreSQL client tools to be installed in your operator container. You'll need to update your Dockerfile to include the `postgresql-client` package. See Task 1.2 below.
+
+### Task 1.2: Update Dockerfile for PostgreSQL Client Tools
+
+Since the backup functionality uses `pg_dump` and restore uses `psql`, you need to install PostgreSQL client tools in your operator container image.
+
+Update your `Dockerfile` to include PostgreSQL client tools. Reference the example in [solutions/Dockerfile](../solutions/Dockerfile):
+
+```dockerfile
+# Runtime stage - use minimal Debian base instead of distroless
+# (distroless doesn't have package manager for installing tools)
+FROM debian:bookworm-slim
+
+# Install PostgreSQL client tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    postgresql-client \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -r -u 65532 -g 65532 -m -s /bin/bash nonroot
+
+WORKDIR /
+COPY --from=builder /workspace/manager .
+
+# Switch to non-root user
+USER 65532:65532
+
+ENTRYPOINT ["/manager"]
+```
+
+**Alternative:** If you want to keep using distroless for security, you can:
+1. Use a sidecar container with PostgreSQL tools
+2. Use Kubernetes Jobs with PostgreSQL client tools for backups
+3. Use a separate backup operator that has the tools
+
 **Key backup logic:**
 
 ```go
-func PerformBackup(ctx context.Context, db *databasev1.Database) (string, error) {
+func PerformBackup(ctx context.Context, k8sClient client.Client, db *databasev1.Database) (string, error) {
     endpoint := db.Status.Endpoint
     if endpoint == "" {
         return "", fmt.Errorf("database endpoint not available")
     }
+
+    // Get password from Secret
+    secretName := db.Status.SecretName
+    if secretName == "" {
+        secretName = fmt.Sprintf("%s-credentials", db.Name)
+    }
+
+    secret := &corev1.Secret{}
+    err := k8sClient.Get(ctx, client.ObjectKey{
+        Name:      secretName,
+        Namespace: db.Namespace,
+    }, secret)
+    if err != nil {
+        return "", fmt.Errorf("failed to get secret: %w", err)
+    }
+
+    password := string(secret.Data["password"])
 
     // Create backup filename
     backupFile := fmt.Sprintf("/backups/%s-%s.sql",
         db.Name,
         time.Now().Format("20060102-150405"))
 
-    // Perform pg_dump
+    // Perform pg_dump with password from Secret
     cmd := exec.CommandContext(ctx, "pg_dump",
         "-h", endpoint,
         "-U", db.Spec.Username,
         "-d", db.Spec.DatabaseName,
         "-f", backupFile)
+
+    // Set password as environment variable
+    cmd.Env = append(cmd.Env, fmt.Sprintf("PGPASSWORD=%s", password))
 
     output, err := cmd.CombinedOutput()
     if err != nil {
@@ -89,7 +146,8 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
     r.Status().Update(ctx, bkp)
 
     // Perform actual backup
-    location, err := backup.PerformBackup(ctx, db)
+    // Note: PerformBackup requires k8sClient to retrieve password from Secret
+    location, err := backup.PerformBackup(ctx, r.Client, db)
     if err != nil {
         bkp.Status.Phase = "Failed"
         r.Status().Update(ctx, bkp)
@@ -219,10 +277,12 @@ The restore package includes:
 - `loadFromStorage()` - Downloads backup from S3/PVC
 - `stopDatabase()` / `startDatabase()` - Graceful database operations
 
+> **Note:** The restore implementation uses `psql` which also requires PostgreSQL client tools. If you haven't already updated your Dockerfile in Task 1.2, make sure to do so now.
+
 **Key restore logic:**
 
 ```go
-func PerformRestore(ctx context.Context, db *databasev1.Database, backupLocation string) error {
+func PerformRestore(ctx context.Context, k8sClient client.Client, db *databasev1.Database, backupLocation string) error {
     // Load backup from storage
     backupData, err := loadFromStorage(backupLocation)
     if err != nil {
@@ -234,12 +294,31 @@ func PerformRestore(ctx context.Context, db *databasev1.Database, backupLocation
         return fmt.Errorf("database endpoint not available")
     }
 
-    // Perform restore using psql
+    // Get password from Secret
+    secretName := db.Status.SecretName
+    if secretName == "" {
+        secretName = fmt.Sprintf("%s-credentials", db.Name)
+    }
+
+    secret := &corev1.Secret{}
+    err = k8sClient.Get(ctx, client.ObjectKey{
+        Name:      secretName,
+        Namespace: db.Namespace,
+    }, secret)
+    if err != nil {
+        return fmt.Errorf("failed to get secret: %w", err)
+    }
+
+    password := string(secret.Data["password"])
+
+    // Perform restore using psql with password from Secret
     cmd := exec.CommandContext(ctx, "psql",
         "-h", endpoint,
         "-U", db.Spec.Username,
         "-d", db.Spec.DatabaseName)
 
+    // Set password as environment variable
+    cmd.Env = append(cmd.Env, fmt.Sprintf("PGPASSWORD=%s", password))
     cmd.Stdin = bytes.NewReader(backupData)
 
     output, err := cmd.CombinedOutput()
