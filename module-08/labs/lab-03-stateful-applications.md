@@ -305,6 +305,25 @@ kubectl get pods -n postgres-operator-system
 kubectl logs -n postgres-operator-system -l control-plane=controller-manager -f
 ```
 
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml` and the image name matches what's loaded in kind.
+
 **Test the backup functionality:**
 
 ```bash
@@ -621,6 +640,25 @@ kubectl get pods -n postgres-operator-system
 kubectl logs -n postgres-operator-system -l control-plane=controller-manager -f
 ```
 
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml` and the image name matches what's loaded in kind.
+
 **Test the restore functionality:**
 
 ```bash
@@ -827,6 +865,25 @@ kubectl rollout restart deploy -n postgres-operator-system postgres-operator-con
 kubectl rollout status deploy -n postgres-operator-system postgres-operator-controller-manager
 ```
 
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml` and the image name matches what's loaded in kind.
+
 **Test rolling update:**
 
 ```bash
@@ -986,6 +1043,25 @@ kubectl rollout restart deploy -n postgres-operator-system postgres-operator-con
 kubectl rollout status deploy -n postgres-operator-system postgres-operator-controller-manager
 ```
 
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml` and the image name matches what's loaded in kind.
+
 **Test consistency checks:**
 
 ```bash
@@ -1070,6 +1146,25 @@ make deploy IMG=postgres-operator:latest
 kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
 kubectl rollout status deploy -n postgres-operator-system postgres-operator-controller-manager
 ```
+
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml` and the image name matches what's loaded in kind.
 
 ### Task 5.2: Create Database and Backup
 
