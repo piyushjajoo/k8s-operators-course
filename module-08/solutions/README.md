@@ -54,8 +54,8 @@ Key concepts demonstrated:
 Use kubebuilder to scaffold the Backup API, then reference the solutions:
 
 ```bash
-# 1. Scaffold the API
-kubebuilder create api --group backup --version v1 --kind Backup --resource --controller
+# 1. Scaffold the API (same group as Database to avoid multi-group setup)
+kubebuilder create api --group database --version v1 --kind Backup --resource --controller
 
 # 2. Reference backup_types.go for type definitions
 # 3. Reference backup-operator.go for controller logic
@@ -63,6 +63,7 @@ kubebuilder create api --group backup --version v1 --kind Backup --resource --co
 ```
 
 Key concepts demonstrated:
+- Same API group (`database`) for related resources - avoids multi-group complexity
 - `DatabaseRef` field references the Database to backup
 - Controller waits for Database to be ready before backing up
 - Status conditions (`BackupReady`) coordinate state between operators

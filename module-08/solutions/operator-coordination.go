@@ -8,14 +8,12 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	backupv1 "github.com/example/backup-operator/api/v1"
 	databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
@@ -25,7 +23,7 @@ func (r *DatabaseReconciler) checkBackupStatus(ctx context.Context, db *database
 		return nil
 	}
 
-	backup := &backupv1.Backup{}
+	backup := &databasev1.Backup{}
 	err := r.Get(ctx, client.ObjectKey{
 		Name:      db.Spec.BackupRef.Name,
 		Namespace: db.Namespace,

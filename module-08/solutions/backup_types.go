@@ -2,8 +2,8 @@
 // This file contains the complete API type definitions for the Backup resource.
 // Use kubebuilder to scaffold the API first, then replace the generated types with these.
 //
-// Scaffold with:
-//   kubebuilder create api --group backup --version v1 --kind Backup --resource --controller
+// Scaffold with (same group as Database to avoid multi-group setup):
+//   kubebuilder create api --group database --version v1 --kind Backup --resource --controller
 
 package v1
 

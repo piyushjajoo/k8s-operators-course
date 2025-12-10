@@ -20,15 +20,15 @@
 
 ### Task 1.1: Scaffold Backup API with Kubebuilder
 
-Use kubebuilder to scaffold the new Backup API:
+Use kubebuilder to scaffold the new Backup API. Since Backup is related to Database, we use the same `database` group:
 
 ```bash
 # Navigate to your operator project
 cd ~/postgres-operator
 
-# Scaffold the Backup API
+# Scaffold the Backup API (same group as Database)
 kubebuilder create api \
-  --group backup \
+  --group database \
   --version v1 \
   --kind Backup \
   --resource --controller
@@ -37,6 +37,8 @@ kubebuilder create api \
 # Create Resource [y/n]: y
 # Create Controller [y/n]: y
 ```
+
+> **Note:** We use `--group database` (same as Database) because both resources are part of the same operator. Using a different group would require enabling multi-group layout. See [kubebuilder multi-group docs](https://kubebuilder.io/migration/multi-group.html) if you need separate groups.
 
 This creates:
 - `api/v1/backup_types.go` - API type definitions
@@ -126,8 +128,8 @@ make manifests
 # Install CRDs
 make install
 
-# Verify the CRD was created
-kubectl get crd backups.backup.example.com
+# Verify the CRD was created (same group as Database)
+kubectl get crd backups.database.example.com
 ```
 
 ### Task 1.4: Implement Backup Controller
@@ -136,7 +138,7 @@ Edit the generated `internal/controller/backup_controller.go` to implement the r
 
 ```go
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    backup := &backupv1.Backup{}
+    backup := &databasev1.Backup{}
     if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
         return ctrl.Result{}, client.IgnoreNotFound(err)
     }
@@ -192,7 +194,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
     
     // Check if backup is required
     if db.Spec.BackupRef != nil {
-        backup := &backupv1.Backup{}
+        backup := &databasev1.Backup{}
         err := r.Get(ctx, client.ObjectKey{
             Name:      db.Spec.BackupRef.Name,
             Namespace: db.Namespace,
@@ -218,7 +220,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 ### Task 3.1: Set Condition in Backup
 
 ```go
-func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *backupv1.Backup) (ctrl.Result, error) {
+func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (ctrl.Result, error) {
     // Perform backup...
     
     // Set condition
@@ -242,7 +244,7 @@ func (r *DatabaseReconciler) checkBackupCondition(ctx context.Context, db *datab
         return nil
     }
     
-    backup := &backupv1.Backup{}
+    backup := &databasev1.Backup{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Spec.BackupRef.Name,
         Namespace: db.Namespace,
@@ -281,7 +283,7 @@ EOF
 
 # Create Backup
 kubectl apply -f - <<EOF
-apiVersion: backup.example.com/v1
+apiVersion: database.example.com/v1
 kind: Backup
 metadata:
   name: my-database-backup

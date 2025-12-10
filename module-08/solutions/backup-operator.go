@@ -1,8 +1,8 @@
 // Solution: Backup Operator from Module 8
 // This demonstrates operator composition with backup functionality.
 //
-// Use kubebuilder to scaffold the API and controller first:
-//   kubebuilder create api --group backup --version v1 --kind Backup --resource --controller
+// Use kubebuilder to scaffold the API and controller first (same group as Database):
+//   kubebuilder create api --group database --version v1 --kind Backup --resource --controller
 //
 // Then replace the generated controller with this implementation.
 
@@ -20,7 +20,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	backupv1 "github.com/example/backup-operator/api/v1"
 	databasev1 "github.com/example/postgres-operator/api/v1"
 )
 
@@ -30,7 +29,7 @@ type BackupReconciler struct {
 }
 
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	backup := &backupv1.Backup{}
+	backup := &databasev1.Backup{}
 	if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -60,7 +59,7 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	return r.performBackup(ctx, db, backup)
 }
 
-func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *backupv1.Backup) (ctrl.Result, error) {
+func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (ctrl.Result, error) {
 	// Update status to in progress
 	backup.Status.Phase = "InProgress"
 	meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
@@ -107,7 +106,7 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 	return ctrl.Result{}, r.Status().Update(ctx, backup)
 }
 
-func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Database, backup *backupv1.Backup) (string, error) {
+func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (string, error) {
 	// Actual backup implementation would:
 	// 1. Connect to database
 	// 2. Create backup (pg_dump, mysqldump, etc.)
@@ -127,7 +126,7 @@ func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Data
 
 func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&backupv1.Backup{}).
+		For(&databasev1.Backup{}).
 		Complete(r)
 }
 
