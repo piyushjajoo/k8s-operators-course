@@ -76,22 +76,26 @@ The course is divided into 8 modules, each building on the previous:
 ### Setup
 
 1. **Clone this repository:**
+
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/piyushjajoo/k8s-operators-course.git
    cd k8s-operators-course
    ```
 
 2. **Set up your development environment:**
+
    ```bash
    ./scripts/setup-dev-environment.sh
    ```
 
 3. **Create a kind cluster:**
+
    ```bash
    ./scripts/setup-kind-cluster.sh
    ```
 
 4. **Start with [Module 1](module-01/README.md):**
+
    ```bash
    cd module-01
    cat README.md
@@ -127,6 +131,10 @@ This course is **free and open-source**, licensed under the [MIT License](LICENS
 - Distribute and sublicense the materials
 
 The only requirement is that you include the original copyright notice and license text. See the [LICENSE](LICENSE) file for full details.
+
+## Share Your Project
+
+If you've completed the course and built an operator, we'd love to see it! Share your project on LinkedIn and tag [Piyush Jajoo](https://www.linkedin.com/in/pjajoo). I'll make my best effort in my free time to review your code and provide feedback.
 
 ## Support
 
