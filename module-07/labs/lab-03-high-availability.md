@@ -261,55 +261,85 @@ kubectl describe pdb -n postgres-operator-system postgres-operator-controller-ma
 
 **Important:** PDB only protects against **voluntary disruptions** (evictions), NOT direct `kubectl delete pod` commands!
 
-### Task 5.3: Test PDB with Eviction API
+### Task 5.3: Test PDB with Rollout Restart
 
-The correct way to test PDB is using the **Eviction API**, not direct pod deletion:
+The easiest way to test PDB is using `kubectl rollout restart`, which uses the eviction API internally:
 
 ```bash
-# Method 1: Use kubectl drain to test PDB
-# First, find which node the pods are running on
-kubectl get pods -n postgres-operator-system -o wide
+# Check current PDB status - note ALLOWED DISRUPTIONS
+kubectl get pdb -n postgres-operator-system
 
-# Try to drain the node (this uses eviction API)
-# The PDB will prevent draining if it would violate minAvailable
-NODE_NAME=$(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o jsonpath='{.items[0].spec.nodeName}')
-kubectl drain $NODE_NAME --ignore-daemonsets --delete-emptydir-data --dry-run=client
+# Expected output:
+# NAME                                        MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+# postgres-operator-controller-manager-pdb   2               N/A               1                     5m
 
-# Method 2: Use kubectl evict directly (requires a script)
-# Get a pod name
-POD_NAME=$(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o jsonpath='{.items[0].metadata.name}')
+# Trigger a rolling restart (this respects PDB)
+kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
 
-# Try to evict a single pod (should succeed - PDB allows 1 disruption)
-kubectl create -f - <<EOF
-apiVersion: policy/v1
-kind: Eviction
-metadata:
-  name: $POD_NAME
-  namespace: postgres-operator-system
-EOF
-
-# Check pods - one should be terminating and a new one starting
+# Watch the rollout - PDB ensures at least 2 pods remain available
 kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+
+# In another terminal, watch PDB status during rollout
+watch kubectl get pdb -n postgres-operator-system
 ```
 
-### Task 5.4: Verify PDB Blocks Excessive Evictions
+**What you should observe:**
+- Pods are replaced one at a time (not all at once)
+- `ALLOWED DISRUPTIONS` changes as pods are terminated/created
+- At least 2 pods remain `Running` throughout the rollout
+
+### Task 5.4: Test PDB Prevents Excessive Disruption
+
+To see PDB actually block a disruption, temporarily set `minAvailable` higher:
+
+```bash
+# Patch PDB to require all 3 pods (no disruptions allowed)
+kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
+  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 3}]'
+
+# Check PDB - ALLOWED DISRUPTIONS should be 0
+kubectl get pdb -n postgres-operator-system
+
+# Try rollout restart now - it will be blocked!
+kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
+
+# Watch - the new pod can't start because it would violate PDB
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+
+# The rollout will be stuck. Check status:
+kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system --timeout=30s
+# This will timeout because rollout can't proceed
+
+# Restore PDB to allow disruptions
+kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
+  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 2}]'
+
+# Now the rollout can complete
+kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system
+```
+
+### Understanding PDB Behavior
 
 ```bash
 # Check current PDB status
 kubectl get pdb -n postgres-operator-system
 
-# The "ALLOWED DISRUPTIONS" column shows how many pods can be evicted
-# With 3 replicas and minAvailable=2, you can evict at most 1 pod at a time
-
-# If you try to evict when disruptionsAllowed=0, it will be blocked:
-# "Cannot evict pod as it would violate the pod's disruption budget"
+# The columns mean:
+# MIN AVAILABLE: Minimum pods that must remain running
+# ALLOWED DISRUPTIONS: How many pods can be evicted right now
+#
+# Formula: ALLOWED DISRUPTIONS = currentHealthy - minAvailable
+# Example: 3 healthy - 2 minimum = 1 allowed disruption
 ```
 
 **Why `kubectl delete pod` doesn't respect PDB:**
 - `kubectl delete` is a **direct deletion**, not an eviction
-- PDB only protects against the **Eviction API**
-- Use `kubectl drain` or the Eviction API to test PDB properly
-- In production, node maintenance tools use eviction, so PDB works as intended
+- PDB only protects against the **Eviction API** used by:
+  - `kubectl drain` (node maintenance)
+  - `kubectl rollout restart` (deployment updates)
+  - Cluster Autoscaler (scale down)
+  - Kubernetes scheduler (pod preemption)
+- In production, these tools use eviction, so PDB works as intended
 
 ## Cleanup
 
