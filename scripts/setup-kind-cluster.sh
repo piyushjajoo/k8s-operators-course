@@ -83,15 +83,17 @@ echo "Installing Calico CNI (for Network Policy enforcement)..."
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
 
 # Wait for Calico to be ready
-echo "Waiting for Calico to be ready..."
-kubectl wait --namespace kube-system \
-    --for=condition=Ready pod \
-    --selector=k8s-app=calico-node \
-    --timeout=300s
-kubectl wait --namespace kube-system \
-    --for=condition=Ready pod \
-    --selector=k8s-app=calico-kube-controllers \
-    --timeout=300s
+echo "Waiting for Calico to be ready (this may take a minute)..."
+# Give Calico time to create pods
+sleep 10
+
+# Wait for calico-node daemonset pods
+echo "  Waiting for calico-node..."
+kubectl rollout status daemonset/calico-node -n kube-system --timeout=300s
+
+# Wait for calico-kube-controllers deployment
+echo "  Waiting for calico-kube-controllers..."
+kubectl rollout status deployment/calico-kube-controllers -n kube-system --timeout=300s
 
 # Wait for cluster nodes to be ready (after CNI is installed)
 echo "Waiting for cluster to be ready..."
