@@ -4,6 +4,7 @@
 // 1. Watches cluster-scoped ClusterDatabase resources
 // 2. Creates resources in the specified targetNamespace
 // 3. Supports multi-tenant patterns with tenant isolation
+// 4. Uses finalizers for cleanup (since OwnerReferences don't work across scopes)
 
 package controller
 
@@ -21,11 +22,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	appsv1 "k8s.io/api/apps/v1"
 	databasev1 "github.com/example/postgres-operator/api/v1"
 )
+
+// Finalizer for cleanup when ClusterDatabase is deleted
+const clusterDatabaseFinalizer = "database.example.com/clusterdatabase-finalizer"
 
 // ClusterDatabaseReconciler reconciles a ClusterDatabase object
 type ClusterDatabaseReconciler struct {
@@ -58,6 +63,30 @@ func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		"name", db.Name,
 		"targetNamespace", db.Spec.TargetNamespace,
 		"tenant", db.Spec.Tenant)
+
+	// Handle deletion with finalizer
+	if !db.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(db, clusterDatabaseFinalizer) {
+			logger.Info("Cleaning up managed resources", "name", db.Name)
+			if err := r.cleanupManagedResources(ctx, db); err != nil {
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(db, clusterDatabaseFinalizer)
+			if err := r.Update(ctx, db); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	// Add finalizer if not present
+	if !controllerutil.ContainsFinalizer(db, clusterDatabaseFinalizer) {
+		controllerutil.AddFinalizer(db, clusterDatabaseFinalizer)
+		if err := r.Update(ctx, db); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
 
 	// Validate target namespace exists
 	if err := r.validateNamespace(ctx, db.Spec.TargetNamespace); err != nil {
@@ -98,6 +127,52 @@ func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// cleanupManagedResources deletes all resources managed by this ClusterDatabase
+// This is called during deletion since we can't use OwnerReferences for garbage collection
+func (r *ClusterDatabaseReconciler) cleanupManagedResources(ctx context.Context, db *databasev1.ClusterDatabase) error {
+	logger := log.FromContext(ctx)
+	namespace := db.Spec.TargetNamespace
+
+	// Delete StatefulSet
+	statefulSet := &appsv1.StatefulSet{}
+	err := r.Get(ctx, client.ObjectKey{Name: db.Name, Namespace: namespace}, statefulSet)
+	if err == nil {
+		logger.Info("Deleting StatefulSet", "name", db.Name, "namespace", namespace)
+		if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+	} else if !errors.IsNotFound(err) {
+		return err
+	}
+
+	// Delete Service
+	service := &corev1.Service{}
+	err = r.Get(ctx, client.ObjectKey{Name: db.Name, Namespace: namespace}, service)
+	if err == nil {
+		logger.Info("Deleting Service", "name", db.Name, "namespace", namespace)
+		if err := r.Delete(ctx, service); err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+	} else if !errors.IsNotFound(err) {
+		return err
+	}
+
+	// Delete Secret
+	secret := &corev1.Secret{}
+	secretName := r.secretName(db)
+	err = r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
+	if err == nil {
+		logger.Info("Deleting Secret", "name", secretName, "namespace", namespace)
+		if err := r.Delete(ctx, secret); err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+	} else if !errors.IsNotFound(err) {
+		return err
+	}
+
+	return nil
 }
 
 // validateNamespace checks if the target namespace exists
@@ -160,7 +235,8 @@ func (r *ClusterDatabaseReconciler) secretName(db *databasev1.ClusterDatabase) s
 }
 
 // generatePassword generates a random password
-// NOTE: if you have database_controller.go from earlier labs, this function already exists, you will see compiler errors, just deletion this duplicate function
+// NOTE: if you have database_controller.go from earlier labs, this function already exists,
+// you will see compiler errors - just delete this duplicate function
 func generatePassword(length int) (string, error) {
 	bytes := make([]byte, length)
 	if _, err := rand.Read(bytes); err != nil {
@@ -456,7 +532,6 @@ func (r *ClusterDatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&databasev1.ClusterDatabase{}).
 		// Note: We don't use Owns() here because cluster-scoped resources
 		// cannot own namespaced resources directly. Instead, we use labels
-		// to track managed resources.
+		// and finalizers to track and clean up managed resources.
 		Complete(r)
 }
-
