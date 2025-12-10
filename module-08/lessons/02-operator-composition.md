@@ -308,7 +308,7 @@ When composing operators:
 
 ### Related Topics
 - [Controller Coordination](https://kubernetes.io/docs/concepts/architecture/controller/#controller-coordination)
-- [Event-Driven Architecture](https://kubernetes.io/docs/concepts/architecture/event-driven/)
+- [Event-Driven Architecture](https://en.wikipedia.org/wiki/Event-driven_architecture)
 - [Microservices Patterns](https://microservices.io/patterns/)
 
 ## Next Steps
