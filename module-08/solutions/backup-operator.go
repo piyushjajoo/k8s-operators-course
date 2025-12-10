@@ -48,6 +48,12 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, nil
 	}
 
+	// Skip if already in progress (another reconciliation is handling it)
+	if backup.Status.Phase == "InProgress" {
+		log.Info("Backup already in progress, skipping", "backup", backup.Name)
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
 	// Get Database
 	db := &databasev1.Database{}
 	err := r.Get(ctx, client.ObjectKey{
@@ -117,6 +123,16 @@ func (r *BackupReconciler) performBackup(ctx context.Context, req ctrl.Request, 
 	// Re-read backup to ensure we have the latest version before updating
 	if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
 		return ctrl.Result{}, err
+	}
+
+	// Check if already completed or in progress (another reconciliation might have updated it)
+	if backup.Status.Phase == "Completed" {
+		log.Info("Backup already completed, skipping", "backup", backup.Name)
+		return ctrl.Result{}, nil
+	}
+	if backup.Status.Phase == "InProgress" {
+		log.Info("Backup already in progress, skipping", "backup", backup.Name)
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	// Update status to in progress
