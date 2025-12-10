@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -82,9 +83,18 @@ func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
-	// Update status
-	if err := r.updateStatus(ctx, db); err != nil {
+	// Update status and check if ready
+	ready, err := r.updateStatus(ctx, db)
+	if err != nil {
 		return ctrl.Result{}, err
+	}
+
+	// If not ready, requeue to check again
+	// This is necessary because we can't use Owns() for cluster-scoped resources
+	// to watch namespaced StatefulSets
+	if !ready {
+		logger.Info("ClusterDatabase not ready, requeuing", "name", db.Name)
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -390,7 +400,7 @@ func (r *ClusterDatabaseReconciler) reconcileService(ctx context.Context, db *da
 	return err
 }
 
-func (r *ClusterDatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.ClusterDatabase) error {
+func (r *ClusterDatabaseReconciler) updateStatus(ctx context.Context, db *databasev1.ClusterDatabase) (bool, error) {
 	// Set namespace and secret in status
 	db.Status.TargetNamespace = db.Spec.TargetNamespace
 	db.Status.SecretName = r.secretName(db)
@@ -402,6 +412,7 @@ func (r *ClusterDatabaseReconciler) updateStatus(ctx context.Context, db *databa
 		Namespace: db.Spec.TargetNamespace,
 	}, statefulSet)
 
+	ready := false
 	if err != nil {
 		db.Status.Phase = "Pending"
 		db.Status.Ready = false
@@ -411,13 +422,14 @@ func (r *ClusterDatabaseReconciler) updateStatus(ctx context.Context, db *databa
 			db.Status.Ready = true
 			db.Status.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:5432",
 				db.Name, db.Spec.TargetNamespace)
+			ready = true
 		} else {
 			db.Status.Phase = "Creating"
 			db.Status.Ready = false
 		}
 	}
 
-	return r.Status().Update(ctx, db)
+	return ready, r.Status().Update(ctx, db)
 }
 
 // ListClusterDatabasesByTenant returns all ClusterDatabases for a specific tenant
