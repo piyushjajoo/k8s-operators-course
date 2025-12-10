@@ -513,12 +513,15 @@ The solutions file already implements these patterns. This exercise explains the
 
 ### Task 5.1: Cluster-Scoped Owner Restrictions
 
-Important: Cluster-scoped resources **cannot** use `OwnerReferences` to own namespace-scoped resources. The solutions file uses labels instead:
+Important: Cluster-scoped resources **cannot** use `OwnerReferences` to own namespace-scoped resources. The solutions file uses labels instead.
+
+In the `buildStatefulSet` helper function, labels are set to track ownership:
 
 ```go
-// In ClusterDatabaseReconciler
-func (r *ClusterDatabaseReconciler) reconcileStatefulSet(ctx context.Context, db *databasev1.ClusterDatabase) error {
-    statefulSet := &appsv1.StatefulSet{
+func (r *ClusterDatabaseReconciler) buildStatefulSet(db *databasev1.ClusterDatabase) *appsv1.StatefulSet {
+    // ... replicas and image setup ...
+
+    return &appsv1.StatefulSet{
         ObjectMeta: metav1.ObjectMeta{
             Name:      db.Name,
             Namespace: db.Spec.TargetNamespace,
@@ -529,14 +532,20 @@ func (r *ClusterDatabaseReconciler) reconcileStatefulSet(ctx context.Context, db
                 "tenant":                       db.Spec.Tenant,
             },
         },
-        // ... spec
+        // ... spec ...
     }
-
-    // Note: Cannot use ctrl.SetControllerReference() here
-    // because cluster-scoped -> namespaced ownership is not allowed
-
-    return r.Create(ctx, statefulSet)
 }
+```
+
+Note the key difference from the namespace-scoped Database controller:
+
+```go
+// Database controller (namespace-scoped) - CAN use OwnerReferences:
+ctrl.SetControllerReference(db, statefulSet, r.Scheme)  // ✓ Works
+
+// ClusterDatabase controller (cluster-scoped) - CANNOT use OwnerReferences:
+// ctrl.SetControllerReference(db, statefulSet, r.Scheme)  // ✗ Would fail
+// Instead, we use labels and cleanup with finalizers
 ```
 
 ### Task 5.2: Cleanup with Finalizers
@@ -575,26 +584,47 @@ func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 }
 
 func (r *ClusterDatabaseReconciler) cleanupManagedResources(ctx context.Context, db *databasev1.ClusterDatabase) error {
-    // Delete resources by label selector
-    labelSelector := client.MatchingLabels{
-        "clusterdatabase": db.Name,
-    }
+    logger := log.FromContext(ctx)
+    namespace := db.Spec.TargetNamespace
 
-    // Delete StatefulSet
-    if err := r.DeleteAllOf(ctx, &appsv1.StatefulSet{},
-        client.InNamespace(db.Spec.TargetNamespace), labelSelector); err != nil {
+    // Delete StatefulSet by name
+    statefulSet := &appsv1.StatefulSet{}
+    err := r.Get(ctx, client.ObjectKey{Name: db.Name, Namespace: namespace}, statefulSet)
+    if err == nil {
+        logger.Info("Deleting StatefulSet", "name", db.Name, "namespace", namespace)
+        if err := r.Delete(ctx, statefulSet); err != nil && !errors.IsNotFound(err) {
+            return err
+        }
+    } else if !errors.IsNotFound(err) {
         return err
     }
 
-    // Delete Service
-    if err := r.DeleteAllOf(ctx, &corev1.Service{},
-        client.InNamespace(db.Spec.TargetNamespace), labelSelector); err != nil {
+    // Delete Service by name
+    service := &corev1.Service{}
+    err = r.Get(ctx, client.ObjectKey{Name: db.Name, Namespace: namespace}, service)
+    if err == nil {
+        logger.Info("Deleting Service", "name", db.Name, "namespace", namespace)
+        if err := r.Delete(ctx, service); err != nil && !errors.IsNotFound(err) {
+            return err
+        }
+    } else if !errors.IsNotFound(err) {
         return err
     }
 
-    // Delete Secret
-    return r.DeleteAllOf(ctx, &corev1.Secret{},
-        client.InNamespace(db.Spec.TargetNamespace), labelSelector)
+    // Delete Secret by name
+    secret := &corev1.Secret{}
+    secretName := r.secretName(db)
+    err = r.Get(ctx, client.ObjectKey{Name: secretName, Namespace: namespace}, secret)
+    if err == nil {
+        logger.Info("Deleting Secret", "name", secretName, "namespace", namespace)
+        if err := r.Delete(ctx, secret); err != nil && !errors.IsNotFound(err) {
+            return err
+        }
+    } else if !errors.IsNotFound(err) {
+        return err
+    }
+
+    return nil
 }
 ```
 
