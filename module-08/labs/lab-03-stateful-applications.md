@@ -128,11 +128,37 @@ func PerformBackup(ctx context.Context, k8sClient client.Client, db *databasev1.
 }
 ```
 
-### Task 1.2: Integrate with Backup Controller
+### Task 1.3: Integrate with Backup Controller
 
-Update `internal/controller/backup_controller.go` to use the backup package.
+Update `internal/controller/backup_controller.go` to use the backup package. The Backup controller from Lab 8.2 has a `createBackup` method that currently simulates the backup. Replace it with a call to the actual backup package.
 
-The `performBackup` function in the Backup controller (from Lab 8.2) can call the backup package:
+**Current state (from Lab 8.2):**
+
+The `createBackup` method in your Backup controller currently looks like this:
+
+```go
+func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (string, error) {
+    // Actual backup implementation would:
+    // 1. Connect to database
+    // 2. Create backup (pg_dump, mysqldump, etc.)
+    // 3. Store backup in storage (S3, PVC, etc.)
+    // 4. Return backup location
+
+    backupLocation := fmt.Sprintf("s3://backups/%s/%s-%s.sql",
+        db.Namespace,
+        db.Name,
+        time.Now().Format("20060102-150405"))
+
+    // Simulate backup creation
+    // In real implementation, this would actually perform the backup
+
+    return backupLocation, nil
+}
+```
+
+**Updated state:**
+
+Replace the `createBackup` method to use the backup package:
 
 ```go
 import (
@@ -140,31 +166,47 @@ import (
     "github.com/example/postgres-operator/internal/backup"
 )
 
-func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, bkp *databasev1.Backup) (ctrl.Result, error) {
-    // Update status to in progress
-    bkp.Status.Phase = "InProgress"
-    r.Status().Update(ctx, bkp)
-
-    // Perform actual backup
+// Replace the createBackup method to use the backup package
+func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (string, error) {
+    // Use the backup package to perform actual backup
     // Note: PerformBackup requires k8sClient to retrieve password from Secret
-    location, err := backup.PerformBackup(ctx, r.Client, db)
+    backupLocation, err := backup.PerformBackup(ctx, r.Client, db)
     if err != nil {
-        bkp.Status.Phase = "Failed"
-        r.Status().Update(ctx, bkp)
+        return "", fmt.Errorf("failed to perform backup: %w", err)
+    }
+
+    return backupLocation, nil
+}
+```
+
+**How it works:**
+
+The `performBackup` method in your controller already handles status updates correctly. It calls `createBackup` and updates the Backup status based on the result:
+
+```go
+func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (ctrl.Result, error) {
+    // Update status to in progress
+    backup.Status.Phase = "InProgress"
+    // ... status updates ...
+
+    // Perform actual backup (calls createBackup)
+    backupLocation, err := r.createBackup(ctx, db, backup)
+    if err != nil {
+        // Handle error and update status
         return ctrl.Result{}, err
     }
 
     // Update status to completed
-    bkp.Status.Phase = "Completed"
-    now := metav1.Now()
-    bkp.Status.BackupTime = &now
-    bkp.Status.BackupLocation = location
-
-    return ctrl.Result{}, r.Status().Update(ctx, bkp)
+    backup.Status.BackupLocation = backupLocation
+    // ... more status updates ...
 }
 ```
 
-> **Note:** For this lab, the simplified backup in Lab 8.2's solution simulates the backup. The `backup.go` solution shows a more realistic implementation using `pg_dump`.
+With this change, `createBackup` will now perform the actual backup using `pg_dump` instead of simulating it.
+
+**Controller structure:**
+- `performBackup()` - Handles status updates, error handling, and calls `createBackup()`
+- `createBackup()` - Performs the actual backup work (now calls `backup.PerformBackup()`)
 
 ## Exercise 2: Implement Restore
 
