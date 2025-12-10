@@ -229,14 +229,15 @@ Replace the `createBackup` method to use the backup package:
 ```go
 import (
     // ... existing imports ...
-    "github.com/example/postgres-operator/internal/backup"
+    backupPkg "github.com/example/postgres-operator/internal/backup"
 )
 
 // Replace the createBackup method to use the backup package
 func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (string, error) {
     // Use the backup package to perform actual backup
     // Note: PerformBackup requires k8sClient to retrieve password from Secret
-    backupLocation, err := backup.PerformBackup(ctx, r.Client, db)
+    // Note: We use 'backupPkg' alias to avoid conflict with 'backup' variable name
+    backupLocation, err := backupPkg.PerformBackup(ctx, r.Client, db)
     if err != nil {
         return "", fmt.Errorf("failed to perform backup: %w", err)
     }
@@ -244,6 +245,8 @@ func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Data
     return backupLocation, nil
 }
 ```
+
+> **Important:** We use the package alias `backupPkg` because the function parameter `backup *databasev1.Backup` would shadow the package name `backup`. Without the alias, Go would try to call `backup.PerformBackup()` on the Backup resource variable instead of the backup package, causing a compile error: `backup.PerformBackup undefined`.
 
 **How it works:**
 
@@ -272,7 +275,7 @@ With this change, `createBackup` will now perform the actual backup using `pg_du
 
 **Controller structure:**
 - `performBackup()` - Handles status updates, error handling, and calls `createBackup()`
-- `createBackup()` - Performs the actual backup work (now calls `backup.PerformBackup()`)
+- `createBackup()` - Performs the actual backup work (now calls `backupPkg.PerformBackup()`)
 
 ## Exercise 2: Implement Restore
 
