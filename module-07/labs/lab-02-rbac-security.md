@@ -386,9 +386,55 @@ Uncomment `- ../prometheus`:
 - ../prometheus  # <-- Uncomment this line
 ```
 
-#### Step 3: Redeploy with ServiceMonitor
+#### Step 3: Grant Prometheus RBAC Access to Metrics
+
+**Important:** The operator's metrics endpoint requires authentication AND authorization. By default, only the controller-manager ServiceAccount has access. We need to grant Prometheus access too.
+
+Create `config/rbac/metrics_reader_prometheus_binding.yaml`:
+
+```yaml
+# config/rbac/metrics_reader_prometheus_binding.yaml
+# Grant Prometheus ServiceAccount permission to read metrics
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: metrics-reader-prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metrics-reader
+subjects:
+- kind: ServiceAccount
+  name: prometheus-kube-prometheus-prometheus
+  namespace: monitoring
+```
+
+Add it to `config/rbac/kustomization.yaml`:
+
+```yaml
+resources:
+- service_account.yaml
+- role.yaml
+- role_binding.yaml
+- leader_election_role.yaml
+- leader_election_role_binding.yaml
+- metrics_auth_role.yaml
+- metrics_auth_role_binding.yaml
+- metrics_reader_role.yaml
+- metrics_reader_role_binding.yaml
+- metrics_reader_prometheus_binding.yaml  # <-- Add this line
+# ... rest of file
+```
+
+#### Step 4: Redeploy with ServiceMonitor and RBAC
 
 ```bash
+# Regenerate manifests to include the new RBAC binding
+make manifests
+
 # For Docker: Redeploy to include the ServiceMonitor
 make deploy IMG=postgres-operator:latest
 
@@ -397,12 +443,16 @@ make deploy IMG=localhost/postgres-operator:latest
 
 # Verify the ServiceMonitor was created
 kubectl get servicemonitor -n postgres-operator-system
+
+# Verify Prometheus RBAC binding was created
+kubectl get clusterrolebinding | grep metrics-reader
 ```
 
 Expected output:
 ```
-NAME                                                 AGE
-postgres-operator-controller-manager-metrics-monitor   10s
+NAME                                              AGE
+postgres-operator-metrics-reader-prometheus       10s
+postgres-operator-metrics-reader-rolebinding      10s
 ```
 
 **Note:** The course setup script (`scripts/setup-kind-cluster.sh`) configures Prometheus to discover ServiceMonitors from all namespaces without requiring specific labels. If you're using a different Prometheus installation, you may need to add `release: prometheus` label to your ServiceMonitor.
@@ -579,10 +629,11 @@ In this lab, you:
 7. Enable network policies by uncommenting `../network-policy` in kustomization
 8. Label namespaces with `metrics: enabled` or `webhook: enabled` to allow access
 9. **Kubebuilder generates ServiceMonitor** in `config/prometheus/` - enable it!
-10. Use Prometheus UI **Status → Targets** to verify scraping is working
-11. The course setup script configures Prometheus to discover all ServiceMonitors
-12. The distroless base image is already used by kubebuilder
-13. Network Policies require a CNI that supports them (Calico, Cilium)
+10. **Grant Prometheus RBAC access** to the metrics endpoint (Step 3 above)
+11. Use Prometheus UI **Status → Targets** to verify scraping is working
+12. The course setup script configures Prometheus to discover all ServiceMonitors
+13. The distroless base image is already used by kubebuilder
+14. Network Policies require a CNI that supports them (Calico)
 
 ## Solutions
 

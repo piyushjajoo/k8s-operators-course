@@ -137,6 +137,26 @@ spec:
           protocol: TCP
 
 ---
+# RBAC: Grant Prometheus access to metrics endpoint
+# Place in config/rbac/metrics_reader_prometheus_binding.yaml
+# Add to config/rbac/kustomization.yaml resources list
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: postgres-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: metrics-reader-prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metrics-reader
+subjects:
+- kind: ServiceAccount
+  name: prometheus-kube-prometheus-prometheus
+  namespace: monitoring
+
+---
 # To enable network policies, edit config/default/kustomization.yaml:
 #
 # resources:
