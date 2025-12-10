@@ -177,29 +177,33 @@ func (r *RestoreReconciler) performRestore(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	// Check if already completed or in progress
+	// Check if already completed
 	if rst.Status.Phase == "Completed" {
 		log.Info("Restore already completed, skipping", "restore", rst.Name)
 		return ctrl.Result{}, nil
 	}
-	if rst.Status.Phase == "InProgress" {
-		log.Info("Restore already in progress, skipping", "restore", rst.Name)
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
+	// Note: We don't skip InProgress here because the restore operation might have completed
+	// but failed to update status due to a conflict. We'll proceed to check/retry.
 
-	// Update status to in progress
-	rst.Status.Phase = "InProgress"
-	meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
-		Type:    "RestoreReady",
-		Status:  metav1.ConditionFalse,
-		Reason:  "RestoreInProgress",
-		Message: "Restore in progress",
-	})
-	if err := r.Status().Update(ctx, rst); err != nil {
-		if errors.IsConflict(err) {
-			return ctrl.Result{Requeue: true}, nil
+	// Update status to in progress (only if not already InProgress)
+	if rst.Status.Phase != "InProgress" {
+		rst.Status.Phase = "InProgress"
+		meta.SetStatusCondition(&rst.Status.Conditions, metav1.Condition{
+			Type:    "RestoreReady",
+			Status:  metav1.ConditionFalse,
+			Reason:  "RestoreInProgress",
+			Message: "Restore in progress",
+		})
+		if err := r.Status().Update(ctx, rst); err != nil {
+			if errors.IsConflict(err) {
+				return ctrl.Result{Requeue: true}, nil
+			}
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
+		// Re-read after updating to get latest version
+		if err := r.Get(ctx, req.NamespacedName, rst); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	// Get backup location from Backup status
