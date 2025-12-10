@@ -299,7 +299,7 @@ Edit `config/default/kustomization.yaml` and uncomment the network-policy line:
 ```bash
 # For Docker: Deploy the operator with network policies enabled
 kind load docker-image postgres-operator:latest --name k8s-operators-course
-make deploy IMG=postgres-operator:v0.1.0
+make deploy IMG=postgres-operator:latest
 
 # For Podman: Deploy operator - use localhost/ prefix to match the loaded image
 podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
@@ -390,7 +390,7 @@ Uncomment `- ../prometheus`:
 
 ```bash
 # For Docker: Redeploy to include the ServiceMonitor
-make deploy IMG=postgres-operator:v0.1.0
+make deploy IMG=postgres-operator:latest
 
 # For Podman: Redeploy to include the ServiceMonitor
 make deploy IMG=localhost/postgres-operator:latest
