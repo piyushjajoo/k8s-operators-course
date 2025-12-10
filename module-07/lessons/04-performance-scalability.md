@@ -451,7 +451,6 @@ When optimizing kubebuilder operators:
 
 ### Official Documentation
 - [Kubernetes API Rate Limiting](https://kubernetes.io/docs/concepts/cluster-administration/flow-control/)
-- [Client-Go Performance](https://github.com/kubernetes/client-go/blob/master/docs/performance.md)
 - [Controller Performance](https://kubernetes.io/docs/concepts/architecture/controller/#controller-performance)
 
 ### Further Reading
