@@ -134,7 +134,23 @@ kubectl get crd backups.database.example.com
 
 ### Task 1.4: Implement Backup Controller
 
-Edit the generated `internal/controller/backup_controller.go` to implement the reconciliation logic:
+The Backup controller needs several functions to work properly. Rather than writing it from scratch, copy the complete implementation from the solutions file:
+
+```bash
+# Copy the complete controller implementation
+cp path/to/solutions/backup-operator.go internal/controller/backup_controller.go
+```
+
+Or, if you prefer to type it yourself, copy the complete controller from:
+**[solutions/backup-operator.go](../solutions/backup-operator.go)**
+
+The complete controller includes:
+- `Reconcile()` - Main reconciliation loop (shown below)
+- `performBackup()` - Updates status and triggers backup
+- `createBackup()` - Performs the actual backup operation
+- `SetupWithManager()` - Registers controller with manager
+
+**Key reconciliation logic:**
 
 ```go
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -166,6 +182,16 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
     // Perform backup
     return r.performBackup(ctx, db, backup)
 }
+```
+
+### Task 1.5: Build and Verify
+
+```bash
+# Ensure the code compiles
+make build
+
+# If there are any compilation errors, verify you copied the complete
+# controller from the solutions file
 ```
 
 ## Exercise 2: Coordinate Operators
