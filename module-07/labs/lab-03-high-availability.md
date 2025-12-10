@@ -256,10 +256,10 @@ make deploy IMG=localhost/postgres-operator:latest
 kubectl get pdb -n postgres-operator-system
 
 # Check PDB status
-kubectl describe pdb -n postgres-operator-system controller-manager-pdb
+kubectl describe pdb -n postgres-operator-system postgres-operator-controller-manager-pdb
 
 # Try to delete multiple pods (PDB should prevent deleting more than 1)
-kubectl delete pod -n postgres-operator-system -l control-plane=controller-manager --all
+kubectl delete pod -n postgres-operator-system --selector=control-plane=controller-manager
 # This should fail or be delayed to maintain minAvailable
 ```
 
