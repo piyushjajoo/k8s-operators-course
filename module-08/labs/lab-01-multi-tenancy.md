@@ -356,8 +356,8 @@ Since operators with webhooks (from earlier modules) require TLS certificates an
 # Verify code compiles
 make build
 
-# Generate manifests and install CRDs
-make generate manifests install
+# Generate code and manifests
+make generate manifests
 
 # Build the container image
 make docker-build IMG=postgres-operator:latest
