@@ -456,7 +456,6 @@ When optimizing kubebuilder operators:
 ### Further Reading
 - **Kubernetes Operators** by Jason Dobies and Joshua Wood - Chapter 15: Performance
 - **High Performance Go** by Ian Lance Taylor - Go performance optimization
-- [Kubernetes Scalability](https://kubernetes.io/docs/concepts/cluster-administration/cluster-large/)
 
 ### Related Topics
 - [API Priority and Fairness](https://kubernetes.io/docs/concepts/cluster-administration/flow-control/)
