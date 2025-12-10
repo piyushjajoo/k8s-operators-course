@@ -122,6 +122,19 @@ kubectl wait --namespace cert-manager \
     --for=condition=Available deployment/cert-manager-cainjector \
     --timeout=120s
 
+# Install metrics-server (required for kubectl top)
+echo "Installing metrics-server..."
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Patch metrics-server to work with kind (disable TLS verification for kubelet)
+kubectl patch deployment metrics-server -n kube-system --type='json' -p='[
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"},
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-preferred-address-types=InternalIP"}
+]'
+
+echo "Waiting for metrics-server to be ready..."
+kubectl rollout status deployment/metrics-server -n kube-system --timeout=120s
+
 # Install Prometheus Stack (for metrics and observability in Module 6-7)
 echo "Installing Prometheus stack..."
 
@@ -188,6 +201,7 @@ echo "Installed components:"
 echo "  - Calico CNI (Network Policy enforcement enabled)"
 echo "  - ingress-nginx"
 echo "  - cert-manager (for webhook TLS certificates)"
+echo "  - metrics-server (for kubectl top)"
 if [ "$PROMETHEUS_INSTALLED" = "yes" ]; then
 echo "  - Prometheus stack (for metrics - Module 6-7)"
 echo "    - Discovers ServiceMonitors from ALL namespaces"

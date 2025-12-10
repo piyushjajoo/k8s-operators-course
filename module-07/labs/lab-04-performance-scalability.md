@@ -391,9 +391,30 @@ echo "Created 50 test databases"
 
 ### Task 5.2: Monitor Performance Under Load
 
+**Note:** `kubectl top` requires metrics-server to be installed. The course setup script (`scripts/setup-kind-cluster.sh`) installs it automatically. If you get "Metrics API not available", install it manually:
+
 ```bash
-# Watch operator resource usage
+# Install metrics-server (if not already installed)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Patch for kind (disable TLS verification for kubelet)
+kubectl patch deployment metrics-server -n kube-system --type='json' -p='[
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"},
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-preferred-address-types=InternalIP"}
+]'
+
+# Wait for it to be ready
+kubectl rollout status deployment/metrics-server -n kube-system
+```
+
+Now monitor performance:
+
+```bash
+# Watch operator resource usage (requires metrics-server)
 watch kubectl top pods -n postgres-operator-system -l control-plane=controller-manager
+
+# Alternative: Check resource requests/limits if metrics-server not available
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].resources}{"\n"}{end}'
 
 # In another terminal, watch reconciliation metrics
 # Port forward to metrics endpoint (using HTTPS on port 8443)
@@ -404,11 +425,11 @@ kubectl port-forward -n postgres-operator-system \
 TOKEN=$(kubectl create token postgres-operator-controller-manager -n postgres-operator-system)
 
 while true; do
-  curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep controller_runtime_reconcile_total
+  curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep database_reconcile_total
   sleep 5
 done
 
-# In the same terminal as above, Check queue length
+# Check queue length
 curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | grep workqueue
 
 # Check controller logs for reconciliation activity
