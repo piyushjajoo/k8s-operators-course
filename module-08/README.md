@@ -49,7 +49,7 @@ If you haven't completed Module 7, start with [Module 7: Production Consideratio
 
 Throughout this module, you'll extend your Database operator with:
 
-- Multi-tenant support
+- A new cluster-scoped ClusterDatabase API for multi-tenant support
 - Backup and restore functionality
 - Advanced stateful application patterns
 - Real-world best practices
@@ -85,22 +85,26 @@ Each lesson includes hands-on exercises that add advanced features to your opera
 ## Solutions
 
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
-- [Lab 8.1 Solutions](solutions/) - Multi-tenant operator examples
-  - [cluster-scoped-crd.yaml](solutions/cluster-scoped-crd.yaml) - Cluster-scoped CRD example
-  - [multi-tenant-controller.go](solutions/multi-tenant-controller.go) - Multi-tenant controller implementation
-- [Lab 8.2 Solutions](solutions/) - Operator composition examples
-  - [backup-operator.go](solutions/backup-operator.go) - Complete backup operator
-  - [operator-coordination.go](solutions/operator-coordination.go) - Operator coordination examples
-- [Lab 8.3 Solutions](solutions/) - Stateful application management
-  - [backup.go](solutions/backup.go) - Backup functionality implementation
-  - [restore.go](solutions/restore.go) - Restore functionality implementation
-  - [rolling-update.go](solutions/rolling-update.go) - Rolling update handling
-- [Lab 8.4 Solutions](solutions/) - Final project examples
-  - See [solutions README](solutions/README.md) for complete examples
+
+### Lab 8.1 Solutions - Multi-Tenant Operator
+- [clusterdatabase-types.go](solutions/clusterdatabase-types.go) - ClusterDatabase API type definitions
+- [clusterdatabase-controller.go](solutions/clusterdatabase-controller.go) - ClusterDatabase controller implementation
+- [multi-tenant-controller.go](solutions/multi-tenant-controller.go) - Multi-tenant patterns and helpers
+
+### Lab 8.2 Solutions - Operator Composition
+- [backup-operator.go](solutions/backup-operator.go) - Complete backup operator
+- [operator-coordination.go](solutions/operator-coordination.go) - Operator coordination examples
+
+### Lab 8.3 Solutions - Stateful Application Management
+- [backup.go](solutions/backup.go) - Backup functionality implementation
+- [restore.go](solutions/restore.go) - Restore functionality implementation
+- [rolling-update.go](solutions/rolling-update.go) - Rolling update handling
+
+### Lab 8.4 Solutions - Final Project
+- See [solutions README](solutions/README.md) for complete examples
 
 
 ## Navigation
 
 - [← Previous: Module 7 - Production Considerations](../module-07/README.md)
 - [Course Overview](../README.md)
-

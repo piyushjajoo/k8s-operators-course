@@ -145,26 +145,49 @@ graph TB
     style CLUSTER fill:#90EE90
 ```
 
-## Creating Cluster-Scoped CRDs
+## Creating Cluster-Scoped CRDs with Kubebuilder
 
-### CRD Scope Configuration
+### Scaffolding a Cluster-Scoped API
 
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: databases.database.example.com
-spec:
-  group: database.example.com
-  versions:
-  - name: v1
-    served: true
-    storage: true
-  scope: Cluster  # Cluster-scoped instead of Namespaced
-  names:
-    plural: databases
-    singular: database
-    kind: Database
+Use kubebuilder to create a new cluster-scoped API:
+
+```bash
+# Create new cluster-scoped API
+kubebuilder create api \
+  --group database \
+  --version v1 \
+  --kind ClusterDatabase \
+  --resource --controller
+```
+
+### Configuring Cluster Scope
+
+Add the scope marker to your types file:
+
+```go
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
+
+// ClusterDatabase is the Schema for the clusterdatabases API
+type ClusterDatabase struct {
+    metav1.TypeMeta   `json:",inline"`
+    metav1.ObjectMeta `json:"metadata,omitempty"`
+    Spec              ClusterDatabaseSpec   `json:"spec,omitempty"`
+    Status            ClusterDatabaseStatus `json:"status,omitempty"`
+}
+```
+
+The key marker is `// +kubebuilder:resource:scope=Cluster`.
+
+### Generating CRDs
+
+```bash
+# Generate CRD manifests from markers
+make manifests
+
+# The generated CRD will have:
+#   scope: Cluster
 ```
 
 ### Scope Comparison
@@ -181,6 +204,74 @@ graph LR
     
     style NAMESPACED fill:#90EE90
     style CLUSTER fill:#FFB6C1
+```
+
+## Designing Cluster-Scoped APIs
+
+### Key Design Consideration: Target Namespace
+
+Cluster-scoped resources don't belong to a namespace, but they often need to create namespaced resources. Include a `targetNamespace` field:
+
+```go
+type ClusterDatabaseSpec struct {
+    // TargetNamespace is where managed resources will be created
+    // +kubebuilder:validation:Required
+    TargetNamespace string `json:"targetNamespace"`
+
+    // Tenant identifies which tenant owns this resource
+    // +optional
+    Tenant string `json:"tenant,omitempty"`
+
+    // ... other fields
+}
+```
+
+### Ownership Limitations
+
+**Important:** Cluster-scoped resources cannot use `OwnerReferences` to own namespaced resources. Use labels instead:
+
+```go
+// Cannot do this for cluster-scoped owner:
+// ctrl.SetControllerReference(clusterDatabase, statefulSet, scheme)
+
+// Instead, use labels:
+statefulSet.Labels["clusterdatabase"] = clusterDatabase.Name
+statefulSet.Labels["tenant"] = clusterDatabase.Spec.Tenant
+```
+
+### Cleanup with Finalizers
+
+Since automatic garbage collection doesn't work across scopes, use finalizers:
+
+```go
+const clusterDatabaseFinalizer = "database.example.com/finalizer"
+
+func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    db := &databasev1.ClusterDatabase{}
+    if err := r.Get(ctx, req.NamespacedName, db); err != nil {
+        return ctrl.Result{}, client.IgnoreNotFound(err)
+    }
+
+    // Handle deletion
+    if !db.DeletionTimestamp.IsZero() {
+        if controllerutil.ContainsFinalizer(db, clusterDatabaseFinalizer) {
+            if err := r.cleanupManagedResources(ctx, db); err != nil {
+                return ctrl.Result{}, err
+            }
+            controllerutil.RemoveFinalizer(db, clusterDatabaseFinalizer)
+            return ctrl.Result{}, r.Update(ctx, db)
+        }
+        return ctrl.Result{}, nil
+    }
+
+    // Add finalizer
+    if !controllerutil.ContainsFinalizer(db, clusterDatabaseFinalizer) {
+        controllerutil.AddFinalizer(db, clusterDatabaseFinalizer)
+        return ctrl.Result{}, r.Update(ctx, db)
+    }
+
+    // ... reconciliation logic
+}
 ```
 
 ## Namespace Isolation
@@ -214,19 +305,21 @@ spec:
     limits.cpu: "8"
     limits.memory: 16Gi
     persistentvolumeclaims: "10"
-    databases.database.example.com: "5"
+    clusterdatabases.database.example.com: "5"
 ```
 
 ## Multi-Tenant Operator Patterns
 
 ### Pattern 1: Namespace-Based Tenancy
 
+Use namespaces as tenant boundaries with namespace-scoped resources:
+
 ```go
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    // Get namespace
+    // Namespace from request identifies the tenant
     namespace := req.Namespace
     
-    // Apply tenant-specific logic
+    // Apply tenant-specific logic based on namespace
     if namespace == "production" {
         // Production tenant logic
     } else if namespace == "development" {
@@ -237,29 +330,54 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 ```
 
-### Pattern 2: Label-Based Tenancy
+### Pattern 2: Cluster-Scoped with Target Namespace
+
+Use cluster-scoped resources that deploy to specific namespaces:
 
 ```go
-// Database with tenant label
-db := &databasev1.Database{
+func (r *ClusterDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    db := &databasev1.ClusterDatabase{}
+    if err := r.Get(ctx, req.NamespacedName, db); err != nil {
+        return ctrl.Result{}, client.IgnoreNotFound(err)
+    }
+
+    // Deploy resources to the target namespace
+    targetNamespace := db.Spec.TargetNamespace
+    tenant := db.Spec.Tenant
+
+    // Create resources in target namespace
+    return r.reconcileInNamespace(ctx, db, targetNamespace, tenant)
+}
+```
+
+### Pattern 3: Label-Based Tenancy
+
+Use labels for flexible tenant identification:
+
+```go
+// ClusterDatabase with tenant label
+db := &databasev1.ClusterDatabase{
     ObjectMeta: metav1.ObjectMeta{
         Labels: map[string]string{
             "tenant": "tenant-1",
         },
     },
+    Spec: databasev1.ClusterDatabaseSpec{
+        Tenant: "tenant-1",
+    },
 }
 
 // Filter by tenant
-databases := &databasev1.DatabaseList{}
+databases := &databasev1.ClusterDatabaseList{}
 r.List(ctx, databases, client.MatchingLabels{"tenant": "tenant-1"})
 ```
 
 ## Handling Resource Quotas
 
-### Checking Quotas
+### Checking Quotas in Controller
 
 ```go
-func (r *DatabaseReconciler) checkQuota(ctx context.Context, namespace string) error {
+func (r *ClusterDatabaseReconciler) checkQuota(ctx context.Context, namespace string) error {
     quota := &corev1.ResourceQuota{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      "database-quota",
@@ -270,38 +388,70 @@ func (r *DatabaseReconciler) checkQuota(ctx context.Context, namespace string) e
         // No quota, proceed
         return nil
     }
+    if err != nil {
+        return err
+    }
     
-    // Check if quota allows new database
-    used := getUsedDatabases(ctx, namespace)
-    hard := quota.Spec.Hard["databases.database.example.com"]
-    
-    if used >= hard {
-        return fmt.Errorf("quota exceeded")
+    // Count ClusterDatabases targeting this namespace
+    databases := &databasev1.ClusterDatabaseList{}
+    if err := r.List(ctx, databases); err != nil {
+        return err
+    }
+
+    var count int64
+    for _, db := range databases.Items {
+        if db.Spec.TargetNamespace == namespace {
+            count++
+        }
+    }
+
+    hard := quota.Spec.Hard["clusterdatabases.database.example.com"]
+    if count >= hard.Value() {
+        return fmt.Errorf("quota exceeded: %d/%d", count, hard.Value())
     }
     
     return nil
 }
 ```
 
+## Both APIs Side by Side
+
+Your operator can manage both namespace-scoped and cluster-scoped resources:
+
+| API | Scope | Use Case |
+|-----|-------|----------|
+| `Database` | Namespaced | Team-level database management |
+| `ClusterDatabase` | Cluster | Platform-level multi-tenant management |
+
+```bash
+# List namespace-scoped databases
+kubectl get databases -n my-namespace
+
+# List cluster-scoped databases
+kubectl get clusterdatabases
+```
+
 ## Key Takeaways
 
+- **Use kubebuilder to scaffold cluster-scoped APIs** - `kubebuilder create api` + `scope=Cluster` marker
 - **Cluster-scoped operators** manage resources across all namespaces
 - **Namespaced operators** manage resources in specific namespace
-- **Multi-tenancy** isolates tenants using namespaces
+- **Cluster-scoped resources need targetNamespace** for creating namespaced resources
+- **Cannot use OwnerReferences across scopes** - use labels and finalizers
 - **Resource quotas** limit tenant resource usage
 - **RBAC** enforces namespace isolation
-- **Label-based tenancy** provides flexible tenant identification
-- **Namespace-based tenancy** uses namespace as tenant boundary
+- **Both API types can coexist** in the same operator
 
 ## Understanding for Building Operators
 
 When implementing multi-tenancy:
 - Choose appropriate scope (cluster vs namespaced)
-- Use namespaces for tenant isolation
+- Use kubebuilder to scaffold new APIs
+- Add `targetNamespace` field for cluster-scoped resources
+- Use labels instead of OwnerReferences for cross-scope ownership
+- Implement finalizers for cleanup
 - Apply resource quotas per tenant
 - Use RBAC for access control
-- Consider label-based tenancy for flexibility
-- Handle quota limits gracefully
 
 ## Related Lab
 
@@ -313,6 +463,7 @@ When implementing multi-tenancy:
 - [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
 - [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 - [Cluster-Scoped Resources](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#not-all-objects-are-in-a-namespace)
+- [Kubebuilder Markers](https://book.kubebuilder.io/reference/markers/crd.html)
 
 ### Further Reading
 - **Kubernetes: Up and Running** by Kelsey Hightower, Brendan Burns, and Joe Beda - Chapter 13: ConfigMaps and Secrets (multi-tenancy concepts)
@@ -329,4 +480,3 @@ When implementing multi-tenancy:
 Now that you understand multi-tenancy, let's learn about operator composition.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: Operator Composition →](02-operator-composition.md)
-
