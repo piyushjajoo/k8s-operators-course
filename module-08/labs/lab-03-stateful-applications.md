@@ -298,6 +298,10 @@ kind load docker-image postgres-operator:latest --name k8s-operators-course
 # Deploy operator to cluster
 make deploy IMG=postgres-operator:latest
 
+# rollout restart the deployment just in case you are using existing kind cluster with operator deployed
+kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
+kubectl rollout status deploy -n postgres-operator-system   postgres-operator-controller-manager
+
 # Verify operator is running
 kubectl get pods -n postgres-operator-system
 
@@ -632,6 +636,10 @@ kind load docker-image postgres-operator:latest --name k8s-operators-course
 
 # Deploy operator to cluster
 make deploy IMG=postgres-operator:latest
+
+# rollout restart the deployment just in case you are using existing kind cluster with operator deployed
+kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
+kubectl rollout status deploy -n postgres-operator-system   postgres-operator-controller-manager
 
 # Verify operator is running
 kubectl get pods -n postgres-operator-system
