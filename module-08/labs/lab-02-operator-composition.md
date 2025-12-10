@@ -187,12 +187,20 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 ### Task 1.5: Build and Verify
 
 ```bash
+# Generate code (deep copy methods, etc.)
+make generate
+
+# Generate manifests (CRDs, RBAC from kubebuilder markers)
+make manifests
+
 # Ensure the code compiles
 make build
 
 # If there are any compilation errors, verify you copied the complete
 # controller from the solutions file
 ```
+
+The `make manifests` command generates RBAC rules from the `+kubebuilder:rbac` markers in the controller, creating the necessary ClusterRole permissions.
 
 ## Exercise 2: Coordinate Operators
 
@@ -291,7 +299,60 @@ func (r *DatabaseReconciler) checkBackupCondition(ctx context.Context, db *datab
 
 ## Exercise 4: Test Operator Composition
 
-### Task 4.1: Create Database with Backup
+### Task 4.1: Build and Deploy Operator to Kind Cluster
+
+Build and deploy the operator with the new Backup controller:
+
+```bash
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+```
+
+Before deploying, ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml`:
+
+```yaml
+containers:
+- name: manager
+  image: controller:latest
+  imagePullPolicy: IfNotPresent  # Add this line if not present
+```
+
+Now deploy:
+
+```bash
+# Deploy operator to cluster
+make deploy IMG=postgres-operator:latest
+
+# Verify operator is running
+kubectl get pods -n postgres-operator-system
+
+# Check logs (in a separate terminal or background)
+kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager -f
+```
+
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set and the image name matches what's loaded in kind.
+
+### Task 4.2: Create Database with Backup
 
 ```bash
 # Create Database
@@ -320,7 +381,7 @@ spec:
 EOF
 ```
 
-### Task 4.2: Verify Coordination
+### Task 4.3: Verify Coordination
 
 ```bash
 # Check Database status

@@ -28,6 +28,13 @@ type BackupReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+// +kubebuilder:rbac:groups=database.example.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=database.example.com,resources=backups/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=database.example.com,resources=backups/finalizers,verbs=update
+// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+
+// Reconcile handles Backup resources
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	backup := &databasev1.Backup{}
 	if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
