@@ -206,47 +206,108 @@ The `make manifests` command generates RBAC rules from the `+kubebuilder:rbac` m
 
 ### Task 2.1: Add Backup Reference to Database
 
-Update Database spec:
+Update your existing `api/v1/database_types.go` to add a BackupRef field to the DatabaseSpec:
 
 ```go
 type DatabaseSpec struct {
     // ... existing fields ...
+
+    // BackupRef references a Backup resource that manages backups for this database.
+    // When set, the Database controller will coordinate with the Backup controller.
+    // +optional
     BackupRef *corev1.LocalObjectReference `json:"backupRef,omitempty"`
 }
 ```
 
+After adding the field, regenerate manifests:
+
+```bash
+make generate manifests
+```
+
 ### Task 2.2: Check Backup Status
 
-Update Database controller:
+The Database controller uses a state machine pattern. Add a helper function to check backup status, then integrate it into the reconciliation flow.
+
+First, add a helper function to `internal/controller/database_controller.go`:
 
 ```go
-func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    db := &databasev1.Database{}
-    if err := r.Get(ctx, req.NamespacedName, db); err != nil {
-        return ctrl.Result{}, err
+// checkBackupStatus checks if the referenced Backup is ready
+func (r *DatabaseReconciler) checkBackupStatus(ctx context.Context, db *databasev1.Database) (bool, error) {
+    if db.Spec.BackupRef == nil {
+        // No backup reference, proceed
+        return true, nil
     }
-    
-    // Check if backup is required
-    if db.Spec.BackupRef != nil {
-        backup := &databasev1.Backup{}
-        err := r.Get(ctx, client.ObjectKey{
-            Name:      db.Spec.BackupRef.Name,
-            Namespace: db.Namespace,
-        }, backup)
-        
+
+    logger := log.FromContext(ctx)
+    backup := &databasev1.Backup{}
+    err := r.Get(ctx, client.ObjectKey{
+        Name:      db.Spec.BackupRef.Name,
+        Namespace: db.Namespace,
+    }, backup)
+
+    if errors.IsNotFound(err) {
+        logger.Info("Backup not found, waiting", "backup", db.Spec.BackupRef.Name)
+        return false, nil
+    }
+    if err != nil {
+        return false, err
+    }
+
+    // Check if backup is completed
+    if backup.Status.Phase != "Completed" {
+        logger.Info("Waiting for backup to complete", 
+            "backup", db.Spec.BackupRef.Name, 
+            "phase", backup.Status.Phase)
+        return false, nil
+    }
+
+    return true, nil
+}
+```
+
+Then, integrate it into the `reconcileWithStateMachine` function (before the state switch):
+
+```go
+func (r *DatabaseReconciler) reconcileWithStateMachine(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    currentState := DatabaseState(db.Status.Phase)
+    if currentState == "" {
+        currentState = StatePending
+    }
+
+    logger := log.FromContext(ctx)
+    logger.Info("Reconciling", "state", currentState)
+
+    // Check backup status before proceeding (if BackupRef is set)
+    if currentState == StatePending || currentState == StateProvisioning {
+        ready, err := r.checkBackupStatus(ctx, db)
         if err != nil {
             return ctrl.Result{}, err
         }
-        
-        // Wait for backup to be ready
-        if backup.Status.Phase != "Completed" {
+        if !ready {
+            r.setCondition(db, "Progressing", metav1.ConditionFalse, 
+                "WaitingForBackup", "Waiting for backup to be ready")
+            r.Status().Update(ctx, db)
             return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
         }
     }
-    
-    // Continue with database reconciliation
-    return r.reconcileDatabase(ctx, db)
+
+    switch currentState {
+    // ... existing state handlers ...
+    }
 }
+```
+
+Don't forget to add the RBAC marker to allow reading Backup resources:
+
+```go
+// +kubebuilder:rbac:groups=database.example.com,resources=backups,verbs=get;list;watch
+```
+
+After making changes, regenerate manifests:
+
+```bash
+make generate manifests
 ```
 
 ## Exercise 3: Use Status Conditions
