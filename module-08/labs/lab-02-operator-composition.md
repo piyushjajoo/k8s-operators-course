@@ -339,32 +339,46 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 
 ### Task 3.2: Check Condition in Database Controller
 
-Add a helper function to `internal/controller/database_controller.go` that checks the Backup condition:
+This is an improved version of the `checkBackupStatus` function from Task 2.2. Instead of checking `Phase`, it uses the standardized `Condition` pattern which provides more detailed state information.
+
+Update the `checkBackupStatus` function in `internal/controller/database_controller.go` to use conditions:
 
 ```go
-func (r *DatabaseReconciler) checkBackupCondition(ctx context.Context, db *databasev1.Database) error {
+// checkBackupStatus checks if the referenced Backup is ready using conditions
+func (r *DatabaseReconciler) checkBackupStatus(ctx context.Context, db *databasev1.Database) (bool, error) {
     if db.Spec.BackupRef == nil {
-        return nil
+        return true, nil
     }
-    
+
+    logger := log.FromContext(ctx)
     backup := &databasev1.Backup{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Spec.BackupRef.Name,
         Namespace: db.Namespace,
     }, backup)
-    
-    if err != nil {
-        return err
+
+    if errors.IsNotFound(err) {
+        logger.Info("Backup not found, waiting", "backup", db.Spec.BackupRef.Name)
+        return false, nil
     }
-    
+    if err != nil {
+        return false, err
+    }
+
+    // Use condition instead of Phase for more robust checking
     condition := meta.FindStatusCondition(backup.Status.Conditions, "BackupReady")
     if condition == nil || condition.Status != metav1.ConditionTrue {
-        return fmt.Errorf("backup not ready")
+        logger.Info("Waiting for backup condition to be ready",
+            "backup", db.Spec.BackupRef.Name,
+            "condition", condition)
+        return false, nil
     }
-    
-    return nil
+
+    return true, nil
 }
 ```
+
+This function is already integrated into `reconcileWithStateMachine` from Task 2.2, so no additional changes are needed.
 
 ## Exercise 4: Test Operator Composition
 
