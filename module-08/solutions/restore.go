@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	databasev1 "github.com/example/postgres-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -30,6 +31,17 @@ func PerformRestore(ctx context.Context, k8sClient client.Client, db *databasev1
 	endpoint := db.Status.Endpoint
 	if endpoint == "" {
 		return fmt.Errorf("database endpoint not available")
+	}
+
+	// Parse endpoint (format: hostname:port or hostname)
+	host := endpoint
+	port := "5432" // Default PostgreSQL port
+	if strings.Contains(endpoint, ":") {
+		parts := strings.Split(endpoint, ":")
+		if len(parts) == 2 {
+			host = parts[0]
+			port = parts[1]
+		}
 	}
 
 	// Get password from Secret
@@ -65,7 +77,8 @@ func PerformRestore(ctx context.Context, k8sClient client.Client, db *databasev1
 
 	// Perform restore with password from Secret
 	cmd := exec.CommandContext(ctx, "psql",
-		"-h", endpoint,
+		"-h", host,
+		"-p", port,
 		"-U", db.Spec.Username,
 		"-d", db.Spec.DatabaseName)
 

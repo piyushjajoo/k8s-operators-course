@@ -50,6 +50,13 @@ func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
+	// Skip if failed (don't retry failed restores automatically)
+	// Users can delete and recreate the Restore resource if they want to retry
+	if rst.Status.Phase == "Failed" {
+		log.Info("Restore failed, skipping reconciliation", "restore", rst.Name)
+		return ctrl.Result{}, nil
+	}
+
 	// Get Database
 	db := &databasev1.Database{}
 	err := r.Get(ctx, client.ObjectKey{
