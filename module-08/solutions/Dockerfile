@@ -38,8 +38,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user and group
+# Using UID 65532 to match distroless images (suppress warning with --no-log-init)
 RUN groupadd -r -g 65532 nonroot && \
-    useradd -r -u 65532 -g nonroot -m -s /bin/bash nonroot
+    useradd -r -u 65532 -g nonroot --no-log-init -m -s /bin/bash nonroot
 
 WORKDIR /
 COPY --from=builder /workspace/manager .
