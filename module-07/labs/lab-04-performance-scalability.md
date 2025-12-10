@@ -279,7 +279,6 @@ DatabaseInfo.WithLabelValues(
 The metrics endpoint requires authentication with a bearer token. We'll use a ServiceAccount token to authenticate.
 
 ```bash
-# Deploy operator if not already deployed
 # For Docker: Build and Deploy the operator with network policies enabled
 make docker-build IMG=postgres-operator:latest
 kind load docker-image postgres-operator:latest --name k8s-operators-course
@@ -292,12 +291,30 @@ kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
 rm /tmp/postgres-operator.tar
 make deploy IMG=localhost/postgres-operator:latest
 
+# Restart operator if already deployed
+kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
+
 # Port forward to metrics endpoint (using HTTPS on port 8443)
 kubectl port-forward -n postgres-operator-system \
   svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
 
 # Get a token for authentication (use the controller-manager service account)
 TOKEN=$(kubectl create token postgres-operator-controller-manager -n postgres-operator-system)
+
+# create database to generate some metrics
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: valid-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: mydb
+  username: admin
+  storage:
+    size: 10Gi
+EOF
 
 # View custom database metrics (using -k for self-signed cert, -H for auth header)
 curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | grep database_
@@ -379,16 +396,23 @@ echo "Created 50 test databases"
 watch kubectl top pods -n postgres-operator-system -l control-plane=controller-manager
 
 # In another terminal, watch reconciliation metrics
+# Port forward to metrics endpoint (using HTTPS on port 8443)
+kubectl port-forward -n postgres-operator-system \
+  svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
+
+# Get a token for authentication (use the controller-manager service account)
+TOKEN=$(kubectl create token postgres-operator-controller-manager -n postgres-operator-system)
+
 while true; do
-  curl -s http://localhost:8080/metrics 2>/dev/null | grep controller_runtime_reconcile_total
+  curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics 2>/dev/null | grep controller_runtime_reconcile_total
   sleep 5
 done
 
+# In the same terminal as above, Check queue length
+curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | grep workqueue
+
 # Check controller logs for reconciliation activity
 kubectl logs -n postgres-operator-system -l control-plane=controller-manager --tail=20 -f
-
-# Check queue length
-curl -s http://localhost:8080/metrics | grep workqueue
 ```
 
 ### Task 5.3: Verify All Resources Are Reconciled
