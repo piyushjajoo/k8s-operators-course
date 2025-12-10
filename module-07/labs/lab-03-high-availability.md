@@ -300,22 +300,35 @@ kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-
 # Check PDB - ALLOWED DISRUPTIONS should be 0
 kubectl get pdb -n postgres-operator-system
 
-# Try rollout restart now - it will be blocked!
+# Try rollout restart now
 kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
 
-# Watch - the new pod can't start because it would violate PDB
+# Watch the pods - you'll see 4 pods! (3 old + 1 new)
 kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+```
 
-# The rollout will be stuck. Check status:
+**What happens:**
+1. Deployment creates a NEW pod (4th pod) - this succeeds
+2. Deployment tries to terminate an old pod - **PDB blocks this!**
+3. Result: 4 pods running, rollout stuck
+
+```bash
+# Check - you should see 4 pods (3 old + 1 new)
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
+
+# The rollout is stuck waiting to terminate old pods
 kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system --timeout=30s
-# This will timeout because rollout can't proceed
+# This will timeout because old pods can't be terminated
 
 # Restore PDB to allow disruptions
 kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
   --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 2}]'
 
-# Now the rollout can complete
+# Now old pods can be terminated and rollout completes
 kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system
+
+# Verify back to 3 pods
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
 ```
 
 ### Understanding PDB Behavior
