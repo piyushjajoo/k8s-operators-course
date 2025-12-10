@@ -150,6 +150,7 @@ func (r *ClusterDatabaseReconciler) secretName(db *databasev1.ClusterDatabase) s
 }
 
 // generatePassword generates a random password
+// NOTE: if you have database_controller.go from earlier labs, this function already exists, you will see compiler errors, just deletion this duplicate function
 func generatePassword(length int) (string, error) {
 	bytes := make([]byte, length)
 	if _, err := rand.Read(bytes); err != nil {
