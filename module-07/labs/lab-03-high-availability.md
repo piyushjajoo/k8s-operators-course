@@ -63,8 +63,17 @@ spec:
 ### Task 1.3: Deploy and Verify
 
 ```bash
-# Deploy the operator
-make deploy IMG=postgres-operator:v0.1.0
+# For Docker: Build and Deploy the operator with network policies enabled
+make docker-build IMG=postgres-operator:latest
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+make deploy IMG=postgres-operator:latest
+
+# For Podman: Build and Deploy operator - use localhost/ prefix to match the loaded image
+make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
+make deploy IMG=localhost/postgres-operator:latest
 
 # Check for lease object
 kubectl get lease -n postgres-operator-system
@@ -109,8 +118,17 @@ spec:
 ### Task 2.2: Deploy and Verify
 
 ```bash
-# Redeploy with updated config
-make deploy IMG=postgres-operator:v0.1.0
+# For Docker: Build and Deploy the operator with network policies enabled
+make docker-build IMG=postgres-operator:latest
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+make deploy IMG=postgres-operator:latest
+
+# For Podman: Build and Deploy operator - use localhost/ prefix to match the loaded image
+make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+rm /tmp/postgres-operator.tar
+make deploy IMG=localhost/postgres-operator:latest
 
 # Check replicas
 kubectl get deployment -n postgres-operator-system
