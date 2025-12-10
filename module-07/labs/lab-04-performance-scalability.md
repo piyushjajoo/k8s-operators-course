@@ -276,6 +276,8 @@ DatabaseInfo.WithLabelValues(
 
 ### Task 4.3: Access Metrics Endpoint
 
+The metrics endpoint requires authentication with a bearer token. We'll use a ServiceAccount token to authenticate.
+
 ```bash
 # Deploy operator if not already deployed
 # For Docker:
@@ -288,18 +290,26 @@ make deploy IMG=localhost/postgres-operator:latest
 kubectl port-forward -n postgres-operator-system \
   svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
 
-# View custom database metrics (using -k for self-signed cert)
-curl -sk https://localhost:8443/metrics | grep database_
+# Get a token for authentication (use the controller-manager service account)
+TOKEN=$(kubectl create token postgres-operator-controller-manager -n postgres-operator-system)
+
+# View custom database metrics (using -k for self-signed cert, -H for auth header)
+curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | grep database_
 
 # View reconciliation metrics
-curl -sk https://localhost:8443/metrics | grep database_reconcile
+curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | grep database_reconcile
 
 # View controller-runtime built-in metrics
-curl -sk https://localhost:8443/metrics | grep controller_runtime
+curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | grep controller_runtime
+
+# View all metrics
+curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8443/metrics | head -100
 
 # Stop port-forward
 pkill -f "port-forward.*8443"
 ```
+
+**Note:** The metrics endpoint uses Kubernetes RBAC for authorization. The ServiceAccount must have the `metrics-reader` ClusterRole (configured in Lab 7.2).
 
 ### Task 4.4: View Metrics in Prometheus
 
