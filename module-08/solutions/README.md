@@ -10,7 +10,8 @@ This directory contains complete, working solutions for Module 8 labs.
 - **multi-tenant-controller.go**: Multi-tenant patterns and helper functions
 
 ### Lab 8.2 - Operator Composition
-- **backup-operator.go**: Complete backup operator
+- **backup_types.go**: Backup API type definitions (scaffold with kubebuilder)
+- **backup-operator.go**: Complete backup controller
 - **operator-coordination.go**: Operator coordination examples
 
 ### Lab 8.3 - Stateful Application Management
@@ -50,9 +51,22 @@ Key concepts demonstrated:
 
 ### For Operator Composition (Lab 8.2)
 
-- Use `backup-operator.go` as template
-- Implement coordination with `operator-coordination.go`
-- Use resource references and conditions
+Use kubebuilder to scaffold the Backup API, then reference the solutions:
+
+```bash
+# 1. Scaffold the API
+kubebuilder create api --group backup --version v1 --kind Backup --resource --controller
+
+# 2. Reference backup_types.go for type definitions
+# 3. Reference backup-operator.go for controller logic
+# 4. Reference operator-coordination.go for coordination patterns
+```
+
+Key concepts demonstrated:
+- `DatabaseRef` field references the Database to backup
+- Controller waits for Database to be ready before backing up
+- Status conditions (`BackupReady`) coordinate state between operators
+- Scheduled backups using cron expressions
 
 ### For Stateful Applications (Lab 8.3)
 

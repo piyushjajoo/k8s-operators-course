@@ -18,49 +18,127 @@
 
 ## Exercise 1: Create Backup Operator
 
-### Task 1.1: Create Backup CRD
+### Task 1.1: Scaffold Backup API with Kubebuilder
 
-Create `api/v1/backup_types.go`:
+Use kubebuilder to scaffold the new Backup API:
+
+```bash
+# Navigate to your operator project
+cd ~/postgres-operator
+
+# Scaffold the Backup API
+kubebuilder create api \
+  --group backup \
+  --version v1 \
+  --kind Backup \
+  --resource --controller
+
+# When prompted:
+# Create Resource [y/n]: y
+# Create Controller [y/n]: y
+```
+
+This creates:
+- `api/v1/backup_types.go` - API type definitions
+- `internal/controller/backup_controller.go` - Controller scaffold
+
+### Task 1.2: Define Backup Spec and Status
+
+Edit the generated `api/v1/backup_types.go` to add the spec and status fields:
 
 ```go
 package v1
 
 import (
+    corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// BackupSpec defines the desired state of Backup
+type BackupSpec struct {
+    // DatabaseRef references the Database to backup
+    // +kubebuilder:validation:Required
+    DatabaseRef corev1.LocalObjectReference `json:"databaseRef"`
+
+    // Schedule is the cron schedule for automated backups (optional)
+    // +optional
+    Schedule string `json:"schedule,omitempty"`
+
+    // Retention is the number of backups to retain
+    // +kubebuilder:validation:Minimum=1
+    // +kubebuilder:default=5
+    // +optional
+    Retention int `json:"retention,omitempty"`
+}
+
+// BackupStatus defines the observed state of Backup
+type BackupStatus struct {
+    // Phase is the current backup phase
+    // +kubebuilder:validation:Enum=Pending;InProgress;Completed;Failed
+    Phase string `json:"phase,omitempty"`
+
+    // BackupTime is when the backup was created
+    BackupTime *metav1.Time `json:"backupTime,omitempty"`
+
+    // BackupLocation is where the backup is stored
+    BackupLocation string `json:"backupLocation,omitempty"`
+
+    // Conditions represent the latest observations
+    Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Database",type="string",JSONPath=".spec.databaseRef.name"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
+// Backup is the Schema for the backups API
 type Backup struct {
     metav1.TypeMeta   `json:",inline"`
     metav1.ObjectMeta `json:"metadata,omitempty"`
-    Spec              BackupSpec   `json:"spec,omitempty"`
-    Status            BackupStatus `json:"status,omitempty"`
+
+    Spec   BackupSpec   `json:"spec,omitempty"`
+    Status BackupStatus `json:"status,omitempty"`
 }
 
-type BackupSpec struct {
-    DatabaseRef corev1.LocalObjectReference `json:"databaseRef"`
-    Schedule    string                      `json:"schedule,omitempty"`
-    Retention   int                         `json:"retention,omitempty"`
+// +kubebuilder:object:root=true
+
+// BackupList contains a list of Backup
+type BackupList struct {
+    metav1.TypeMeta `json:",inline"`
+    metav1.ListMeta `json:"metadata,omitempty"`
+    Items           []Backup `json:"items"`
 }
 
-type BackupStatus struct {
-    Phase          string    `json:"phase,omitempty"`
-    BackupTime     time.Time `json:"backupTime,omitempty"`
-    BackupLocation string    `json:"backupLocation,omitempty"`
+func init() {
+    SchemeBuilder.Register(&Backup{}, &BackupList{})
 }
 ```
 
-### Task 1.2: Create Backup Controller
+### Task 1.3: Generate and Install CRD
 
-Create `internal/controller/backup_controller.go`:
+```bash
+# Generate code and CRD manifests
+make generate
+make manifests
+
+# Install CRDs
+make install
+
+# Verify the CRD was created
+kubectl get crd backups.backup.example.com
+```
+
+### Task 1.4: Implement Backup Controller
+
+Edit the generated `internal/controller/backup_controller.go` to implement the reconciliation logic:
 
 ```go
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
     backup := &backupv1.Backup{}
     if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
-        return ctrl.Result{}, err
+        return ctrl.Result{}, client.IgnoreNotFound(err)
     }
     
     // Get Database
@@ -72,6 +150,14 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
     
     if errors.IsNotFound(err) {
         // Database not found, wait
+        return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+    }
+    if err != nil {
+        return ctrl.Result{}, err
+    }
+    
+    // Check if database is ready
+    if db.Status.Phase != "Ready" {
         return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
     }
     
@@ -230,24 +316,25 @@ kubectl delete backups --all
 ## Lab Summary
 
 In this lab, you:
-- Created backup operator
-- Implemented operator coordination
-- Used resource references
+- Scaffolded a new Backup API using kubebuilder
+- Implemented backup operator with coordination logic
+- Used resource references between operators
 - Tested operator composition
 
 ## Key Learnings
 
-1. Operators can depend on each other
-2. Resource references link operators
-3. Status conditions coordinate state
-4. Operators coordinate through resources
-5. Dependency management is important
-6. Composition enables complex applications
+1. **Use kubebuilder to scaffold new APIs** - `kubebuilder create api` handles boilerplate
+2. **Operators can depend on each other** - Backup depends on Database
+3. **Resource references link operators** - `DatabaseRef` connects Backup to Database
+4. **Status conditions coordinate state** - `BackupReady` condition for cross-operator checks
+5. **Dependency management is important** - Wait for dependencies before proceeding
+6. **Composition enables complex applications** - Multiple operators working together
 
 ## Solutions
 
 Complete working solutions for this lab are available in the [solutions directory](../solutions/):
-- [Backup Operator](../solutions/backup-operator.go) - Complete backup operator
+- [Backup Types](../solutions/backup_types.go) - Complete API type definitions
+- [Backup Operator](../solutions/backup-operator.go) - Complete backup controller
 - [Operator Coordination](../solutions/operator-coordination.go) - Coordination examples
 
 ## Next Steps

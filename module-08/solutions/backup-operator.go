@@ -1,20 +1,25 @@
 // Solution: Backup Operator from Module 8
-// This demonstrates operator composition with backup functionality
+// This demonstrates operator composition with backup functionality.
+//
+// Use kubebuilder to scaffold the API and controller first:
+//   kubebuilder create api --group backup --version v1 --kind Backup --resource --controller
+//
+// Then replace the generated controller with this implementation.
 
 package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	backupv1 "github.com/example/backup-operator/api/v1"
 	databasev1 "github.com/example/postgres-operator/api/v1"
 )
@@ -82,7 +87,8 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 
 	// Update status to completed
 	backup.Status.Phase = "Completed"
-	backup.Status.BackupTime = metav1.Now()
+	now := metav1.Now()
+	backup.Status.BackupTime = &now
 	backup.Status.BackupLocation = backupLocation
 	meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
 		Type:    "BackupReady",
