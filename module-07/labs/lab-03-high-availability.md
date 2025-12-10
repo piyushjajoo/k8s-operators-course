@@ -288,48 +288,65 @@ watch kubectl get pdb -n postgres-operator-system
 - `ALLOWED DISRUPTIONS` changes as pods are terminated/created
 - At least 2 pods remain `Running` throughout the rollout
 
-### Task 5.4: Test PDB Prevents Excessive Disruption
+### Task 5.4: Understand How PDB Interacts with Rollouts
 
-To see PDB actually block a disruption, temporarily set `minAvailable` higher:
+Let's understand the math behind PDB:
 
 ```bash
-# Patch PDB to require all 3 pods (no disruptions allowed)
-kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
-  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 3}]'
-
-# Check PDB - ALLOWED DISRUPTIONS should be 0
+# Check current state
 kubectl get pdb -n postgres-operator-system
 
-# Try rollout restart now
-kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
-
-# Watch the pods - you'll see 4 pods! (3 old + 1 new)
-kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+# Formula: ALLOWED DISRUPTIONS = currentHealthy - minAvailable
+# With 3 healthy pods and minAvailable=2: 3 - 2 = 1 disruption allowed
 ```
 
-**What happens:**
-1. Deployment creates a NEW pod (4th pod) - this succeeds
-2. Deployment tries to terminate an old pod - **PDB blocks this!**
-3. Result: 4 pods running, rollout stuck
+**Why `minAvailable=3` doesn't block rollouts:**
+1. New pod (4th) is created and becomes healthy
+2. Now `currentHealthy=4`, so `allowedDisruptions = 4 - 3 = 1`
+3. One old pod can be terminated → rollout proceeds!
+
+To truly block a rollout, you'd need `minAvailable > replicas`:
 
 ```bash
-# Check - you should see 4 pods (3 old + 1 new)
-kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
+# Scale down to 2 replicas first
+kubectl scale deployment/postgres-operator-controller-manager -n postgres-operator-system --replicas=2
+kubectl wait --for=condition=available deployment/postgres-operator-controller-manager -n postgres-operator-system
 
-# The rollout is stuck waiting to terminate old pods
-kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system --timeout=30s
-# This will timeout because old pods can't be terminated
-
-# Restore PDB to allow disruptions
+# Set minAvailable=2 (equal to replicas)
 kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
   --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 2}]'
 
-# Now old pods can be terminated and rollout completes
+# Check PDB - ALLOWED DISRUPTIONS should be 0
+kubectl get pdb -n postgres-operator-system
+# 2 healthy - 2 minimum = 0 allowed
+
+# Try rollout restart - this WILL get stuck
+kubectl rollout restart deployment/postgres-operator-controller-manager -n postgres-operator-system
+
+# Watch - new pod created, but old pods can't be terminated
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+
+# You'll see 3 pods (2 old + 1 new), rollout stuck
+# The deployment waits for allowedDisruptions > 0
+
+# Check rollout status - it will be waiting
+kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system --timeout=30s
+# Waiting for deployment "postgres-operator-controller-manager" rollout to finish: 1 old replicas are pending termination...
+
+# Fix by reducing minAvailable
+kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
+  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 1}]'
+
+# Now rollout can complete
 kubectl rollout status deployment/postgres-operator-controller-manager -n postgres-operator-system
 
-# Verify back to 3 pods
-kubectl get pods -n postgres-operator-system -l control-plane=controller-manager
+# Restore to 3 replicas and minAvailable=2
+kubectl scale deployment/postgres-operator-controller-manager -n postgres-operator-system --replicas=3
+kubectl patch pdb postgres-operator-controller-manager-pdb -n postgres-operator-system \
+  --type='json' -p='[{"op": "replace", "path": "/spec/minAvailable", "value": 2}]'
 ```
+
+**Key insight:** PDB blocks disruptions when `minAvailable >= currentHealthy`. During rollouts, new pods increase `currentHealthy`, which increases `allowedDisruptions`.
 
 ### Understanding PDB Behavior
 
