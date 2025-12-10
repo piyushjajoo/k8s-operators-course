@@ -123,6 +123,14 @@ Controller-runtime (used by kubebuilder) includes built-in rate limiting. Config
 ```go
 // In internal/controller/database_controller.go
 
+import (
+    "time"
+    "k8s.io/client-go/util/workqueue"
+    ctrl "sigs.k8s.io/controller-runtime"
+    "sigs.k8s.io/controller-runtime/pkg/controller"
+    "sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&databasev1.Database{}).
@@ -131,8 +139,8 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
         WithOptions(controller.Options{
             // MaxConcurrentReconciles limits parallel reconciliations
             MaxConcurrentReconciles: 2,
-            // RateLimiter controls requeue rate
-            RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(
+            // RateLimiter controls requeue rate (typed for controller-runtime v0.19+)
+            RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
                 5*time.Millisecond,  // Base delay
                 1000*time.Second,    // Max delay
             ),

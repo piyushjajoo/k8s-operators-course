@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	databasev1 "github.com/example/postgres-operator/api/v1"
 )
@@ -50,8 +51,8 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithOptions(controller.Options{
 			// Limit concurrent reconciliations to prevent overload
 			MaxConcurrentReconciles: 2,
-			// Custom rate limiter with exponential backoff
-			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(
+			// Custom rate limiter with exponential backoff (typed for controller-runtime v0.19+)
+			RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
 				time.Millisecond*5,  // Base delay
 				time.Second*1000,    // Max delay
 			),
