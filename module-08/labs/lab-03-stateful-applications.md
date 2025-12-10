@@ -44,13 +44,20 @@ The backup package includes:
 
 ### Task 1.2: Update Dockerfile for PostgreSQL Client Tools
 
-Since the backup functionality uses `pg_dump` and restore uses `psql`, you need to install PostgreSQL client tools in your operator container image.
+> **Important Security Note:** In [Module 7](../../module-07/labs/lab-01-packaging-distribution.md), we recommended using distroless images for maximum security. However, distroless images don't include package managers, making it impossible to install PostgreSQL client tools (`pg_dump`, `psql`) directly.
 
-Update your `Dockerfile` to include PostgreSQL client tools. Reference the example in [solutions/Dockerfile](../solutions/Dockerfile):
+**For this course (learning purposes):** We'll take a pragmatic shortcut and use a minimal Debian base image to include PostgreSQL client tools. This makes the lab simpler and allows you to focus on learning backup/restore functionality.
+
+**For production:** See the production-ready alternatives below that maintain security while providing the necessary tools.
+
+#### Option A: Minimal Debian Base (Course Shortcut)
+
+For this course, update your `Dockerfile` to use a minimal Debian base image. Reference the example in [solutions/Dockerfile](../solutions/Dockerfile):
 
 ```dockerfile
 # Runtime stage - use minimal Debian base instead of distroless
-# (distroless doesn't have package manager for installing tools)
+# NOTE: This is a shortcut for learning purposes
+# For production, see Option B below
 FROM debian:bookworm-slim
 
 # Install PostgreSQL client tools
@@ -72,10 +79,69 @@ USER 65532:65532
 ENTRYPOINT ["/manager"]
 ```
 
-**Alternative:** If you want to keep using distroless for security, you can:
-1. Use a sidecar container with PostgreSQL tools
-2. Use Kubernetes Jobs with PostgreSQL client tools for backups
-3. Use a separate backup operator that has the tools
+#### Option B: Production-Ready Approaches (Recommended)
+
+For production environments, maintain security by using distroless images and one of these patterns:
+
+**1. Sidecar Container Pattern**
+
+Keep your operator using distroless, and use a sidecar container with PostgreSQL tools:
+
+```yaml
+# In your operator Deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        image: your-operator:distroless
+        # ... operator config ...
+      - name: postgres-client
+        image: postgres:14-alpine
+        command: ["sleep", "infinity"]
+        # Mount shared volume for backup files
+        volumeMounts:
+        - name: backup-storage
+          mountPath: /backups
+```
+
+Then modify your backup code to exec into the sidecar container:
+
+```go
+// Execute pg_dump in sidecar container
+cmd := exec.CommandContext(ctx, "kubectl", "exec", "-i", podName, 
+    "-c", "postgres-client", "--", "pg_dump", ...)
+```
+
+**2. Kubernetes Jobs Pattern**
+
+Create Kubernetes Jobs with PostgreSQL client tools for each backup:
+
+```go
+job := &batchv1.Job{
+    Spec: batchv1.JobSpec{
+        Template: corev1.PodTemplateSpec{
+            Spec: corev1.PodSpec{
+                Containers: []corev1.Container{{
+                    Name:  "backup",
+                    Image: "postgres:14-alpine",
+                    Command: []string{"pg_dump", ...},
+                }},
+            },
+        },
+    },
+}
+```
+
+**3. Separate Backup Operator**
+
+Create a dedicated backup operator that includes PostgreSQL tools, keeping your main operator distroless.
+
+**4. Init Container Pattern**
+
+Use an init container to prepare backup tools, then use a shared volume.
+
+> **For this course:** We'll use Option A (Debian base) to keep things simple. In production, choose one of the Option B approaches based on your security requirements and operational preferences.
 
 **Key backup logic:**
 
