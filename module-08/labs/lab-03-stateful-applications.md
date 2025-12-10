@@ -282,12 +282,12 @@ With this change, `createBackup` will now perform the actual backup using `pg_du
 Now let's build and test the backup functionality:
 
 ```bash
-# Ensure code compiles
-make build
-
 # Generate code and manifests
 make generate
 make manifests
+
+# Ensure code compiles
+make build
 
 # Build the container image (with PostgreSQL client tools)
 make docker-build IMG=postgres-operator:latest
@@ -598,6 +598,10 @@ kubectl get crd restores.database.example.com
 Now let's build and test the restore functionality:
 
 ```bash
+# Generate code and manifests
+make generate
+make manifests
+
 # Ensure code compiles
 make build
 
