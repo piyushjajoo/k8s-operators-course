@@ -58,6 +58,10 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if errors.IsNotFound(err) {
 		// Database not found, set pending status and wait
 		log.Info("Database not found, waiting", "database", backup.Spec.DatabaseRef.Name)
+		// Re-read backup to ensure we have the latest version
+		if getErr := r.Get(ctx, req.NamespacedName, backup); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		backup.Status.Phase = "Pending"
 		meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
 			Type:    "BackupReady",
@@ -66,6 +70,10 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			Message: fmt.Sprintf("Waiting for database %s to be created", backup.Spec.DatabaseRef.Name),
 		})
 		if updateErr := r.Status().Update(ctx, backup); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				// Resource was modified, requeue to retry
+				return ctrl.Result{Requeue: true}, nil
+			}
 			return ctrl.Result{}, updateErr
 		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
@@ -78,6 +86,10 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// Check if database is ready
 	if db.Status.Phase != "Ready" {
 		log.Info("Database not ready, waiting", "database", db.Name, "phase", db.Status.Phase)
+		// Re-read backup to ensure we have the latest version
+		if getErr := r.Get(ctx, req.NamespacedName, backup); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		backup.Status.Phase = "Pending"
 		meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
 			Type:    "BackupReady",
@@ -86,16 +98,27 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			Message: fmt.Sprintf("Waiting for database %s to be ready (current phase: %s)", db.Name, db.Status.Phase),
 		})
 		if updateErr := r.Status().Update(ctx, backup); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				// Resource was modified, requeue to retry
+				return ctrl.Result{Requeue: true}, nil
+			}
 			return ctrl.Result{}, updateErr
 		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	// Perform backup
-	return r.performBackup(ctx, db, backup)
+	return r.performBackup(ctx, req, db, backup)
 }
 
-func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (ctrl.Result, error) {
+func (r *BackupReconciler) performBackup(ctx context.Context, req ctrl.Request, db *databasev1.Database, backup *databasev1.Backup) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx)
+
+	// Re-read backup to ensure we have the latest version before updating
+	if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// Update status to in progress
 	backup.Status.Phase = "InProgress"
 	meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
@@ -104,11 +127,21 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 		Reason:  "BackupInProgress",
 		Message: "Backup in progress",
 	})
-	r.Status().Update(ctx, backup)
+	if err := r.Status().Update(ctx, backup); err != nil {
+		if errors.IsConflict(err) {
+			// Resource was modified, requeue to retry
+			return ctrl.Result{Requeue: true}, nil
+		}
+		return ctrl.Result{}, err
+	}
 
 	// Perform actual backup (simplified)
 	backupLocation, err := r.createBackup(ctx, db, backup)
 	if err != nil {
+		// Re-read backup before updating status on error
+		if getErr := r.Get(ctx, req.NamespacedName, backup); getErr != nil {
+			return ctrl.Result{}, getErr
+		}
 		backup.Status.Phase = "Failed"
 		meta.SetStatusCondition(&backup.Status.Conditions, metav1.Condition{
 			Type:    "BackupReady",
@@ -116,7 +149,18 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 			Reason:  "BackupFailed",
 			Message: err.Error(),
 		})
-		r.Status().Update(ctx, backup)
+		if updateErr := r.Status().Update(ctx, backup); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				// Resource was modified, requeue to retry
+				return ctrl.Result{Requeue: true}, nil
+			}
+			return ctrl.Result{}, updateErr
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Re-read backup before final status update
+	if err := r.Get(ctx, req.NamespacedName, backup); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -136,10 +180,25 @@ func (r *BackupReconciler) performBackup(ctx context.Context, db *databasev1.Dat
 	if backup.Spec.Schedule != "" {
 		// For scheduled backups, requeue after interval
 		// In production, you'd parse cron schedule and calculate next time
-		return ctrl.Result{RequeueAfter: 24 * time.Hour}, r.Status().Update(ctx, backup)
+		if updateErr := r.Status().Update(ctx, backup); updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				log.Info("Conflict updating backup status, requeuing", "backup", backup.Name)
+				return ctrl.Result{Requeue: true}, nil
+			}
+			return ctrl.Result{}, updateErr
+		}
+		return ctrl.Result{RequeueAfter: 24 * time.Hour}, nil
 	}
 
-	return ctrl.Result{}, r.Status().Update(ctx, backup)
+	if err := r.Status().Update(ctx, backup); err != nil {
+		if errors.IsConflict(err) {
+			log.Info("Conflict updating backup status, requeuing", "backup", backup.Name)
+			return ctrl.Result{Requeue: true}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func (r *BackupReconciler) createBackup(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup) (string, error) {
