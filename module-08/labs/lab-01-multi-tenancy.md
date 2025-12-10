@@ -348,22 +348,68 @@ Key points:
 
 > **Prerequisites:** Ensure you have completed Exercise 2 (copied the complete controller from solutions) and your code compiles with `make build`.
 
-### Task 4.1: Run the Operator
+### Task 4.1: Build and Deploy Operator to Kind Cluster
+
+Since operators with webhooks (from earlier modules) require TLS certificates and in-cluster deployment, we'll deploy to the kind cluster:
 
 ```bash
 # Verify code compiles
 make build
 
-# Generate and install CRDs
+# Generate manifests and install CRDs
 make generate manifests install
 
-# Run the operator locally
-make run
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
 ```
+
+Before deploying, ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml`:
+
+```yaml
+containers:
+- name: manager
+  image: controller:latest
+  imagePullPolicy: IfNotPresent  # Add this line if not present
+```
+
+Now deploy:
+
+```bash
+# Deploy operator to cluster
+make deploy IMG=postgres-operator:latest
+
+# Verify operator is running
+kubectl get pods -n postgres-operator-system
+
+# Check logs
+kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager -f
+```
+
+> **Using Podman instead of Docker?**
+> 
+> ```bash
+> # Build with podman
+> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
+> 
+> # Load image into kind (save to tarball, then load)
+> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+> rm /tmp/postgres-operator.tar
+> 
+> # Deploy with localhost/ prefix
+> make deploy IMG=localhost/postgres-operator:latest
+> ```
+
+> **Getting `ErrImagePull` or `ImagePullBackOff`?**
+> 
+> Ensure `imagePullPolicy: IfNotPresent` is set and the image name matches what's loaded in kind.
 
 ### Task 4.2: Create Tenant Namespaces
 
-In a new terminal:
+In a new terminal (or the same one after deployment):
 
 ```bash
 # Create namespaces for tenants
@@ -431,6 +477,11 @@ kubectl get statefulsets -n tenant-2
 # Filter by tenant using jsonpath
 kubectl get clusterdatabases -o jsonpath='{range .items[?(@.spec.tenant=="tenant-1")]}{.metadata.name}{"\n"}{end}'
 ```
+
+> **Resources not being created?** Check the operator logs:
+> ```bash
+> kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager
+> ```
 
 ### Task 4.5: Compare with Namespace-Scoped Database
 
@@ -550,6 +601,9 @@ func (r *ClusterDatabaseReconciler) cleanupManagedResources(ctx context.Context,
 ### Task 5.3: Test Cleanup Behavior
 
 ```bash
+# Ensure tenant-1 namespace exists (from earlier)
+kubectl get namespace tenant-1 || kubectl create namespace tenant-1
+
 # Create a ClusterDatabase
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
@@ -570,6 +624,9 @@ EOF
 # Verify resources were created
 kubectl get statefulsets -n tenant-1
 
+# Watch operator logs in another terminal to see cleanup happening
+# kubectl logs -n postgres-operator-system deployment/postgres-operator-controller-manager -f
+
 # Delete the ClusterDatabase
 kubectl delete clusterdatabase test-cleanup
 
@@ -586,6 +643,9 @@ kubectl delete clusterdatabases --all
 
 # Delete test namespaces
 kubectl delete namespace tenant-1 tenant-2
+
+# (Optional) Undeploy operator
+make undeploy
 ```
 
 ## Lab Summary
