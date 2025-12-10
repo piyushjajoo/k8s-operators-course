@@ -120,7 +120,43 @@ This course emphasizes:
 
 ## Contributing
 
-If you find issues or have suggestions, please open an issue in this repository.
+We welcome contributions and feedback! Here's how you can help improve this course:
+
+### Reporting Issues
+
+If you find bugs, typos, or errors in the course materials, please open an issue in this repository.
+
+### Requesting New Concepts
+
+Have an idea for a new concept, topic, or module you'd like to see added to the course? We'd love to hear from you!
+
+**To request a new concept:**
+
+1. **Open a new issue** in this repository with the label `enhancement` (if available) or use the title prefix `[Feature Request]`
+2. **Include the following information:**
+   - **Concept/Topic Name:** What concept would you like to see covered?
+   - **Description:** A brief description of the concept and why it would be valuable
+   - **Suggested Module:** Which module do you think this fits best in? (or suggest a new module)
+   - **Use Case:** How would this help learners build better operators?
+   - **Priority:** Is this a nice-to-have or a critical gap in the course?
+
+3. **Example format:**
+   ```
+   [Feature Request] Operator SDK Comparison
+   
+   Description: Add a lesson comparing Kubebuilder with Operator SDK
+   Suggested Module: Module 2 or new comparison module
+   Use Case: Help learners understand when to choose which framework
+   Priority: Nice-to-have
+   ```
+
+We review all requests and prioritize based on:
+- Community interest and upvotes
+- Alignment with course learning objectives
+- Complexity and time required to develop
+- Gaps in current course coverage
+
+**Note:** While we can't guarantee every request will be implemented, we value your input and will consider all suggestions!
 
 ## License
 
