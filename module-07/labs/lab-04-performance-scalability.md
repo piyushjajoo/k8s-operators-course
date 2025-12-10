@@ -470,7 +470,7 @@ In this lab, you:
 1. Controller-runtime has built-in rate limiting via RateLimiter option
 2. MaxConcurrentReconciles controls parallelism
 3. Field indexes enable fast filtered queries
-4. Built-in metrics are available at `:8080/metrics`
+4. Built-in metrics are available at `:8443/metrics`
 5. Custom metrics use prometheus client with metrics.Registry
 6. Load testing validates operator performance at scale
 7. `client.MatchingFields{}` leverages indexes for fast lookups
