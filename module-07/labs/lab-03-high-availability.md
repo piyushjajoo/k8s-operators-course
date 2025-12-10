@@ -257,11 +257,59 @@ kubectl get pdb -n postgres-operator-system
 
 # Check PDB status
 kubectl describe pdb -n postgres-operator-system postgres-operator-controller-manager-pdb
-
-# Try to delete multiple pods (PDB should prevent deleting more than 1)
-kubectl delete pod -n postgres-operator-system --selector=control-plane=controller-manager
-# This should fail or be delayed to maintain minAvailable
 ```
+
+**Important:** PDB only protects against **voluntary disruptions** (evictions), NOT direct `kubectl delete pod` commands!
+
+### Task 5.3: Test PDB with Eviction API
+
+The correct way to test PDB is using the **Eviction API**, not direct pod deletion:
+
+```bash
+# Method 1: Use kubectl drain to test PDB
+# First, find which node the pods are running on
+kubectl get pods -n postgres-operator-system -o wide
+
+# Try to drain the node (this uses eviction API)
+# The PDB will prevent draining if it would violate minAvailable
+NODE_NAME=$(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o jsonpath='{.items[0].spec.nodeName}')
+kubectl drain $NODE_NAME --ignore-daemonsets --delete-emptydir-data --dry-run=client
+
+# Method 2: Use kubectl evict directly (requires a script)
+# Get a pod name
+POD_NAME=$(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o jsonpath='{.items[0].metadata.name}')
+
+# Try to evict a single pod (should succeed - PDB allows 1 disruption)
+kubectl create -f - <<EOF
+apiVersion: policy/v1
+kind: Eviction
+metadata:
+  name: $POD_NAME
+  namespace: postgres-operator-system
+EOF
+
+# Check pods - one should be terminating and a new one starting
+kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -w
+```
+
+### Task 5.4: Verify PDB Blocks Excessive Evictions
+
+```bash
+# Check current PDB status
+kubectl get pdb -n postgres-operator-system
+
+# The "ALLOWED DISRUPTIONS" column shows how many pods can be evicted
+# With 3 replicas and minAvailable=2, you can evict at most 1 pod at a time
+
+# If you try to evict when disruptionsAllowed=0, it will be blocked:
+# "Cannot evict pod as it would violate the pod's disruption budget"
+```
+
+**Why `kubectl delete pod` doesn't respect PDB:**
+- `kubectl delete` is a **direct deletion**, not an eviction
+- PDB only protects against the **Eviction API**
+- Use `kubectl drain` or the Eviction API to test PDB properly
+- In production, node maintenance tools use eviction, so PDB works as intended
 
 ## Cleanup
 
@@ -281,6 +329,7 @@ In this lab, you:
 - Configured resource limits
 - Tested failover by deleting leader pod
 - Set up Pod Disruption Budget
+- Tested PDB using the Eviction API
 
 ## Key Learnings
 
@@ -288,8 +337,9 @@ In this lab, you:
 2. Increase replicas in `config/manager/manager.yaml` for HA
 3. Use `make deploy` to apply all configurations
 4. Failover is automatic - standby pods acquire the lease
-5. PDB protects availability during node maintenance
-6. Health checks are pre-configured by kubebuilder
+5. **PDB only protects against voluntary disruptions** (evictions, not direct deletion)
+6. Use `kubectl drain` or Eviction API to test PDB - NOT `kubectl delete pod`
+7. Health checks are pre-configured by kubebuilder
 
 ## Solutions
 
