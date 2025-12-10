@@ -277,6 +277,86 @@ With this change, `createBackup` will now perform the actual backup using `pg_du
 - `performBackup()` - Handles status updates, error handling, and calls `createBackup()`
 - `createBackup()` - Performs the actual backup work (now calls `backupPkg.PerformBackup()`)
 
+### Task 1.4: Build, Deploy, and Test Backup Functionality
+
+Now let's build and test the backup functionality:
+
+```bash
+# Ensure code compiles
+make build
+
+# Generate code and manifests
+make generate
+make manifests
+
+# Build the container image (with PostgreSQL client tools)
+make docker-build IMG=postgres-operator:latest
+
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# Deploy operator to cluster
+make deploy IMG=postgres-operator:latest
+
+# Verify operator is running
+kubectl get pods -n postgres-operator-system
+
+# Check logs
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager -f
+```
+
+**Test the backup functionality:**
+
+```bash
+# Create a Database
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: test-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: testdb
+  username: admin
+  storage:
+    size: "1Gi"
+EOF
+
+# Wait for Database to be ready
+kubectl wait --for=jsonpath='{.status.phase}'=Ready database/test-db --timeout=120s
+
+# Create a Backup
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Backup
+metadata:
+  name: test-backup
+spec:
+  databaseRef:
+    name: test-db
+EOF
+
+# Watch Backup status
+kubectl get backup test-backup -w
+
+# Check Backup status details
+kubectl get backup test-backup -o yaml
+
+# Verify backup location is set
+kubectl get backup test-backup -o jsonpath='{.status.backupLocation}'
+```
+
+**Verify backup was performed:**
+
+```bash
+# Check operator logs for backup activity
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i backup
+
+# Check Backup conditions
+kubectl get backup test-backup -o jsonpath='{.status.conditions}'
+```
+
 ## Exercise 2: Implement Restore
 
 ### Task 2.1: Scaffold Restore API with Kubebuilder
@@ -443,63 +523,63 @@ func PerformRestore(ctx context.Context, k8sClient client.Client, db *databasev1
 
 ### Task 2.4: Implement Restore Controller
 
-Edit `internal/controller/restore_controller.go` to implement the reconciliation:
+Edit `internal/controller/restore_controller.go` to implement the complete reconciliation logic.
+
+Copy the complete restore controller implementation from: **[solutions/restore-controller.go](../solutions/restore-controller.go)**
+
+The restore controller:
+- Waits for Database to be ready
+- Waits for Backup to be completed
+- Calls `restorePkg.PerformRestore()` to perform the actual restore
+- Updates Restore status with phases (Pending → InProgress → Completed/Failed)
+- Sets conditions for observability
+
+**Key implementation details:**
 
 ```go
-// +kubebuilder:rbac:groups=database.example.com,resources=restores,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=database.example.com,resources=restores/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=database.example.com,resources=databases,verbs=get;list;watch
-// +kubebuilder:rbac:groups=database.example.com,resources=backups,verbs=get;list;watch
+func (r *RestoreReconciler) performRestore(ctx context.Context, db *databasev1.Database, backup *databasev1.Backup, rst *databasev1.Restore) (ctrl.Result, error) {
+    // Update status to in progress
+    rst.Status.Phase = "InProgress"
+    // ... status updates ...
 
-func (r *RestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := ctrl.LoggerFrom(ctx)
-
-    rst := &databasev1.Restore{}
-    if err := r.Get(ctx, req.NamespacedName, rst); err != nil {
-        return ctrl.Result{}, client.IgnoreNotFound(err)
+    // Get backup location from Backup status
+    if backup.Status.BackupLocation == "" {
+        // Handle error
     }
 
-    // Skip if already completed
-    if rst.Status.Phase == "Completed" {
-        return ctrl.Result{}, nil
+    // Perform actual restore using restore package
+    // Note: PerformRestore requires k8sClient to retrieve password from Secret
+    err := restorePkg.PerformRestore(ctx, r.Client, db, backup.Status.BackupLocation)
+    if err != nil {
+        // Handle error and update status
     }
 
-    // Get Database
-    db := &databasev1.Database{}
-    if err := r.Get(ctx, client.ObjectKey{
-        Name:      rst.Spec.DatabaseRef.Name,
-        Namespace: rst.Namespace,
-    }, db); err != nil {
-        rst.Status.Phase = "Pending"
-        r.Status().Update(ctx, rst)
-        return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-    }
-
-    // Get Backup
-    backup := &databasev1.Backup{}
-    if err := r.Get(ctx, client.ObjectKey{
-        Name:      rst.Spec.BackupRef.Name,
-        Namespace: rst.Namespace,
-    }, backup); err != nil {
-        rst.Status.Phase = "Pending"
-        r.Status().Update(ctx, rst)
-        return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-    }
-
-    // Check backup is completed
-    if backup.Status.Phase != "Completed" {
-        log.Info("Waiting for backup to complete", "backup", backup.Name)
-        rst.Status.Phase = "Pending"
-        r.Status().Update(ctx, rst)
-        return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-    }
-
-    // Perform restore
-    return r.performRestore(ctx, db, backup, rst)
+    // Update status to completed
+    rst.Status.Phase = "Completed"
+    rst.Status.RestoreTime = &metav1.Now()
+    // ... more status updates ...
 }
 ```
 
-### Task 2.5: Generate and Install CRDs
+**Controller structure:**
+- `Reconcile()` - Main reconciliation loop, validates prerequisites
+- `performRestore()` - Handles status updates, error handling, and calls `restorePkg.PerformRestore()`
+
+### Task 2.5: Register Restore Controller
+
+Ensure the Restore controller is registered in `cmd/main.go`:
+
+```go
+if err = (&controller.RestoreReconciler{
+    Client: mgr.GetClient(),
+    Scheme: mgr.GetScheme(),
+}).SetupWithManager(mgr); err != nil {
+    setupLog.Error(err, "unable to create controller", "controller", "Restore")
+    os.Exit(1)
+}
+```
+
+### Task 2.6: Generate and Install CRDs
 
 ```bash
 # Generate code and manifests
@@ -511,6 +591,147 @@ make install
 
 # Verify the CRD was created
 kubectl get crd restores.database.example.com
+```
+
+### Task 2.7: Build, Deploy, and Test Restore Functionality
+
+Now let's build and test the restore functionality:
+
+```bash
+# Ensure code compiles
+make build
+
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# Deploy operator to cluster
+make deploy IMG=postgres-operator:latest
+
+# Verify operator is running
+kubectl get pods -n postgres-operator-system
+
+# Check logs
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager -f
+```
+
+**Test the restore functionality:**
+
+```bash
+# Ensure you have a Database and completed Backup from Task 1.4
+# If not, create them first:
+
+# Create a Database
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: restore-test-db
+spec:
+  image: postgres:14
+  replicas: 1
+  databaseName: restoredb
+  username: admin
+  storage:
+    size: "1Gi"
+EOF
+
+# Wait for Database to be ready
+kubectl wait --for=jsonpath='{.status.phase}'=Ready database/restore-test-db --timeout=120s
+
+# Create a Backup
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Backup
+metadata:
+  name: restore-test-backup
+spec:
+  databaseRef:
+    name: restore-test-db
+EOF
+
+# Wait for Backup to complete
+kubectl wait --for=jsonpath='{.status.phase}'=Completed backup/restore-test-backup --timeout=300s
+
+# Verify backup location exists
+kubectl get backup restore-test-backup -o jsonpath='{.status.backupLocation}'
+echo
+
+# Now create a Restore
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Restore
+metadata:
+  name: test-restore
+spec:
+  databaseRef:
+    name: restore-test-db
+  backupRef:
+    name: restore-test-backup
+EOF
+
+# Watch Restore status
+kubectl get restore test-restore -w
+
+# Check Restore status details
+kubectl get restore test-restore -o yaml
+
+# Verify restore completed successfully
+kubectl get restore test-restore -o jsonpath='{.status.phase}'
+echo
+```
+
+**Verify restore was performed:**
+
+```bash
+# Check operator logs for restore activity
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i restore
+
+# Check Restore conditions
+kubectl get restore test-restore -o jsonpath='{.status.conditions}'
+echo
+
+# Verify restore time is set
+kubectl get restore test-restore -o jsonpath='{.status.restoreTime}'
+echo
+```
+
+**Test error scenarios:**
+
+```bash
+# Test with non-existent database
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Restore
+metadata:
+  name: test-restore-fail-db
+spec:
+  databaseRef:
+    name: non-existent-db
+  backupRef:
+    name: restore-test-backup
+EOF
+
+# Watch status - should stay in Pending
+kubectl get restore test-restore-fail-db -w
+
+# Test with non-existent backup
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Restore
+metadata:
+  name: test-restore-fail-backup
+spec:
+  databaseRef:
+    name: restore-test-db
+  backupRef:
+    name: non-existent-backup
+EOF
+
+# Watch status - should stay in Pending
+kubectl get restore test-restore-fail-backup -w
 ```
 
 ## Exercise 3: Handle Rolling Updates
@@ -579,6 +800,91 @@ func (r *DatabaseReconciler) waitForRollingUpdate(ctx context.Context, ss *appsv
 ```
 
 > **Note:** The existing Database controller from earlier modules already handles image updates. This exercise shows the explicit waiting pattern for more control.
+
+### Task 3.2: Test Rolling Updates
+
+Build and deploy the updated operator:
+
+```bash
+# Ensure code compiles
+make build
+
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# Deploy operator to cluster
+make deploy IMG=postgres-operator:latest
+
+# Restart deployment if redeploying
+kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
+kubectl rollout status deploy -n postgres-operator-system postgres-operator-controller-manager
+```
+
+**Test rolling update:**
+
+```bash
+# Create a Database with initial image
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: rolling-update-test
+spec:
+  image: postgres:14
+  replicas: 2
+  databaseName: testdb
+  username: admin
+  storage:
+    size: "1Gi"
+EOF
+
+# Wait for Database to be ready
+kubectl wait --for=jsonpath='{.status.phase}'=Ready database/rolling-update-test --timeout=120s
+
+# Verify initial StatefulSet pods
+kubectl get pods -l app=database,name=rolling-update-test
+
+# Check current image version
+kubectl get statefulset rolling-update-test -o jsonpath='{.spec.template.spec.containers[0].image}'
+echo
+
+# Update to new image version
+kubectl patch database rolling-update-test --type=merge -p '{"spec":{"image":"postgres:15"}}'
+
+# Watch StatefulSet update
+kubectl get statefulset rolling-update-test -w
+
+# Watch pods during rolling update
+kubectl get pods -l app=database,name=rolling-update-test -w
+
+# Verify all pods are updated
+kubectl get statefulset rolling-update-test -o jsonpath='{.status.updatedReplicas}/{.spec.replicas}'
+echo
+
+# Verify new image version
+kubectl get statefulset rolling-update-test -o jsonpath='{.spec.template.spec.containers[0].image}'
+echo
+
+# Check operator logs for rolling update activity
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "rolling\|update"
+```
+
+**Verify rolling update completed:**
+
+```bash
+# Check StatefulSet status
+kubectl get statefulset rolling-update-test -o yaml | grep -A 10 status:
+
+# Verify all replicas are ready
+kubectl get statefulset rolling-update-test -o jsonpath='{.status.readyReplicas}/{.spec.replicas}'
+echo
+
+# Verify pods are running with new image
+kubectl get pods -l app=database,name=rolling-update-test -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
+```
 
 ## Exercise 4: Ensure Data Consistency
 
@@ -652,6 +958,88 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
     db.Status.Ready = true
     return ctrl.Result{}, r.Status().Update(ctx, db)
 }
+```
+
+### Task 4.3: Test Data Consistency Checks
+
+Build and deploy the updated operator:
+
+```bash
+# Ensure code compiles
+make build
+
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# Load image into kind cluster
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# Deploy operator to cluster
+make deploy IMG=postgres-operator:latest
+
+# Restart deployment if redeploying
+kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
+kubectl rollout status deploy -n postgres-operator-system postgres-operator-controller-manager
+```
+
+**Test consistency checks:**
+
+```bash
+# Create a Database with multiple replicas
+kubectl apply -f - <<EOF
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: consistency-test
+spec:
+  image: postgres:14
+  replicas: 3
+  databaseName: testdb
+  username: admin
+  storage:
+    size: "1Gi"
+EOF
+
+# Watch Database status transitions
+kubectl get database consistency-test -w
+
+# Wait for Database to reach Verifying phase
+kubectl wait --for=jsonpath='{.status.phase}'=Verifying database/consistency-test --timeout=120s || true
+
+# Check Database status
+kubectl get database consistency-test -o yaml | grep -A 5 status:
+
+# Wait for Database to be Ready (consistency checks should pass)
+kubectl wait --for=jsonpath='{.status.phase}'=Ready database/consistency-test --timeout=300s
+
+# Verify all replicas are ready
+kubectl get statefulset consistency-test -o jsonpath='{.status.readyReplicas}/{.spec.replicas}'
+echo
+
+# Verify pods are running
+kubectl get pods -l app=database,name=consistency-test
+
+# Check operator logs for consistency check activity
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "consistency\|replica"
+```
+
+**Test consistency check failure scenario:**
+
+```bash
+# Scale down replicas to simulate inconsistency
+kubectl patch database consistency-test --type=merge -p '{"spec":{"replicas":1}}'
+
+# Wait for StatefulSet to scale down
+kubectl wait --for=jsonpath='{.status.readyReplicas}'=1 statefulset/consistency-test --timeout=60s
+
+# Scale back up
+kubectl patch database consistency-test --type=merge -p '{"spec":{"replicas":3}}'
+
+# Watch Database status during consistency checks
+kubectl get database consistency-test -w
+
+# Check logs for consistency check retries
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "consistency"
 ```
 
 ## Exercise 5: Test Backup and Restore

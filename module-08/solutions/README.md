@@ -16,6 +16,7 @@ This directory contains complete, working solutions for Module 8 labs.
 
 ### Lab 8.3 - Stateful Application Management
 - **restore_types.go**: Restore API type definitions (scaffold with kubebuilder)
+- **restore-controller.go**: Complete Restore controller implementation
 - **backup.go**: Backup functionality implementation (`internal/backup/`)
 - **restore.go**: Restore functionality implementation (`internal/restore/`)
 - **rolling-update.go**: Rolling update handling for Database controller
@@ -80,10 +81,11 @@ Use kubebuilder to scaffold the Restore API, then reference the solutions:
 kubebuilder create api --group database --version v1 --kind Restore --resource --controller
 
 # 2. Reference restore_types.go for type definitions
-# 3. Create backup package: mkdir -p internal/backup && cp backup.go internal/backup/
-# 4. Create restore package: mkdir -p internal/restore && cp restore.go internal/restore/
-# 5. Update Dockerfile to include PostgreSQL client tools (see Dockerfile in solutions)
-# 6. Reference rolling-update.go for Database controller enhancements
+# 3. Reference restore-controller.go for complete controller implementation
+# 4. Create backup package: mkdir -p internal/backup && cp backup.go internal/backup/
+# 5. Create restore package: mkdir -p internal/restore && cp restore.go internal/restore/
+# 6. Update Dockerfile to include PostgreSQL client tools (see Dockerfile in solutions)
+# 7. Reference rolling-update.go for Database controller enhancements
 ```
 
 Key concepts demonstrated:
