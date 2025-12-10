@@ -177,91 +177,158 @@ func (r *DatabaseReconciler) reconcileBatch(ctx context.Context, databases []dat
 
 ## Exercise 4: Monitor Performance with Built-in Metrics
 
-Controller-runtime automatically exposes metrics. Let's explore and add custom ones.
+Controller-runtime automatically exposes metrics. Your postgres-operator already has custom metrics configured!
 
-### Task 4.1: Access Built-in Metrics
+### Task 4.1: Review Existing Metrics Code
+
+Your operator already has metrics in `internal/controller/metrics.go`:
 
 ```bash
-# For Docker: Build and Deploy the operator with network policies enabled
-make docker-build IMG=postgres-operator:latest
-kind load docker-image postgres-operator:latest --name k8s-operators-course
-make deploy IMG=postgres-operator:latest
+cd ~/postgres-operator
 
-# For Podman: Build and Deploy operator - use localhost/ prefix to match the loaded image
-make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
-podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
-kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
-rm /tmp/postgres-operator.tar
-make deploy IMG=localhost/postgres-operator:latest
-
-# Port forward to metrics endpoint
-kubectl port-forward -n postgres-operator-system \
-  $(kubectl get pods -n postgres-operator-system -l control-plane=controller-manager -o name | head -1) \
-  8080:8080
-
-# View all metrics
-curl -s http://localhost:8080/metrics | head -50
-
-# View controller-runtime reconciliation metrics
-curl -s http://localhost:8080/metrics | grep controller_runtime_reconcile
+# Review the metrics file
+cat internal/controller/metrics.go
 ```
 
-### Task 4.2: Add Custom Metrics
-
-Add custom metrics in `internal/controller/database_controller.go`:
+You should see these custom metrics already defined:
 
 ```go
-import (
-    "github.com/prometheus/client_golang/prometheus"
-    "sigs.k8s.io/controller-runtime/pkg/metrics"
-)
-
 var (
-    databasesTotal = prometheus.NewGaugeVec(
+    // ReconcileTotal counts the total number of reconciliations
+    ReconcileTotal = prometheus.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "database_reconcile_total",
+            Help: "Total number of reconciliations per controller",
+        },
+        []string{"result"}, // success, error, requeue
+    )
+
+    // ReconcileDuration measures the duration of reconciliations
+    ReconcileDuration = prometheus.NewHistogramVec(
+        prometheus.HistogramOpts{
+            Name:    "database_reconcile_duration_seconds",
+            Help:    "Duration of reconciliations in seconds",
+            Buckets: prometheus.DefBuckets,
+        },
+        []string{"result"},
+    )
+
+    // DatabasesTotal tracks the current number of Database resources
+    DatabasesTotal = prometheus.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "database_operator_databases_total",
-            Help: "Total number of Database resources by phase",
+            Name: "database_resources_total",
+            Help: "Current number of Database resources by phase",
         },
         []string{"phase"},
     )
-    
-    reconcileDuration = prometheus.NewHistogramVec(
-        prometheus.HistogramOpts{
-            Name:    "database_operator_reconcile_duration_seconds",
-            Help:    "Duration of reconciliations",
-            Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+
+    // DatabaseInfo provides information about each database
+    DatabaseInfo = prometheus.NewGaugeVec(
+        prometheus.GaugeOpts{
+            Name: "database_info",
+            Help: "Information about Database resources",
         },
-        []string{"result"},
+        []string{"name", "namespace", "image", "phase"},
     )
 )
 
 func init() {
-    // Register custom metrics with controller-runtime
-    metrics.Registry.MustRegister(databasesTotal, reconcileDuration)
+    // Register custom metrics with the global registry
+    metrics.Registry.MustRegister(
+        ReconcileTotal,
+        ReconcileDuration,
+        DatabasesTotal,
+        DatabaseInfo,
+    )
 }
 ```
 
-### Task 4.3: Use Metrics in Reconcile
+### Task 4.2: Review Metrics Usage in Controller
+
+Check how metrics are used in the Reconcile function:
+
+```bash
+# See how metrics are recorded in the reconcile loop
+grep -A 10 "Defer metrics" internal/controller/database_controller.go
+```
+
+You should see:
 
 ```go
-func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    start := time.Now()
-    result := "success"
-    
-    defer func() {
-        reconcileDuration.WithLabelValues(result).Observe(time.Since(start).Seconds())
-    }()
-    
-    // ... reconciliation logic ...
-    
-    if err != nil {
-        result = "error"
-        return ctrl.Result{}, err
-    }
-    
-    return ctrl.Result{}, nil
-}
+// Defer metrics recording
+defer func() {
+    duration := time.Since(start).Seconds()
+    ReconcileDuration.WithLabelValues(reconcileResult).Observe(duration)
+    ReconcileTotal.WithLabelValues(reconcileResult).Inc()
+}()
 ```
+
+And database info metrics being set:
+
+```go
+DatabaseInfo.WithLabelValues(
+    db.Name,
+    db.Namespace,
+    db.Spec.Image,
+    db.Status.Phase,
+).Set(1)
+```
+
+### Task 4.3: Access Metrics Endpoint
+
+```bash
+# Deploy operator if not already deployed
+# For Docker:
+make deploy IMG=postgres-operator:latest
+
+# For Podman:
+make deploy IMG=localhost/postgres-operator:latest
+
+# Port forward to metrics endpoint (using HTTPS on port 8443)
+kubectl port-forward -n postgres-operator-system \
+  svc/postgres-operator-controller-manager-metrics-service 8443:8443 &
+
+# View custom database metrics (using -k for self-signed cert)
+curl -sk https://localhost:8443/metrics | grep database_
+
+# View reconciliation metrics
+curl -sk https://localhost:8443/metrics | grep database_reconcile
+
+# View controller-runtime built-in metrics
+curl -sk https://localhost:8443/metrics | grep controller_runtime
+
+# Stop port-forward
+pkill -f "port-forward.*8443"
+```
+
+### Task 4.4: View Metrics in Prometheus
+
+If you have Prometheus set up (from Lab 7.2), view metrics there:
+
+```bash
+# Port forward to Prometheus
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
+
+# Open http://localhost:9090 and query:
+# - database_reconcile_total
+# - database_reconcile_duration_seconds
+# - database_resources_total
+# - database_info
+
+# Stop port-forward when done
+pkill -f "port-forward.*9090"
+```
+
+**Example Prometheus queries:**
+
+| Query | Description |
+|-------|-------------|
+| `database_reconcile_total` | Total reconciliations by result |
+| `rate(database_reconcile_total[5m])` | Reconciliations per second |
+| `database_reconcile_duration_seconds_bucket` | Reconciliation latency histogram |
+| `histogram_quantile(0.99, rate(database_reconcile_duration_seconds_bucket[5m]))` | p99 latency |
+| `database_resources_total` | Current databases by phase |
+| `database_info` | Info about each database |
 
 ## Exercise 5: Load Testing
 
