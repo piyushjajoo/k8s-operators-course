@@ -53,8 +53,8 @@ func (r *DatabaseReconciler) updateStatefulSet(ctx context.Context, db *database
 	}
 
 	// Check if replicas need updating
-	if *statefulSet.Spec.Replicas != db.Spec.Replicas {
-		statefulSet.Spec.Replicas = &db.Spec.Replicas
+	if db.Spec.Replicas != nil && *statefulSet.Spec.Replicas != *db.Spec.Replicas {
+		statefulSet.Spec.Replicas = db.Spec.Replicas
 		if err := r.Update(ctx, statefulSet); err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func (r *DatabaseReconciler) createStatefulSet(ctx context.Context, db *database
 			Namespace: db.Namespace,
 		},
 		Spec: appsv1.StatefulSetSpec{
-			Replicas: &db.Spec.Replicas,
+			Replicas: db.Spec.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": db.Name,

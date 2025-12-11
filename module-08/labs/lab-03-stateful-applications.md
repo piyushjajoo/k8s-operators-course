@@ -800,58 +800,77 @@ The key functions are:
 - `waitForRollingUpdate()` - Waits for all pods to be updated
 - `createStatefulSet()` - Creates new StatefulSet if needed
 
-Add these helper functions to `internal/controller/database_controller.go`:
+**Step 1: Add the helper functions**
+
+Copy the complete implementation from `solutions/rolling-update.go` to `internal/controller/database_controller.go`. The functions handle:
+- Detecting image changes
+- Updating the StatefulSet to trigger rolling updates
+- Waiting for all replicas to be updated and ready
+- Handling replica count changes
+
+**Step 2: Integrate into reconciliation logic**
+
+To use these functions in your Database controller, call `updateStatefulSet()` from your reconciliation logic. For example, in your `Reconcile()` method or state machine handler:
 
 ```go
-func (r *DatabaseReconciler) updateStatefulSet(ctx context.Context, db *databasev1.Database) error {
+func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    
+    // ... other provisioning logic ...
+    
+    // Update StatefulSet (handles rolling updates if image/replicas changed)
+    if err := r.updateStatefulSet(ctx, db); err != nil {
+        logger.Error(err, "Failed to update StatefulSet")
+        return ctrl.Result{}, err
+    }
+    
+    // Check if StatefulSet is ready
     statefulSet := &appsv1.StatefulSet{}
     err := r.Get(ctx, client.ObjectKey{
         Name:      db.Name,
         Namespace: db.Namespace,
     }, statefulSet)
-
-    if errors.IsNotFound(err) {
-        return r.createStatefulSet(ctx, db)
-    }
+    
     if err != nil {
-        return err
+        return ctrl.Result{}, err
     }
-
-    // Check if update needed
-    desiredImage := db.Spec.Image
-    currentImage := statefulSet.Spec.Template.Spec.Containers[0].Image
-
-    if desiredImage != currentImage {
-        // Update image
-        statefulSet.Spec.Template.Spec.Containers[0].Image = desiredImage
-
-        // Update StatefulSet (triggers rolling update)
-        if err := r.Update(ctx, statefulSet); err != nil {
-            return err
-        }
-
-        // Wait for update to complete
-        return r.waitForRollingUpdate(ctx, statefulSet)
+    
+    // Transition to Ready if all replicas are ready
+    if statefulSet.Status.ReadyReplicas == *statefulSet.Spec.Replicas {
+        db.Status.Phase = "Ready"
+        return ctrl.Result{}, r.Status().Update(ctx, db)
     }
-
-    return nil
-}
-
-func (r *DatabaseReconciler) waitForRollingUpdate(ctx context.Context, ss *appsv1.StatefulSet) error {
-    return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-        err := r.Get(ctx, client.ObjectKeyFromObject(ss), ss)
-        if err != nil {
-            return false, err
-        }
-
-        // Check if all replicas are updated and ready
-        return ss.Status.UpdatedReplicas == *ss.Spec.Replicas &&
-            ss.Status.ReadyReplicas == *ss.Spec.Replicas, nil
-    })
+    
+    return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 }
 ```
 
-> **Note:** The existing Database controller from earlier modules already handles image updates. This exercise shows the explicit waiting pattern for more control.
+**Alternative: Call from main reconcile loop**
+
+If you prefer, you can call `updateStatefulSet()` directly from your main `Reconcile()` method after ensuring the database is in a ready state:
+
+```go
+func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    // ... get database ...
+    
+    // Handle rolling updates
+    if err := r.updateStatefulSet(ctx, db); err != nil {
+        return ctrl.Result{}, err
+    }
+    
+    // ... rest of reconciliation ...
+}
+```
+
+**How it works:**
+
+1. `updateStatefulSet()` checks if the StatefulSet exists, creates it if not
+2. Compares desired image/replicas with current StatefulSet spec
+3. If different, updates the StatefulSet (triggers Kubernetes rolling update)
+4. Calls `waitForRollingUpdate()` to wait for all pods to be updated and ready
+5. Returns when the rolling update completes or times out
+
+> **Note:** The existing Database controller from earlier modules already handles image updates. This exercise shows the explicit waiting pattern for more control. The `waitForRollingUpdate()` function uses `wait.PollImmediate()` to poll the StatefulSet status until all replicas are updated and ready, with a 5-minute timeout.
 
 ### Task 3.2: Test Rolling Updates
 
