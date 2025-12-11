@@ -1153,131 +1153,25 @@ kubectl get database consistency-test -w
 kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "consistency"
 ```
 
-## Exercise 5: Test Backup and Restore
-
-### Task 5.1: Build and Deploy Operator
-
-Build and deploy the operator with the new Restore controller:
-
-```bash
-# Generate code and manifests
-make generate
-make manifests
-
-# Build the container image
-make docker-build IMG=postgres-operator:latest
-
-# Load image into kind cluster
-kind load docker-image postgres-operator:latest --name k8s-operators-course
-
-# Deploy operator to cluster
-make deploy IMG=postgres-operator:latest
-
-# If redeploying, restart the deployment
-kubectl rollout restart deploy -n postgres-operator-system postgres-operator-controller-manager
-kubectl rollout status deploy -n postgres-operator-system postgres-operator-controller-manager
-```
-
-> **Using Podman instead of Docker?**
-> 
-> ```bash
-> # Build with podman
-> make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
-> 
-> # Load image into kind (save to tarball, then load)
-> podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
-> kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
-> rm /tmp/postgres-operator.tar
-> 
-> # Deploy with localhost/ prefix
-> make deploy IMG=localhost/postgres-operator:latest
-> ```
-
-> **Getting `ErrImagePull` or `ImagePullBackOff`?**
-> 
-> Ensure `imagePullPolicy: IfNotPresent` is set in `config/manager/manager.yaml` and the image name matches what's loaded in kind.
-
-### Task 5.2: Create Database and Backup
-
-```bash
-# Create Database
-kubectl apply -f - <<EOF
-apiVersion: database.example.com/v1
-kind: Database
-metadata:
-  name: test-db
-spec:
-  image: postgres:14
-  replicas: 1
-  databaseName: testdb
-  username: admin
-  storage:
-    size: "1Gi"
-EOF
-
-# Wait for Database to be ready
-kubectl wait --for=jsonpath='{.status.phase}'=Ready database/test-db --timeout=120s
-
-# Create Backup
-kubectl apply -f - <<EOF
-apiVersion: database.example.com/v1
-kind: Backup
-metadata:
-  name: test-backup
-spec:
-  databaseRef:
-    name: test-db
-EOF
-
-# Check Backup status
-kubectl get backup test-backup
-```
-
-### Task 5.3: Test Restore
-
-```bash
-# Wait for Backup to complete
-kubectl wait --for=jsonpath='{.status.phase}'=Completed backup/test-backup --timeout=60s
-
-# Create Restore
-kubectl apply -f - <<EOF
-apiVersion: database.example.com/v1
-kind: Restore
-metadata:
-  name: test-restore
-spec:
-  databaseRef:
-    name: test-db
-  backupRef:
-    name: test-backup
-EOF
-
-# Check Restore status
-kubectl get restore test-restore
-
-# Verify restore completed
-kubectl get restore test-restore -o yaml
-```
-
-### Task 5.4: Verify All Resources
-
-```bash
-# Check all resources
-kubectl get databases
-kubectl get backups
-kubectl get restores
-
-# Check operator logs
-kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i restore
-```
-
 ## Cleanup
 
+Clean up the test resources created during this lab:
+
 ```bash
-# Delete test resources
-kubectl delete restore test-restore
-kubectl delete backup test-backup
-kubectl delete database test-db
+# Delete restore test resources
+kubectl delete restore test-restore --ignore-not-found=true
+kubectl delete restore test-restore-fail-db --ignore-not-found=true
+kubectl delete restore test-restore-fail-backup --ignore-not-found=true
+
+# Delete backup test resources
+kubectl delete backup test-backup --ignore-not-found=true
+kubectl delete backup restore-test-backup --ignore-not-found=true
+
+# Delete database test resources
+kubectl delete database test-db --ignore-not-found=true
+kubectl delete database restore-test-db --ignore-not-found=true
+kubectl delete database rolling-update-test --ignore-not-found=true
+kubectl delete database consistency-test --ignore-not-found=true
 ```
 
 ## Lab Summary
