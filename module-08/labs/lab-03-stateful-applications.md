@@ -984,7 +984,18 @@ Data consistency is critical for stateful applications. This exercise shows patt
 
 ### Task 4.1: Add Consistency Check Functions
 
-Add these helper functions to `internal/controller/database_controller.go`. The necessary imports (`fmt`, `log`, `client`, `appsv1`) should already be present in your controller file:
+Add these helper functions to `internal/controller/database_controller.go`. You'll need to add `os/exec` and `strings` to your imports if they're not already present:
+
+```go
+import (
+    // ... existing imports ...
+    "os/exec"
+    "strings"
+    // ... rest of imports ...
+)
+```
+
+The other necessary imports (`fmt`, `log`, `client`, `appsv1`) should already be present in your controller file:
 
 ```go
 func (r *DatabaseReconciler) ensureDataConsistency(ctx context.Context, db *databasev1.Database) error {
@@ -1018,16 +1029,50 @@ func (r *DatabaseReconciler) ensureDataConsistency(ctx context.Context, db *data
 }
 
 func (r *DatabaseReconciler) performConsistencyCheck(ctx context.Context, db *databasev1.Database) error {
-    // Application-specific consistency checks:
+    logger := log.FromContext(ctx)
+    
+    // Verify database endpoint is set
+    if db.Status.Endpoint == "" {
+        return fmt.Errorf("database endpoint not available in status")
+    }
+
+    // Parse endpoint (format: hostname:port or hostname)
+    host := db.Status.Endpoint
+    port := "5432" // Default PostgreSQL port
+    if strings.Contains(db.Status.Endpoint, ":") {
+        parts := strings.Split(db.Status.Endpoint, ":")
+        if len(parts) == 2 {
+            host = parts[0]
+            port = parts[1]
+        }
+    }
+
+    // For this lab, verify database is accessible using pg_isready
+    // pg_isready checks if PostgreSQL is accepting connections
+    // Note: This requires PostgreSQL client tools in the operator image
+    cmd := exec.CommandContext(ctx, "pg_isready",
+        "-h", host,
+        "-p", port)
+
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        logger.Error(err, "Database accessibility check failed", 
+            "endpoint", db.Status.Endpoint, 
+            "output", string(output))
+        return fmt.Errorf("database not accessible at %s: %v, output: %s", 
+            db.Status.Endpoint, err, string(output))
+    }
+
+    logger.Info("Database accessibility check passed", 
+        "endpoint", db.Status.Endpoint,
+        "output", string(output))
+
+    // In production, you would also:
     // 1. Connect to primary and verify it's writable
     // 2. Connect to replicas and verify replication lag
     // 3. Run test queries to verify data integrity
-
     // Example: Check replication status (PostgreSQL)
     // SELECT * FROM pg_stat_replication;
-
-    // For this lab, we'll just verify the database is accessible
-    // In production, implement actual consistency checks
 
     return nil
 }
