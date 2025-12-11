@@ -90,6 +90,7 @@ Complete working solutions for all labs are available in the [solutions director
 - [Lab 4.1 Solutions](solutions/conditions-helpers.go) - Condition helper functions
 - [Lab 4.2 Solutions](solutions/finalizer-handler.go) - Finalizer implementation
 - [Lab 4.3 Solutions](solutions/watch-setup.go) - Watch setup examples
+- [Lab 4.4 Solutions](solutions/state-machine-controller.go) - Multi-phase reconciliation with state machine
 
 
 ## Navigation

@@ -89,7 +89,7 @@ By the end of this module, you'll have:
 ## Solutions
 
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
-- [Lab 4.1 Solutions](solutions/) - Complete Hello World operator (main.go, controller, types)
+- [Lab 2.4 Solutions](solutions/) - Complete Hello World operator (main.go, controller, types)
 
 
 ## Navigation
