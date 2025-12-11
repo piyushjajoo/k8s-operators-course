@@ -916,6 +916,7 @@ kubectl rollout status deploy -n postgres-operator-system postgres-operator-cont
 
 ```bash
 # Create a Database with initial image
+# Using postgres:14 (Debian-based) as the initial image
 kubectl apply -f - <<EOF
 apiVersion: database.example.com/v1
 kind: Database
@@ -940,8 +941,10 @@ kubectl get pods -l app=database,name=rolling-update-test
 kubectl get statefulset rolling-update-test -o jsonpath='{.spec.template.spec.containers[0].image}'
 echo
 
-# Update to new image version
-kubectl patch database rolling-update-test --type=merge -p '{"spec":{"image":"postgres:15"}}'
+# Update to new image version (using compatible PostgreSQL 14 variant)
+# Note: We use postgres:14-alpine instead of postgres:15 because PostgreSQL major versions
+# are incompatible. Using the same major version (14) ensures data compatibility.
+kubectl patch database rolling-update-test --type=merge -p '{"spec":{"image":"postgres:14-alpine"}}'
 
 # Watch StatefulSet update
 kubectl get statefulset rolling-update-test -w
