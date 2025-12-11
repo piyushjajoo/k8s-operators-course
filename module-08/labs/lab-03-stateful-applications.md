@@ -812,7 +812,7 @@ Copy the complete implementation from `solutions/rolling-update.go` to `internal
 
 Looking at your current `postgres-operator` controller structure, you have a state machine pattern with `handleReady()` that already calls `reconcileStatefulSet()` to handle spec changes. To integrate the rolling update logic with waiting:
 
-**Current state:** In `handleReady()` (around line 293), you currently have:
+**Current state:** In `handleReady()`, you currently have:
 
 ```go
 func (r *DatabaseReconciler) handleReady(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
