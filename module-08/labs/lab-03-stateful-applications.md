@@ -1224,21 +1224,54 @@ kubectl logs -n postgres-operator-system -l control-plane=controller-manager | g
 
 **Test consistency check failure scenario:**
 
+To test how the operator handles consistency check failures, create a database with multiple replicas and observe the consistency check retries while replicas are starting up:
+
 ```bash
-# Scale down replicas to simulate inconsistency
-kubectl patch database consistency-test --type=merge -p '{"spec":{"replicas":1}}'
+# Create a new database with 3 replicas
+cat <<EOF | kubectl apply -f -
+apiVersion: database.example.com/v1
+kind: Database
+metadata:
+  name: consistency-failure-test
+spec:
+  databaseName: testdb
+  username: testuser
+  replicas: 3
+EOF
 
-# Wait for StatefulSet to scale down
-kubectl wait --for=jsonpath='{.status.readyReplicas}'=1 statefulset/consistency-test --timeout=60s
+# Watch Database status transitions in one terminal
+kubectl get database consistency-failure-test -w
 
-# Scale back up
-kubectl patch database consistency-test --type=merge -p '{"spec":{"replicas":3}}'
+# In another terminal, watch logs for consistency check activity
+kubectl logs -n postgres-operator-system -l control-plane=controller-manager -f | grep -i "consistency\|replica\|accessibility"
+```
 
-# Watch Database status during consistency checks
-kubectl get database consistency-test -w
+**What to observe:**
 
-# Check logs for consistency check retries
-kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "consistency"
+1. **During replica startup**: The Database will transition to `Verifying` phase once the StatefulSet starts deploying pods
+2. **Consistency check retries**: You should see logs like:
+   - `"Consistency check failed, retrying"` with error `"not all replicas ready: 1/3"` (or similar)
+   - The controller will retry every 5 seconds (as configured in `handleVerifying`)
+3. **Once all replicas are ready**: The `ensureDataConsistency` check will pass (all replicas ready)
+4. **Database accessibility check**: The `performConsistencyCheck` will run `pg_isready` to verify PostgreSQL is accepting connections
+5. **Final transition**: Once both checks pass, the Database will transition to `Ready` phase
+
+**Expected log sequence:**
+```
+INFO    Handling Verifying phase    {"database": "consistency-failure-test"}
+INFO    All replicas ready, checking consistency    {"replicas": 3}
+INFO    Database accessibility check passed    {"endpoint": "consistency-failure-test.default.svc.cluster.local:5432"}
+INFO    STATE TRANSITION: Verifying -> Ready    {"database": "consistency-failure-test"}
+```
+
+**If replicas aren't ready yet:**
+```
+INFO    Consistency check failed, retrying    {"error": "not all replicas ready: 2/3"}
+```
+
+**Clean up:**
+```bash
+kubectl delete database consistency-failure-test
 ```
 
 ## Cleanup
