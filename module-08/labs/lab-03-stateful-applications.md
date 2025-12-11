@@ -1237,6 +1237,8 @@ spec:
   databaseName: testdb
   username: testuser
   replicas: 3
+  storage:
+    size: "1Gi"
 EOF
 
 # Watch Database status transitions in one terminal
