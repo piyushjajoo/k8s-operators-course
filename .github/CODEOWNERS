@@ -1,0 +1,9 @@
+# CODEOWNERS file
+# This file defines code owners for this repository.
+# All pull requests will require approval from the code owners.
+#
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# All files require review from the repository owner
+* @piyushjajoo
+
