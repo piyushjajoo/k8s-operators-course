@@ -810,57 +810,56 @@ Copy the complete implementation from `solutions/rolling-update.go` to `internal
 
 **Step 2: Integrate into reconciliation logic**
 
-To use these functions in your Database controller, call `updateStatefulSet()` from your reconciliation logic. For example, in your `Reconcile()` method or state machine handler:
+Looking at your current `postgres-operator` controller structure, you have a state machine pattern with `handleReady()` that already calls `reconcileStatefulSet()` to handle spec changes. To integrate the rolling update logic with waiting:
+
+**Current state:** In `handleReady()` (around line 293), you currently have:
 
 ```go
-func (r *DatabaseReconciler) handleProvisioning(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+func (r *DatabaseReconciler) handleReady(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
     logger := log.FromContext(ctx)
-    
-    // ... other provisioning logic ...
-    
-    // Update StatefulSet (handles rolling updates if image/replicas changed)
-    if err := r.updateStatefulSet(ctx, db); err != nil {
-        logger.Error(err, "Failed to update StatefulSet")
+
+    // Reconcile StatefulSet to handle spec changes (e.g., replica count, image)
+    if err := r.reconcileStatefulSet(ctx, db); err != nil {
+        logger.Error(err, "Failed to reconcile StatefulSet in Ready state")
         return ctrl.Result{}, err
     }
-    
-    // Check if StatefulSet is ready
-    statefulSet := &appsv1.StatefulSet{}
-    err := r.Get(ctx, client.ObjectKey{
-        Name:      db.Name,
-        Namespace: db.Namespace,
-    }, statefulSet)
-    
-    if err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    // Transition to Ready if all replicas are ready
-    if statefulSet.Status.ReadyReplicas == *statefulSet.Spec.Replicas {
-        db.Status.Phase = "Ready"
-        return ctrl.Result{}, r.Status().Update(ctx, db)
-    }
-    
-    return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+    // ... rest of function ...
 }
 ```
 
-**Alternative: Call from main reconcile loop**
-
-If you prefer, you can call `updateStatefulSet()` directly from your main `Reconcile()` method after ensuring the database is in a ready state:
+**Integration:** Replace the call to `reconcileStatefulSet()` with `updateStatefulSet()` in `handleReady()`:
 
 ```go
-func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    // ... get database ...
-    
-    // Handle rolling updates
+func (r *DatabaseReconciler) handleReady(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+
+    // Update StatefulSet with rolling update support (waits for completion)
+    // This handles image changes and replica count changes with proper waiting
     if err := r.updateStatefulSet(ctx, db); err != nil {
+        logger.Error(err, "Failed to update StatefulSet in Ready state")
         return ctrl.Result{}, err
     }
-    
-    // ... rest of reconciliation ...
+
+    // Reconcile Service in case it was deleted
+    if err := r.reconcileService(ctx, db); err != nil {
+        logger.Error(err, "Failed to reconcile Service in Ready state")
+        return ctrl.Result{}, err
+    }
+
+    return ctrl.Result{}, nil
 }
 ```
+
+**Why `handleReady()`?** 
+- The `Ready` state is where ongoing spec changes (like image updates or replica scaling) are handled
+- `handleProvisioning()` should continue using `reconcileStatefulSet()` for initial creation
+- `updateStatefulSet()` will wait for rolling updates to complete, ensuring the database is fully updated before the next reconciliation
+
+**Note:** The `updateStatefulSet()` function will:
+- Create the StatefulSet if it doesn't exist (calls `createStatefulSet()`)
+- Detect image changes and trigger rolling updates
+- Wait for all replicas to be updated and ready (via `waitForRollingUpdate()`)
+- Handle replica count changes
 
 **How it works:**
 
