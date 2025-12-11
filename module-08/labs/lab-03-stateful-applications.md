@@ -975,7 +975,7 @@ kubectl get statefulset rolling-update-test -o jsonpath='{.status.readyReplicas}
 echo
 
 # Verify pods are running with new image
-kubectl get pods -l app=database,name=rolling-update-test -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=database,database=rolling-update-test -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
 ```
 
 ## Exercise 4: Ensure Data Consistency
