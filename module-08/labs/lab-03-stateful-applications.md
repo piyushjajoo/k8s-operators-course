@@ -934,7 +934,7 @@ EOF
 kubectl wait --for=jsonpath='{.status.phase}'=Ready database/rolling-update-test --timeout=120s
 
 # Verify initial StatefulSet pods
-kubectl get pods -l app=database,name=rolling-update-test
+kubectl get pods -l app=database,database=rolling-update-test
 
 # Check current image version
 kubectl get statefulset rolling-update-test -o jsonpath='{.spec.template.spec.containers[0].image}'
@@ -947,7 +947,7 @@ kubectl patch database rolling-update-test --type=merge -p '{"spec":{"image":"po
 kubectl get statefulset rolling-update-test -w
 
 # Watch pods during rolling update
-kubectl get pods -l app=database,name=rolling-update-test -w
+kubectl get pods -l app=database,database=rolling-update-test -w
 
 # Verify all pods are updated
 kubectl get statefulset rolling-update-test -o jsonpath='{.status.updatedReplicas}/{.spec.replicas}'
