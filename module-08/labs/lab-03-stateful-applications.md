@@ -1098,12 +1098,22 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
 }
 ```
 
-**Integration:** Add the consistency check before transitioning to Ready:
+**Integration:** Add the consistency check before transitioning to Ready. **Important:** Set the endpoint before calling `ensureDataConsistency()` since the consistency check needs it:
 
 ```go
 func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
     logger := log.FromContext(ctx)
     logger.Info("Handling Verifying phase", "database", db.Name)
+
+    // Set endpoint and secret name before consistency check (needed for pg_isready)
+    if db.Status.Endpoint == "" {
+        db.Status.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:5432", db.Name, db.Namespace)
+        db.Status.SecretName = r.secretName(db)
+        // Update status to persist endpoint before consistency check
+        if err := r.Status().Update(ctx, db); err != nil {
+            return ctrl.Result{}, err
+        }
+    }
 
     // Verify database consistency
     if err := r.ensureDataConsistency(ctx, db); err != nil {
@@ -1115,8 +1125,6 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
     logger.Info("STATE TRANSITION: Verifying -> Ready", "database", db.Name)
     db.Status.Phase = string(StateReady)
     db.Status.Ready = true
-    db.Status.SecretName = r.secretName(db)
-    db.Status.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:5432", db.Name, db.Namespace)
     r.setCondition(db, "Ready", metav1.ConditionTrue, "AllChecksPassed", "Database is ready")
     r.setCondition(db, "Progressing", metav1.ConditionFalse, "ReconciliationComplete", "Reconciliation complete")
 
