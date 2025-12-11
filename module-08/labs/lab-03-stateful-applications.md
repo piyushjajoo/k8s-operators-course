@@ -984,7 +984,7 @@ Data consistency is critical for stateful applications. This exercise shows patt
 
 ### Task 4.1: Add Consistency Check Functions
 
-Add these helper functions to `internal/controller/database_controller.go`:
+Add these helper functions to `internal/controller/database_controller.go`. The necessary imports (`fmt`, `log`, `client`, `appsv1`) should already be present in your controller file:
 
 ```go
 func (r *DatabaseReconciler) ensureDataConsistency(ctx context.Context, db *databasev1.Database) error {
@@ -1001,6 +1001,10 @@ func (r *DatabaseReconciler) ensureDataConsistency(ctx context.Context, db *data
     }
 
     // Check all replicas are ready
+    if statefulSet.Spec.Replicas == nil {
+        return fmt.Errorf("StatefulSet replicas not set")
+    }
+    
     if statefulSet.Status.ReadyReplicas != *statefulSet.Spec.Replicas {
         return fmt.Errorf("not all replicas ready: %d/%d",
             statefulSet.Status.ReadyReplicas, *statefulSet.Spec.Replicas)
@@ -1031,13 +1035,30 @@ func (r *DatabaseReconciler) performConsistencyCheck(ctx context.Context, db *da
 
 ### Task 4.2: Integrate Consistency Check
 
-You can call `ensureDataConsistency` in the `handleVerifying` state of the Database controller, or after rolling updates complete.
+Looking at your current `postgres-operator` controller, the `handleVerifying()` function currently just transitions to Ready without performing consistency checks. Update it to call `ensureDataConsistency()`:
 
-Example integration in `handleVerifying`:
+**Current state:** In `handleVerifying()`, you currently have:
 
 ```go
 func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
     logger := log.FromContext(ctx)
+    logger.Info("Handling Verifying phase", "database", db.Name)
+
+    // Verify database is working (connect, run test query, etc.)
+    // For now, assume it's ready
+    logger.Info("STATE TRANSITION: Verifying -> Ready", "database", db.Name)
+    db.Status.Phase = string(StateReady)
+    db.Status.Ready = true
+    // ... rest of status updates ...
+}
+```
+
+**Integration:** Add the consistency check before transitioning to Ready:
+
+```go
+func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1.Database) (ctrl.Result, error) {
+    logger := log.FromContext(ctx)
+    logger.Info("Handling Verifying phase", "database", db.Name)
 
     // Verify database consistency
     if err := r.ensureDataConsistency(ctx, db); err != nil {
@@ -1046,11 +1067,25 @@ func (r *DatabaseReconciler) handleVerifying(ctx context.Context, db *databasev1
     }
 
     // All checks passed, transition to Ready
-    db.Status.Phase = "Ready"
+    logger.Info("STATE TRANSITION: Verifying -> Ready", "database", db.Name)
+    db.Status.Phase = string(StateReady)
     db.Status.Ready = true
+    db.Status.SecretName = r.secretName(db)
+    db.Status.Endpoint = fmt.Sprintf("%s.%s.svc.cluster.local:5432", db.Name, db.Namespace)
+    r.setCondition(db, "Ready", metav1.ConditionTrue, "AllChecksPassed", "Database is ready")
+    r.setCondition(db, "Progressing", metav1.ConditionFalse, "ReconciliationComplete", "Reconciliation complete")
+
+    logger.Info("Database is now READY!", "database", db.Name, "endpoint", db.Status.Endpoint)
+    r.Recorder.Event(db, "Normal", "Ready", "Database is ready at "+db.Status.Endpoint)
     return ctrl.Result{}, r.Status().Update(ctx, db)
 }
 ```
+
+**How it works:**
+- `ensureDataConsistency()` checks that all StatefulSet replicas are ready
+- If replicas aren't ready, it returns an error and the function requeues after 5 seconds
+- Once all replicas are ready, it calls `performConsistencyCheck()` for application-specific checks
+- Only when consistency checks pass does the database transition to Ready state
 
 ### Task 4.3: Test Data Consistency Checks
 
@@ -1128,7 +1163,7 @@ kubectl get statefulset consistency-test -o jsonpath='{.status.readyReplicas}/{.
 echo
 
 # Verify pods are running
-kubectl get pods -l app=database,name=consistency-test
+kubectl get pods -l app=database,database=consistency-test
 
 # Check operator logs for consistency check activity
 kubectl logs -n postgres-operator-system -l control-plane=controller-manager | grep -i "consistency\|replica"
