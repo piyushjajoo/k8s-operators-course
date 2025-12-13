@@ -4,7 +4,6 @@ title: "Lab 06.2: Unit Testing Envtest"
 nav_order: 12
 parent: "Module 6: Testing & Debugging"
 grand_parent: Modules
-permalink: /module-06/labs/unit-testing-envtest/
 mermaid: true
 ---
 

@@ -4,7 +4,6 @@ title: "Lab 02.2: Kubebuilder Fundamentals"
 nav_order: 12
 parent: "Module 2: Introduction to Operators"
 grand_parent: Modules
-permalink: /module-02/labs/kubebuilder-fundamentals/
 mermaid: true
 ---
 

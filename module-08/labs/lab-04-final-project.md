@@ -4,7 +4,6 @@ title: "Lab 08.4: Final Project"
 nav_order: 14
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/labs/final-project/
 mermaid: true
 ---
 

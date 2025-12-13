@@ -4,7 +4,6 @@ title: "08.3 Stateful Applications"
 nav_order: 3
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/lessons/stateful-applications/
 mermaid: true
 ---
 

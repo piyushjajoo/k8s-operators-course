@@ -4,7 +4,6 @@ title: "02.3 Dev Environment"
 nav_order: 3
 parent: "Module 2: Introduction to Operators"
 grand_parent: Modules
-permalink: /module-02/lessons/dev-environment/
 mermaid: true
 ---
 

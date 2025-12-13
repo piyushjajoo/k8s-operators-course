@@ -4,7 +4,6 @@ title: "03.4 Client Go"
 nav_order: 4
 parent: "Module 3: Building Custom Controllers"
 grand_parent: Modules
-permalink: /module-03/lessons/client-go/
 mermaid: true
 ---
 

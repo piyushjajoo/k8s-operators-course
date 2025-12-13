@@ -4,7 +4,6 @@ title: "03.2 Designing Api"
 nav_order: 2
 parent: "Module 3: Building Custom Controllers"
 grand_parent: Modules
-permalink: /module-03/lessons/designing-api/
 mermaid: true
 ---
 

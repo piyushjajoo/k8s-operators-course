@@ -4,7 +4,6 @@ title: "Lab 01.4: Custom Resources"
 nav_order: 14
 parent: "Module 1: Kubernetes Architecture"
 grand_parent: Modules
-permalink: /module-01/labs/custom-resources/
 mermaid: true
 ---
 

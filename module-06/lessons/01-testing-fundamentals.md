@@ -4,7 +4,6 @@ title: "06.1 Testing Fundamentals"
 nav_order: 1
 parent: "Module 6: Testing & Debugging"
 grand_parent: Modules
-permalink: /module-06/lessons/testing-fundamentals/
 mermaid: true
 ---
 

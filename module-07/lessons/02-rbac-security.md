@@ -4,7 +4,6 @@ title: "07.2 Rbac Security"
 nav_order: 2
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/lessons/rbac-security/
 mermaid: true
 ---
 

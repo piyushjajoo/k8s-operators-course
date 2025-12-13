@@ -4,7 +4,6 @@ title: "1.2 API Machinery"
 nav_order: 2
 parent: "Module 1: Kubernetes Architecture"
 grand_parent: Modules
-permalink: /module-01/lessons/api-machinery/
 mermaid: true
 ---
 

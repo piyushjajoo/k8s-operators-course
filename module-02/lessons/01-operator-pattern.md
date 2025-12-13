@@ -4,7 +4,6 @@ title: "02.1 Operator Pattern"
 nav_order: 1
 parent: "Module 2: Introduction to Operators"
 grand_parent: Modules
-permalink: /module-02/lessons/operator-pattern/
 mermaid: true
 ---
 

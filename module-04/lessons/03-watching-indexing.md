@@ -4,7 +4,6 @@ title: "04.3 Watching Indexing"
 nav_order: 3
 parent: "Module 4: Advanced Reconciliation"
 grand_parent: Modules
-permalink: /module-04/lessons/watching-indexing/
 mermaid: true
 ---
 

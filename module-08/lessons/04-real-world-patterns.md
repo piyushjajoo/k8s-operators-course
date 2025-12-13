@@ -4,7 +4,6 @@ title: "08.4 Real World Patterns"
 nav_order: 4
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/lessons/real-world-patterns/
 mermaid: true
 ---
 

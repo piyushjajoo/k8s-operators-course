@@ -4,7 +4,6 @@ title: "Lab 05.4: Webhook Deployment"
 nav_order: 14
 parent: "Module 5: Webhooks & Admission Control"
 grand_parent: Modules
-permalink: /module-05/labs/webhook-deployment/
 mermaid: true
 ---
 

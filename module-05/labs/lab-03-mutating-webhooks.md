@@ -4,7 +4,6 @@ title: "Lab 05.3: Mutating Webhooks"
 nav_order: 13
 parent: "Module 5: Webhooks & Admission Control"
 grand_parent: Modules
-permalink: /module-05/labs/mutating-webhooks/
 mermaid: true
 ---
 

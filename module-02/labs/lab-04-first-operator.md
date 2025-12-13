@@ -4,7 +4,6 @@ title: "Lab 02.4: First Operator"
 nav_order: 14
 parent: "Module 2: Introduction to Operators"
 grand_parent: Modules
-permalink: /module-02/labs/first-operator/
 mermaid: true
 ---
 

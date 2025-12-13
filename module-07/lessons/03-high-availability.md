@@ -4,7 +4,6 @@ title: "07.3 High Availability"
 nav_order: 3
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/lessons/high-availability/
 mermaid: true
 ---
 

@@ -6,7 +6,7 @@ baseurl: "/k8s-operators-course"
 
 # Theme settings
 remote_theme: just-the-docs/just-the-docs@v0.10.0
-color_scheme: dark
+color_scheme: light
 
 # Aux links (top right)
 aux_links:
@@ -57,6 +57,12 @@ markdown: kramdown
 plugins:
   - jekyll-seo-tag
   - jekyll-remote-theme
+  - jekyll-relative-links
+
+# Relative links plugin - converts .md links to proper URLs
+relative_links:
+  enabled: true
+  collections: true
 
 # Exclude from processing
 exclude:

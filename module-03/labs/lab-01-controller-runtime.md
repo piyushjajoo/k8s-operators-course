@@ -4,7 +4,6 @@ title: "Lab 03.1: Controller Runtime"
 nav_order: 11
 parent: "Module 3: Building Custom Controllers"
 grand_parent: Modules
-permalink: /module-03/labs/controller-runtime/
 mermaid: true
 ---
 

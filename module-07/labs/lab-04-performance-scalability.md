@@ -4,7 +4,6 @@ title: "Lab 07.4: Performance Scalability"
 nav_order: 14
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/labs/performance-scalability/
 mermaid: true
 ---
 

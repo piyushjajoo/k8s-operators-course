@@ -4,7 +4,6 @@ title: "Lab 04.1: Conditions Status"
 nav_order: 11
 parent: "Module 4: Advanced Reconciliation"
 grand_parent: Modules
-permalink: /module-04/labs/conditions-status/
 mermaid: true
 ---
 

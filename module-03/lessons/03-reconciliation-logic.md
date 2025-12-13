@@ -4,7 +4,6 @@ title: "03.3 Reconciliation Logic"
 nav_order: 3
 parent: "Module 3: Building Custom Controllers"
 grand_parent: Modules
-permalink: /module-03/lessons/reconciliation-logic/
 mermaid: true
 ---
 

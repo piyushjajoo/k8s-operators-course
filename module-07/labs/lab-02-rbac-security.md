@@ -4,7 +4,6 @@ title: "Lab 07.2: Rbac Security"
 nav_order: 12
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/labs/rbac-security/
 mermaid: true
 ---
 

@@ -4,7 +4,6 @@ title: "Lab 04.2: Finalizers Cleanup"
 nav_order: 12
 parent: "Module 4: Advanced Reconciliation"
 grand_parent: Modules
-permalink: /module-04/labs/finalizers-cleanup/
 mermaid: true
 ---
 

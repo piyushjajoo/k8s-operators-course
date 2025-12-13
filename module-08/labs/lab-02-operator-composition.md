@@ -4,7 +4,6 @@ title: "Lab 08.2: Operator Composition"
 nav_order: 12
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/labs/operator-composition/
 mermaid: true
 ---
 

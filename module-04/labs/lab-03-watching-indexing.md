@@ -4,7 +4,6 @@ title: "Lab 04.3: Watching Indexing"
 nav_order: 13
 parent: "Module 4: Advanced Reconciliation"
 grand_parent: Modules
-permalink: /module-04/labs/watching-indexing/
 mermaid: true
 ---
 

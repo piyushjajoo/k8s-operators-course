@@ -4,7 +4,6 @@ title: "Lab 04.4: Advanced Patterns"
 nav_order: 14
 parent: "Module 4: Advanced Reconciliation"
 grand_parent: Modules
-permalink: /module-04/labs/advanced-patterns/
 mermaid: true
 ---
 

@@ -4,7 +4,6 @@ title: "Lab 08.1: Multi Tenancy"
 nav_order: 11
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/labs/multi-tenancy/
 mermaid: true
 ---
 

@@ -4,7 +4,6 @@ title: "Lab 07.3: High Availability"
 nav_order: 13
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/labs/high-availability/
 mermaid: true
 ---
 

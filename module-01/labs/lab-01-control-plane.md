@@ -4,7 +4,6 @@ title: "Lab 01.1: Control Plane"
 nav_order: 11
 parent: "Module 1: Kubernetes Architecture"
 grand_parent: Modules
-permalink: /module-01/labs/control-plane/
 mermaid: true
 ---
 

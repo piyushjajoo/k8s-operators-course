@@ -4,7 +4,6 @@ title: "04.1 Conditions Status"
 nav_order: 1
 parent: "Module 4: Advanced Reconciliation"
 grand_parent: Modules
-permalink: /module-04/lessons/conditions-status/
 mermaid: true
 ---
 

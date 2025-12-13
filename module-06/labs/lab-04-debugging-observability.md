@@ -4,7 +4,6 @@ title: "Lab 06.4: Debugging Observability"
 nav_order: 14
 parent: "Module 6: Testing & Debugging"
 grand_parent: Modules
-permalink: /module-06/labs/debugging-observability/
 mermaid: true
 ---
 

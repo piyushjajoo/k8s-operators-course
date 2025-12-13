@@ -4,7 +4,6 @@ title: "05.1 Admission Control"
 nav_order: 1
 parent: "Module 5: Webhooks & Admission Control"
 grand_parent: Modules
-permalink: /module-05/lessons/admission-control/
 mermaid: true
 ---
 

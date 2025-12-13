@@ -4,7 +4,6 @@ title: "07.4 Performance Scalability"
 nav_order: 4
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/lessons/performance-scalability/
 mermaid: true
 ---
 

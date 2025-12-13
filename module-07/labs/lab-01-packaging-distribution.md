@@ -4,7 +4,6 @@ title: "Lab 07.1: Packaging Distribution"
 nav_order: 11
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/labs/packaging-distribution/
 mermaid: true
 ---
 

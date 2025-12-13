@@ -4,7 +4,6 @@ title: "08.2 Operator Composition"
 nav_order: 2
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/lessons/operator-composition/
 mermaid: true
 ---
 

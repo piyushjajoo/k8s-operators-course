@@ -4,7 +4,6 @@ title: "Lab 08.3: Stateful Applications"
 nav_order: 13
 parent: "Module 8: Advanced Topics"
 grand_parent: Modules
-permalink: /module-08/labs/stateful-applications/
 mermaid: true
 ---
 

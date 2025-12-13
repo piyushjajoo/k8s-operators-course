@@ -4,7 +4,6 @@ title: "Lab 01.2: Api Machinery"
 nav_order: 12
 parent: "Module 1: Kubernetes Architecture"
 grand_parent: Modules
-permalink: /module-01/labs/api-machinery/
 mermaid: true
 ---
 

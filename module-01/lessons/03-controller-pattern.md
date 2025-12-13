@@ -4,7 +4,6 @@ title: "1.3 Controller Pattern"
 nav_order: 3
 parent: "Module 1: Kubernetes Architecture"
 grand_parent: Modules
-permalink: /module-01/lessons/controller-pattern/
 mermaid: true
 ---
 

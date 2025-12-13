@@ -4,7 +4,6 @@ title: "Lab 06.3: Integration Testing"
 nav_order: 13
 parent: "Module 6: Testing & Debugging"
 grand_parent: Modules
-permalink: /module-06/labs/integration-testing/
 mermaid: true
 ---
 

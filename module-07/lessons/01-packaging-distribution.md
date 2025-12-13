@@ -4,7 +4,6 @@ title: "07.1 Packaging Distribution"
 nav_order: 1
 parent: "Module 7: Production Considerations"
 grand_parent: Modules
-permalink: /module-07/lessons/packaging-distribution/
 mermaid: true
 ---
 

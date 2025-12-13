@@ -4,7 +4,6 @@ title: "Lab 01.3: Controller Pattern"
 nav_order: 13
 parent: "Module 1: Kubernetes Architecture"
 grand_parent: Modules
-permalink: /module-01/labs/controller-pattern/
 mermaid: true
 ---
 
