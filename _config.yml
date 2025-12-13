@@ -82,45 +82,101 @@ defaults:
     values:
       layout: default
   - scope:
-      path: "module-01"
+      path: "module-01/lessons"
     values:
       parent: "Module 1: Kubernetes Architecture"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-02"
+      path: "module-01/labs"
+    values:
+      parent: "Module 1: Kubernetes Architecture"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-02/lessons"
     values:
       parent: "Module 2: Introduction to Operators"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-03"
+      path: "module-02/labs"
+    values:
+      parent: "Module 2: Introduction to Operators"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-03/lessons"
     values:
       parent: "Module 3: Building Custom Controllers"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-04"
+      path: "module-03/labs"
+    values:
+      parent: "Module 3: Building Custom Controllers"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-04/lessons"
     values:
       parent: "Module 4: Advanced Reconciliation"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-05"
+      path: "module-04/labs"
+    values:
+      parent: "Module 4: Advanced Reconciliation"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-05/lessons"
     values:
       parent: "Module 5: Webhooks & Admission Control"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-06"
+      path: "module-05/labs"
+    values:
+      parent: "Module 5: Webhooks & Admission Control"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-06/lessons"
     values:
       parent: "Module 6: Testing & Debugging"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-07"
+      path: "module-06/labs"
+    values:
+      parent: "Module 6: Testing & Debugging"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-07/lessons"
     values:
       parent: "Module 7: Production Considerations"
       grand_parent: Modules
+      render_with_liquid: false
   - scope:
-      path: "module-08"
+      path: "module-07/labs"
+    values:
+      parent: "Module 7: Production Considerations"
+      grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-08/lessons"
     values:
       parent: "Module 8: Advanced Topics"
       grand_parent: Modules
+      render_with_liquid: false
+  - scope:
+      path: "module-08/labs"
+    values:
+      parent: "Module 8: Advanced Topics"
+      grand_parent: Modules
+      render_with_liquid: false
 
 # Callouts for notes, warnings, etc.
 callouts:
