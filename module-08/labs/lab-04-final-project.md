@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 08.4: Final Project"
+nav_order: 14
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/labs/final-project/
+mermaid: true
+---
+
 # Lab 8.4: Final Project
 
 **Related Lesson:** [Lesson 8.4: Real-World Patterns and Best Practices](../lessons/04-real-world-patterns.md)  

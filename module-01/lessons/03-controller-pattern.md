@@ -1,3 +1,13 @@
+---
+layout: default
+title: "1.3 Controller Pattern"
+nav_order: 3
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/lessons/controller-pattern/
+mermaid: true
+---
+
 # Lesson 1.3: The Controller Pattern
 
 **Navigation:** [← Previous: API Machinery](02-api-machinery.md) | [Module Overview](../README.md) | [Next: Custom Resources →](04-custom-resources.md)

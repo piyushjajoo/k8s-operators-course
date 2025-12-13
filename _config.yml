@@ -1,0 +1,139 @@
+# Site settings
+title: Building Kubernetes Operators
+description: A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder
+url: "https://piyushjajoo.github.io"
+baseurl: "/k8s-operators-course"
+
+# Theme settings
+remote_theme: just-the-docs/just-the-docs@v0.10.0
+color_scheme: dark
+
+# Aux links (top right)
+aux_links:
+  "GitHub":
+    - "https://github.com/piyushjajoo/k8s-operators-course"
+
+aux_links_new_tab: true
+
+# Footer
+footer_content: "Licensed under <a href=\"https://github.com/piyushjajoo/k8s-operators-course/blob/main/LICENSE\">MIT License</a>. Free and open-source."
+
+# Back to top link
+back_to_top: true
+back_to_top_text: "Back to top"
+
+# Heading anchor links
+heading_anchors: true
+
+# Navigation structure
+nav_enabled: true
+nav_sort: case_insensitive
+
+# Search
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false
+
+# Mermaid diagrams support
+mermaid:
+  version: "10.6.0"
+
+# Code syntax highlighting
+highlighter: rouge
+kramdown:
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-seo-tag
+  - jekyll-remote-theme
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .git
+  - scripts/
+  - "*.sh"
+  - LICENSE
+
+# Collections for organizing content
+collections:
+  modules:
+    output: true
+    permalink: /:collection/:path/
+
+# Default front matter
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: "module-01"
+    values:
+      parent: "Module 1: Kubernetes Architecture"
+      grand_parent: Modules
+  - scope:
+      path: "module-02"
+    values:
+      parent: "Module 2: Introduction to Operators"
+      grand_parent: Modules
+  - scope:
+      path: "module-03"
+    values:
+      parent: "Module 3: Building Custom Controllers"
+      grand_parent: Modules
+  - scope:
+      path: "module-04"
+    values:
+      parent: "Module 4: Advanced Reconciliation"
+      grand_parent: Modules
+  - scope:
+      path: "module-05"
+    values:
+      parent: "Module 5: Webhooks & Admission Control"
+      grand_parent: Modules
+  - scope:
+      path: "module-06"
+    values:
+      parent: "Module 6: Testing & Debugging"
+      grand_parent: Modules
+  - scope:
+      path: "module-07"
+    values:
+      parent: "Module 7: Production Considerations"
+      grand_parent: Modules
+  - scope:
+      path: "module-08"
+    values:
+      parent: "Module 8: Advanced Topics"
+      grand_parent: Modules
+
+# Callouts for notes, warnings, etc.
+callouts:
+  note:
+    title: Note
+    color: blue
+  warning:
+    title: Warning
+    color: red
+  important:
+    title: Important
+    color: yellow
+  tip:
+    title: Tip
+    color: green
+

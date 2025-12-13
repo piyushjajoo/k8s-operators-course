@@ -1,3 +1,13 @@
+---
+layout: default
+title: "1.1 Control Plane"
+nav_order: 1
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/lessons/control-plane/
+mermaid: true
+---
+
 # Lesson 1.1: Kubernetes Control Plane Review
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: API Machinery →](02-api-machinery.md)

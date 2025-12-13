@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 05.2: Validating Webhooks"
+nav_order: 12
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/labs/validating-webhooks/
+mermaid: true
+---
+
 # Lab 5.2: Building Validating Webhook
 
 **Related Lesson:** [Lesson 5.2: Implementing Validating Webhooks](../lessons/02-validating-webhooks.md)  
@@ -516,4 +526,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's build a mutating webhook for defaulting!
 
 **Navigation:** [← Previous Lab: Admission Control](lab-01-admission-control.md) | [Related Lesson](../lessons/02-validating-webhooks.md) | [Next Lab: Mutating Webhooks →](lab-03-mutating-webhooks.md)
-

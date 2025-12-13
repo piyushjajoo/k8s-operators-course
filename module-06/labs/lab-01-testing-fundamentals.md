@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 06.1: Testing Fundamentals"
+nav_order: 11
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/labs/testing-fundamentals/
+mermaid: true
+---
+
 # Lab 6.1: Setting Up Testing Environment
 
 **Related Lesson:** [Lesson 6.1: Testing Fundamentals](../lessons/01-testing-fundamentals.md)  
@@ -354,4 +364,3 @@ The test suite setup from this lab matches the Kubebuilder-generated scaffolding
 Now let's write comprehensive unit tests for your operator!
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-testing-fundamentals.md) | [Next Lab: Unit Testing →](lab-02-unit-testing-envtest.md)
-

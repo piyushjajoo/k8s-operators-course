@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 04.1: Conditions Status"
+nav_order: 11
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/labs/conditions-status/
+mermaid: true
+---
+
 # Lab 4.1: Implementing Status Conditions
 
 **Related Lesson:** [Lesson 4.1: Conditions and Status Management](../lessons/01-conditions-status.md)  
@@ -241,4 +251,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's implement finalizers for graceful cleanup!
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-conditions-status.md) | [Next Lab: Finalizers →](lab-02-finalizers-cleanup.md)
-

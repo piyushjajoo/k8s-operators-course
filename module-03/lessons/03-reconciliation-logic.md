@@ -1,3 +1,13 @@
+---
+layout: default
+title: "03.3 Reconciliation Logic"
+nav_order: 3
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/lessons/reconciliation-logic/
+mermaid: true
+---
+
 # Lesson 3.3: Implementing Reconciliation Logic
 
 **Navigation:** [← Previous: Designing Your API](02-designing-api.md) | [Module Overview](../README.md) | [Next: Working with Client-Go →](04-client-go.md)
@@ -391,4 +401,3 @@ When implementing reconciliation:
 Now that you understand reconciliation logic, let's learn advanced client operations for more sophisticated controllers.
 
 **Navigation:** [← Previous: Designing Your API](02-designing-api.md) | [Module Overview](../README.md) | [Next: Working with Client-Go →](04-client-go.md)
-

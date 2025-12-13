@@ -1,3 +1,13 @@
+---
+layout: default
+title: "08.3 Stateful Applications"
+nav_order: 3
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/lessons/stateful-applications/
+mermaid: true
+---
+
 # Lesson 8.3: Stateful Application Management
 
 **Navigation:** [← Previous: Operator Composition](02-operator-composition.md) | [Module Overview](../README.md) | [Next: Real-World Patterns →](04-real-world-patterns.md)
@@ -397,4 +407,3 @@ When managing stateful applications:
 Now that you understand stateful applications, let's learn about real-world patterns and best practices.
 
 **Navigation:** [← Previous: Operator Composition](02-operator-composition.md) | [Module Overview](../README.md) | [Next: Real-World Patterns →](04-real-world-patterns.md)
-

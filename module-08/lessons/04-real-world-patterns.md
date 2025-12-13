@@ -1,3 +1,13 @@
+---
+layout: default
+title: "08.4 Real World Patterns"
+nav_order: 4
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/lessons/real-world-patterns/
+mermaid: true
+---
+
 # Lesson 8.4: Real-World Patterns and Best Practices
 
 **Navigation:** [← Previous: Stateful Applications](03-stateful-applications.md) | [Module Overview](../README.md)
@@ -348,4 +358,3 @@ When building production operators:
 Congratulations! You've completed the entire course! You now have the knowledge and skills to build production-ready Kubernetes operators.
 
 **Navigation:** [← Previous: Stateful Applications](03-stateful-applications.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
-

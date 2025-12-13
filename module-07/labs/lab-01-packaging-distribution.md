@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 07.1: Packaging Distribution"
+nav_order: 11
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/labs/packaging-distribution/
+mermaid: true
+---
+
 # Lab 7.1: Packaging Your Operator
 
 **Related Lesson:** [Lesson 7.1: Packaging and Distribution](../lessons/01-packaging-distribution.md)  
@@ -549,4 +559,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's configure proper RBAC and security!
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-packaging-distribution.md) | [Next Lab: RBAC →](lab-02-rbac-security.md)
-

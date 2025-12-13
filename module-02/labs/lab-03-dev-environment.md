@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 02.3: Dev Environment"
+nav_order: 13
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/labs/dev-environment/
+mermaid: true
+---
+
 # Lab 2.3: Setting Up Your Environment
 
 **Related Lesson:** [Lesson 2.3: Development Environment Setup](../lessons/03-dev-environment.md)  
@@ -329,4 +339,3 @@ In this lab, you:
 Your environment is ready! Now let's build your first operator.
 
 **Navigation:** [← Previous Lab: Kubebuilder Fundamentals](lab-02-kubebuilder-fundamentals.md) | [Related Lesson](../lessons/03-dev-environment.md) | [Next Lab: First Operator →](lab-04-first-operator.md)
-

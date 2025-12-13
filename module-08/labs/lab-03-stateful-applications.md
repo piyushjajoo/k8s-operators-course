@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 08.3: Stateful Applications"
+nav_order: 13
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/labs/stateful-applications/
+mermaid: true
+---
+
 # Lab 8.3: Managing Stateful Applications
 
 **Related Lesson:** [Lesson 8.3: Stateful Application Management](../lessons/03-stateful-applications.md)  
@@ -1341,4 +1351,3 @@ cp path/to/solutions/restore.go internal/restore/
 Now let's build the final project!
 
 **Navigation:** [← Previous Lab: Operator Composition](lab-02-operator-composition.md) | [Related Lesson](../lessons/03-stateful-applications.md) | [Next Lab: Final Project →](lab-04-final-project.md)
-

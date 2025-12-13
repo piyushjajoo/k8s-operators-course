@@ -1,3 +1,13 @@
+---
+layout: default
+title: "07.2 Rbac Security"
+nav_order: 2
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/lessons/rbac-security/
+mermaid: true
+---
+
 # Lesson 7.2: RBAC and Security
 
 **Navigation:** [← Previous: Packaging and Distribution](01-packaging-distribution.md) | [Module Overview](../README.md) | [Next: High Availability →](03-high-availability.md)
@@ -428,4 +438,3 @@ When configuring RBAC and security with kubebuilder:
 Now that you understand RBAC and security, let's learn about high availability.
 
 **Navigation:** [← Previous: Packaging and Distribution](01-packaging-distribution.md) | [Module Overview](../README.md) | [Next: High Availability →](03-high-availability.md)
-

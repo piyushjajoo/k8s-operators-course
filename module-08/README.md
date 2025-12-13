@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 8: Advanced Topics"
+nav_order: 8
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-08/
+mermaid: true
+---
+
 # Module 8: Advanced Topics and Real-World Patterns
 
 ## Overview

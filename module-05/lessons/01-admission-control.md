@@ -1,3 +1,13 @@
+---
+layout: default
+title: "05.1 Admission Control"
+nav_order: 1
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/lessons/admission-control/
+mermaid: true
+---
+
 # Lesson 5.1: Kubernetes Admission Control
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: Validating Webhooks →](02-validating-webhooks.md)
@@ -283,4 +293,3 @@ When implementing webhooks:
 Now that you understand admission control, let's implement a validating webhook for your operator.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: Validating Webhooks →](02-validating-webhooks.md)
-

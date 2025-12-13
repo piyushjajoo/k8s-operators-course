@@ -1,3 +1,13 @@
+---
+layout: default
+title: "04.3 Watching Indexing"
+nav_order: 3
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/lessons/watching-indexing/
+mermaid: true
+---
+
 # Lesson 4.3: Watching and Indexing
 
 **Navigation:** [← Previous: Finalizers and Cleanup](02-finalizers-cleanup.md) | [Module Overview](../README.md) | [Next: Advanced Patterns →](04-advanced-patterns.md)
@@ -335,4 +345,3 @@ When setting up watches:
 Now that you understand watching and indexing, let's learn advanced patterns like multi-phase reconciliation and state machines.
 
 **Navigation:** [← Previous: Finalizers and Cleanup](02-finalizers-cleanup.md) | [Module Overview](../README.md) | [Next: Advanced Patterns →](04-advanced-patterns.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 06.4: Debugging Observability"
+nav_order: 14
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/labs/debugging-observability/
+mermaid: true
+---
+
 # Lab 6.4: Adding Observability
 
 **Related Lesson:** [Lesson 6.4: Debugging and Observability](../lessons/04-debugging-observability.md)  

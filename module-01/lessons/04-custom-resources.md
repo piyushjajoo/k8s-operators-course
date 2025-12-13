@@ -1,3 +1,13 @@
+---
+layout: default
+title: "1.4 Custom Resources"
+nav_order: 4
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/lessons/custom-resources/
+mermaid: true
+---
+
 # Lesson 1.4: Custom Resources
 
 **Navigation:** [← Previous: Controller Pattern](03-controller-pattern.md) | [Module Overview](../README.md)

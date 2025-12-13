@@ -1,3 +1,13 @@
+---
+layout: default
+title: "06.1 Testing Fundamentals"
+nav_order: 1
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/lessons/testing-fundamentals/
+mermaid: true
+---
+
 # Lesson 6.1: Testing Fundamentals
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: Unit Testing with envtest →](02-unit-testing-envtest.md)
@@ -298,4 +308,3 @@ When testing operators:
 Now that you understand testing fundamentals, let's set up envtest and write unit tests.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: Unit Testing with envtest →](02-unit-testing-envtest.md)
-

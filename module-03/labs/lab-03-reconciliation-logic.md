@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 03.3: Reconciliation Logic"
+nav_order: 13
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/labs/reconciliation-logic/
+mermaid: true
+---
+
 # Lab 3.3: Building PostgreSQL Operator
 
 **Related Lesson:** [Lesson 3.3: Implementing Reconciliation Logic](../lessons/03-reconciliation-logic.md)  

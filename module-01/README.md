@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 1: Kubernetes Architecture"
+nav_order: 1
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-01/
+mermaid: true
+---
+
 # Module 1: Kubernetes Architecture Deep Dive
 
 ## Overview

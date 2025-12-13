@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 08.2: Operator Composition"
+nav_order: 12
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/labs/operator-composition/
+mermaid: true
+---
+
 # Lab 8.2: Composing Operators
 
 **Related Lesson:** [Lesson 8.2: Operator Composition](../lessons/02-operator-composition.md)  
@@ -539,4 +549,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's learn about managing stateful applications!
 
 **Navigation:** [← Previous Lab: Multi-Tenancy](lab-01-multi-tenancy.md) | [Related Lesson](../lessons/02-operator-composition.md) | [Next Lab: Stateful Applications →](lab-03-stateful-applications.md)
-

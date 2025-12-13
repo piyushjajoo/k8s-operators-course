@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 06.3: Integration Testing"
+nav_order: 13
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/labs/integration-testing/
+mermaid: true
+---
+
 # Lab 6.3: Creating Integration Tests
 
 **Related Lesson:** [Lesson 6.3: Integration Testing](../lessons/03-integration-testing.md)  
@@ -471,4 +481,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's add observability and learn debugging techniques!
 
 **Navigation:** [← Previous Lab: Unit Testing](lab-02-unit-testing-envtest.md) | [Related Lesson](../lessons/03-integration-testing.md) | [Next Lab: Observability →](lab-04-debugging-observability.md)
-

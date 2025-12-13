@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 05.4: Webhook Deployment"
+nav_order: 14
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/labs/webhook-deployment/
+mermaid: true
+---
+
 # Lab 5.4: Webhook Deployment and Certificates
 
 **Related Lesson:** [Lesson 5.4: Webhook Deployment and Certificates](../lessons/04-webhook-deployment.md)  

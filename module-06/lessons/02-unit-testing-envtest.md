@@ -1,3 +1,13 @@
+---
+layout: default
+title: "06.2 Unit Testing Envtest"
+nav_order: 2
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/lessons/unit-testing-envtest/
+mermaid: true
+---
+
 # Lesson 6.2: Unit Testing with envtest
 
 **Navigation:** [← Previous: Testing Fundamentals](01-testing-fundamentals.md) | [Module Overview](../README.md) | [Next: Integration Testing →](03-integration-testing.md)
@@ -346,4 +356,3 @@ When writing unit tests:
 Now that you understand unit testing, let's learn about integration testing with real clusters.
 
 **Navigation:** [← Previous: Testing Fundamentals](01-testing-fundamentals.md) | [Module Overview](../README.md) | [Next: Integration Testing →](03-integration-testing.md)
-

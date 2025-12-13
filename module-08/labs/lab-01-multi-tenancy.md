@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 08.1: Multi Tenancy"
+nav_order: 11
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/labs/multi-tenancy/
+mermaid: true
+---
+
 # Lab 8.1: Building Multi-Tenant Operator
 
 **Related Lesson:** [Lesson 8.1: Multi-Tenancy and Namespace Isolation](../lessons/01-multi-tenancy.md)  

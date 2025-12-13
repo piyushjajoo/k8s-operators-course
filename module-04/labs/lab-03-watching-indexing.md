@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 04.3: Watching Indexing"
+nav_order: 13
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/labs/watching-indexing/
+mermaid: true
+---
+
 # Lab 4.3: Setting Up Watches and Indexes
 
 **Related Lesson:** [Lesson 4.3: Watching and Indexing](../lessons/03-watching-indexing.md)  
@@ -373,4 +383,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's implement advanced patterns like multi-phase reconciliation!
 
 **Navigation:** [← Previous Lab: Finalizers](lab-02-finalizers-cleanup.md) | [Related Lesson](../lessons/03-watching-indexing.md) | [Next Lab: Advanced Patterns →](lab-04-advanced-patterns.md)
-

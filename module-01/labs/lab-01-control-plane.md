@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 01.1: Control Plane"
+nav_order: 11
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/labs/control-plane/
+mermaid: true
+---
+
 # Lab 1.1: Exploring the Control Plane
 
 **Related Lesson:** [Lesson 1.1: Kubernetes Control Plane Review](../lessons/01-control-plane.md)  
@@ -259,4 +269,3 @@ In this lab, you:
 5. Reconciliation happens automatically when desired != actual state
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-control-plane.md) | [Next Lab: API Machinery →](lab-02-api-machinery.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 05.1: Admission Control"
+nav_order: 11
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/labs/admission-control/
+mermaid: true
+---
+
 # Lab 5.1: Exploring Admission Control
 
 **Related Lesson:** [Lesson 5.1: Kubernetes Admission Control](../lessons/01-admission-control.md)  
@@ -239,4 +249,3 @@ In this lab, you:
 Now let's build your own validating webhook!
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-admission-control.md) | [Next Lab: Validating Webhooks →](lab-02-validating-webhooks.md)
-

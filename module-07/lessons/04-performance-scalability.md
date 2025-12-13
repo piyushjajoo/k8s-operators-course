@@ -1,3 +1,13 @@
+---
+layout: default
+title: "07.4 Performance Scalability"
+nav_order: 4
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/lessons/performance-scalability/
+mermaid: true
+---
+
 # Lesson 7.4: Performance and Scalability
 
 **Navigation:** [← Previous: High Availability](03-high-availability.md) | [Module Overview](../README.md)
@@ -481,4 +491,3 @@ Congratulations! You've completed Module 7. You now understand:
 In [Module 8](../../module-08/README.md), you'll learn about advanced topics and real-world patterns.
 
 **Navigation:** [← Previous: High Availability](03-high-availability.md) | [Module Overview](../README.md) | [Next: Module 8 →](../../module-08/README.md)
-

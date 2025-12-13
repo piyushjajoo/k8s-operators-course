@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 06.2: Unit Testing Envtest"
+nav_order: 12
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/labs/unit-testing-envtest/
+mermaid: true
+---
+
 # Lab 6.2: Writing Unit Tests
 
 **Related Lesson:** [Lesson 6.2: Unit Testing with envtest](../lessons/02-unit-testing-envtest.md)  
@@ -427,4 +437,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's create integration tests for end-to-end scenarios!
 
 **Navigation:** [← Previous Lab: Testing Fundamentals](lab-01-testing-fundamentals.md) | [Related Lesson](../lessons/02-unit-testing-envtest.md) | [Next Lab: Integration Testing →](lab-03-integration-testing.md)
-

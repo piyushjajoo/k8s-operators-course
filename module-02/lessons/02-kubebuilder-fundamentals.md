@@ -1,3 +1,13 @@
+---
+layout: default
+title: "02.2 Kubebuilder Fundamentals"
+nav_order: 2
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/lessons/kubebuilder-fundamentals/
+mermaid: true
+---
+
 # Lesson 2.2: Kubebuilder Fundamentals
 
 **Navigation:** [← Previous: Operator Pattern](01-operator-pattern.md) | [Module Overview](../README.md) | [Next: Dev Environment →](03-dev-environment.md)
@@ -304,4 +314,3 @@ When using Kubebuilder:
 Now that you understand Kubebuilder, let's set up your development environment and create your first operator!
 
 **Navigation:** [← Previous: Operator Pattern](01-operator-pattern.md) | [Module Overview](../README.md) | [Next: Dev Environment →](03-dev-environment.md)
-

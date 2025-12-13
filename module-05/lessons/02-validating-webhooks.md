@@ -1,3 +1,13 @@
+---
+layout: default
+title: "05.2 Validating Webhooks"
+nav_order: 2
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/lessons/validating-webhooks/
+mermaid: true
+---
+
 # Lesson 5.2: Implementing Validating Webhooks
 
 **Navigation:** [← Previous: Admission Control](01-admission-control.md) | [Module Overview](../README.md) | [Next: Mutating Webhooks →](03-mutating-webhooks.md)
@@ -359,4 +369,3 @@ When implementing validating webhooks:
 Now that you understand validating webhooks, let's learn about mutating webhooks for defaulting and mutation.
 
 **Navigation:** [← Previous: Admission Control](01-admission-control.md) | [Module Overview](../README.md) | [Next: Mutating Webhooks →](03-mutating-webhooks.md)
-

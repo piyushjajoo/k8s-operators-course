@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 02.1: Operator Pattern"
+nav_order: 11
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/labs/operator-pattern/
+mermaid: true
+---
+
 # Lab 2.1: Exploring Existing Operators
 
 **Related Lesson:** [Lesson 2.1: The Operator Pattern](../lessons/01-operator-pattern.md)  
@@ -214,4 +224,3 @@ In this lab, you:
 Now that you understand what operators are, let's learn about Kubebuilder - the tool we'll use to build them!
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-operator-pattern.md) | [Next Lab: Kubebuilder Fundamentals →](lab-02-kubebuilder-fundamentals.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "06.3 Integration Testing"
+nav_order: 3
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/lessons/integration-testing/
+mermaid: true
+---
+
 # Lesson 6.3: Integration Testing
 
 **Navigation:** [← Previous: Unit Testing with envtest](02-unit-testing-envtest.md) | [Module Overview](../README.md) | [Next: Debugging and Observability →](04-debugging-observability.md)
@@ -294,4 +304,3 @@ When writing integration tests:
 Now that you understand integration testing, let's learn about debugging and observability.
 
 **Navigation:** [← Previous: Unit Testing with envtest](02-unit-testing-envtest.md) | [Module Overview](../README.md) | [Next: Debugging and Observability →](04-debugging-observability.md)
-

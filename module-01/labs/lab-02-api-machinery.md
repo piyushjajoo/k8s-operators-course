@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 01.2: Api Machinery"
+nav_order: 12
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/labs/api-machinery/
+mermaid: true
+---
+
 # Lab 1.2: Working with the Kubernetes API
 
 **Related Lesson:** [Lesson 1.2: Kubernetes API Machinery](../lessons/02-api-machinery.md)  
@@ -312,4 +322,3 @@ In this lab, you:
 5. Subresources provide additional functionality (status, scale, exec, etc.)
 
 **Navigation:** [← Previous Lab: Control Plane](lab-01-control-plane.md) | [Related Lesson](../lessons/02-api-machinery.md) | [Next Lab: Controller Pattern →](lab-03-controller-pattern.md)
-

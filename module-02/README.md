@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 2: Introduction to Operators"
+nav_order: 2
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-02/
+mermaid: true
+---
+
 # Module 2: Introduction to Operators
 
 ## Overview

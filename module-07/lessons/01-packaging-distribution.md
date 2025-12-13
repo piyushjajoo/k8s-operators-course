@@ -1,3 +1,13 @@
+---
+layout: default
+title: "07.1 Packaging Distribution"
+nav_order: 1
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/lessons/packaging-distribution/
+mermaid: true
+---
+
 # Lesson 7.1: Packaging and Distribution
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: RBAC and Security →](02-rbac-security.md)
@@ -476,4 +486,3 @@ When packaging kubebuilder operators:
 Now that you understand packaging, let's learn about RBAC and security.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: RBAC and Security →](02-rbac-security.md)
-

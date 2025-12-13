@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 7: Production Considerations"
+nav_order: 7
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-07/
+mermaid: true
+---
+
 # Module 7: Production Considerations
 
 ## Overview

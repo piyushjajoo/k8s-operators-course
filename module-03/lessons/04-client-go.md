@@ -1,3 +1,13 @@
+---
+layout: default
+title: "03.4 Client Go"
+nav_order: 4
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/lessons/client-go/
+mermaid: true
+---
+
 # Lesson 3.4: Working with Client-Go
 
 **Navigation:** [← Previous: Reconciliation Logic](03-reconciliation-logic.md) | [Module Overview](../README.md)
@@ -405,4 +415,3 @@ Congratulations! You've completed Module 3. You now understand:
 In [Module 4](../../module-04/README.md), you'll learn advanced reconciliation patterns like conditions, finalizers, and multi-phase reconciliation.
 
 **Navigation:** [← Previous: Reconciliation Logic](03-reconciliation-logic.md) | [Module Overview](../README.md) | [Next: Module 4 →](../../module-04/README.md)
-

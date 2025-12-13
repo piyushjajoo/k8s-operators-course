@@ -1,3 +1,13 @@
+---
+layout: default
+title: "04.2 Finalizers Cleanup"
+nav_order: 2
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/lessons/finalizers-cleanup/
+mermaid: true
+---
+
 # Lesson 4.2: Finalizers and Cleanup
 
 **Navigation:** [← Previous: Conditions and Status](01-conditions-status.md) | [Module Overview](../README.md) | [Next: Watching and Indexing →](03-watching-indexing.md)
@@ -289,4 +299,3 @@ When implementing finalizers:
 Now that you understand finalizers, let's learn about watching and indexing for efficient controllers.
 
 **Navigation:** [← Previous: Conditions and Status](01-conditions-status.md) | [Module Overview](../README.md) | [Next: Watching and Indexing →](03-watching-indexing.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 02.2: Kubebuilder Fundamentals"
+nav_order: 12
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/labs/kubebuilder-fundamentals/
+mermaid: true
+---
+
 # Lab 2.2: Kubebuilder CLI and Project Structure
 
 **Related Lesson:** [Lesson 2.2: Kubebuilder Fundamentals](../lessons/02-kubebuilder-fundamentals.md)  
@@ -296,4 +306,3 @@ In this lab, you:
 Now that you understand kubebuilder, let's set up your complete development environment!
 
 **Navigation:** [← Previous Lab: Operator Pattern](lab-01-operator-pattern.md) | [Related Lesson](../lessons/02-kubebuilder-fundamentals.md) | [Next Lab: Dev Environment →](lab-03-dev-environment.md)
-

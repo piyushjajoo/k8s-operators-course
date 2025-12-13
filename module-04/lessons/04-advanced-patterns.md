@@ -1,3 +1,13 @@
+---
+layout: default
+title: "04.4 Advanced Patterns"
+nav_order: 4
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/lessons/advanced-patterns/
+mermaid: true
+---
+
 # Lesson 4.4: Advanced Patterns
 
 **Navigation:** [← Previous: Watching and Indexing](03-watching-indexing.md) | [Module Overview](../README.md)
@@ -384,4 +394,3 @@ Congratulations! You've completed Module 4. You now understand:
 In [Module 5](../../module-05/README.md), you'll learn about webhooks for validation and mutation.
 
 **Navigation:** [← Previous: Watching and Indexing](03-watching-indexing.md) | [Module Overview](../README.md) | [Next: Module 5 →](../../module-05/README.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 07.2: Rbac Security"
+nav_order: 12
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/labs/rbac-security/
+mermaid: true
+---
+
 # Lab 7.2: Configuring RBAC
 
 **Related Lesson:** [Lesson 7.2: RBAC and Security](../lessons/02-rbac-security.md)  
@@ -646,4 +656,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's implement high availability!
 
 **Navigation:** [← Previous Lab: Packaging](lab-01-packaging-distribution.md) | [Related Lesson](../lessons/02-rbac-security.md) | [Next Lab: HA →](lab-03-high-availability.md)
-

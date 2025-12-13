@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 05.3: Mutating Webhooks"
+nav_order: 13
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/labs/mutating-webhooks/
+mermaid: true
+---
+
 # Lab 5.3: Building Mutating Webhook
 
 **Related Lesson:** [Lesson 5.3: Implementing Mutating Webhooks](../lessons/03-mutating-webhooks.md)  

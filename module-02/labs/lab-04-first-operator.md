@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 02.4: First Operator"
+nav_order: 14
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/labs/first-operator/
+mermaid: true
+---
+
 # Lab 2.4: Building Hello World Operator
 
 **Related Lesson:** [Lesson 2.4: Your First Operator](../lessons/04-first-operator.md)  
@@ -488,4 +498,3 @@ Complete working solutions for this lab are available in the [solutions director
 In Module 3, you'll learn to build more sophisticated controllers with advanced patterns!
 
 **Navigation:** [← Previous Lab: Dev Environment](lab-03-dev-environment.md) | [Related Lesson](../lessons/04-first-operator.md) | [Module Overview](../README.md)
-

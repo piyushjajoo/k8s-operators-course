@@ -1,3 +1,13 @@
+---
+layout: default
+title: "05.4 Webhook Deployment"
+nav_order: 4
+parent: "Module 5: Webhooks & Admission Control"
+grand_parent: Modules
+permalink: /module-05/lessons/webhook-deployment/
+mermaid: true
+---
+
 # Lesson 5.4: Webhook Deployment and Certificates
 
 **Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md)

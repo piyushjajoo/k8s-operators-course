@@ -1,3 +1,13 @@
+---
+layout: default
+title: "03.2 Designing Api"
+nav_order: 2
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/lessons/designing-api/
+mermaid: true
+---
+
 # Lesson 3.2: Designing Your API
 
 **Navigation:** [← Previous: Controller Runtime](01-controller-runtime.md) | [Module Overview](../README.md) | [Next: Reconciliation Logic →](03-reconciliation-logic.md)
@@ -390,4 +400,3 @@ When designing APIs:
 Now that you know how to design APIs, let's implement the reconciliation logic that uses them.
 
 **Navigation:** [← Previous: Controller Runtime](01-controller-runtime.md) | [Module Overview](../README.md) | [Next: Reconciliation Logic →](03-reconciliation-logic.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 03.4: Client Go"
+nav_order: 14
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/labs/client-go/
+mermaid: true
+---
+
 # Lab 3.4: Advanced Client Operations
 
 **Related Lesson:** [Lesson 3.4: Working with Client-Go](../lessons/04-client-go.md)  
@@ -237,4 +247,3 @@ You've completed Module 3! You now understand:
 In Module 4, you'll learn advanced patterns like conditions, finalizers, and multi-phase reconciliation.
 
 **Navigation:** [← Previous Lab: Reconciliation Logic](lab-03-reconciliation-logic.md) | [Related Lesson](../lessons/04-client-go.md) | [Module Overview](../README.md)
-

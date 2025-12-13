@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 07.4: Performance Scalability"
+nav_order: 14
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/labs/performance-scalability/
+mermaid: true
+---
+
 # Lab 7.4: Optimizing Performance
 
 **Related Lesson:** [Lesson 7.4: Performance and Scalability](../lessons/04-performance-scalability.md)  
@@ -492,4 +502,3 @@ You've completed Module 7! You now understand:
 In Module 8, you'll learn about advanced topics and real-world patterns!
 
 **Navigation:** [← Previous Lab: HA](lab-03-high-availability.md) | [Related Lesson](../lessons/04-performance-scalability.md) | [Module Overview](../README.md)
-

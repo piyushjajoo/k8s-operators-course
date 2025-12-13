@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 01.3: Controller Pattern"
+nav_order: 13
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/labs/controller-pattern/
+mermaid: true
+---
+
 # Lab 1.3: Observing Controllers in Action
 
 **Related Lesson:** [Lesson 1.3: The Controller Pattern](../lessons/03-controller-pattern.md)  
@@ -332,4 +342,3 @@ In this lab, you:
 6. Watch mechanisms provide real-time updates
 
 **Navigation:** [← Previous Lab: API Machinery](lab-02-api-machinery.md) | [Related Lesson](../lessons/03-controller-pattern.md) | [Next Lab: Custom Resources →](lab-04-custom-resources.md)
-

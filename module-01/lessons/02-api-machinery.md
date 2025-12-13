@@ -1,3 +1,13 @@
+---
+layout: default
+title: "1.2 API Machinery"
+nav_order: 2
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/lessons/api-machinery/
+mermaid: true
+---
+
 # Lesson 1.2: Kubernetes API Machinery
 
 **Navigation:** [← Previous: Control Plane](01-control-plane.md) | [Module Overview](../README.md) | [Next: Controller Pattern →](03-controller-pattern.md)

@@ -65,3 +65,10 @@ build/
 docs/_build/
 site/
 
+# Jekyll build artifacts
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+Gemfile.lock
+

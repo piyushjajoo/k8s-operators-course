@@ -1,3 +1,13 @@
+---
+layout: default
+title: "04.1 Conditions Status"
+nav_order: 1
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/lessons/conditions-status/
+mermaid: true
+---
+
 # Lesson 4.1: Conditions and Status Management
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: Finalizers and Cleanup →](02-finalizers-cleanup.md)
@@ -307,4 +317,3 @@ When implementing conditions:
 Now that you understand status management, let's learn about finalizers for graceful cleanup.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: Finalizers and Cleanup →](02-finalizers-cleanup.md)
-

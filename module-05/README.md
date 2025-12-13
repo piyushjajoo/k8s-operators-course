@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 5: Webhooks & Admission Control"
+nav_order: 5
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-05/
+mermaid: true
+---
+
 # Module 5: Webhooks and Admission Control
 
 ## Overview

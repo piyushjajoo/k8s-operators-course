@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 04.4: Advanced Patterns"
+nav_order: 14
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/labs/advanced-patterns/
+mermaid: true
+---
+
 # Lab 4.4: Multi-Phase Reconciliation
 
 **Related Lesson:** [Lesson 4.4: Advanced Patterns](../lessons/04-advanced-patterns.md)  
@@ -487,4 +497,3 @@ You've completed Module 4! You now understand:
 In Module 5, you'll learn about webhooks for validation and mutation!
 
 **Navigation:** [← Previous Lab: Watching](lab-03-watching-indexing.md) | [Related Lesson](../lessons/04-advanced-patterns.md) | [Module Overview](../README.md)
-

@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 3: Building Custom Controllers"
+nav_order: 3
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-03/
+mermaid: true
+---
+
 # Module 3: Building Custom Controllers
 
 ## Overview

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 07.3: High Availability"
+nav_order: 13
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/labs/high-availability/
+mermaid: true
+---
+
 # Lab 7.3: Implementing High Availability
 
 **Related Lesson:** [Lesson 7.3: High Availability](../lessons/03-high-availability.md)  
@@ -421,4 +431,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's optimize performance!
 
 **Navigation:** [← Previous Lab: RBAC](lab-02-rbac-security.md) | [Related Lesson](../lessons/03-high-availability.md) | [Next Lab: Performance →](lab-04-performance-scalability.md)
-

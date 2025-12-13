@@ -1,3 +1,13 @@
+---
+layout: default
+title: "08.2 Operator Composition"
+nav_order: 2
+parent: "Module 8: Advanced Topics"
+grand_parent: Modules
+permalink: /module-08/lessons/operator-composition/
+mermaid: true
+---
+
 # Lesson 8.2: Operator Composition
 
 **Navigation:** [← Previous: Multi-Tenancy](01-multi-tenancy.md) | [Module Overview](../README.md) | [Next: Stateful Applications →](03-stateful-applications.md)
@@ -316,4 +326,3 @@ When composing operators:
 Now that you understand operator composition, let's learn about managing stateful applications.
 
 **Navigation:** [← Previous: Multi-Tenancy](01-multi-tenancy.md) | [Module Overview](../README.md) | [Next: Stateful Applications →](03-stateful-applications.md)
-

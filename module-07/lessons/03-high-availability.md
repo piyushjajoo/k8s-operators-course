@@ -1,3 +1,13 @@
+---
+layout: default
+title: "07.3 High Availability"
+nav_order: 3
+parent: "Module 7: Production Considerations"
+grand_parent: Modules
+permalink: /module-07/lessons/high-availability/
+mermaid: true
+---
+
 # Lesson 7.3: High Availability
 
 **Navigation:** [← Previous: RBAC and Security](02-rbac-security.md) | [Module Overview](../README.md) | [Next: Performance and Scalability →](04-performance-scalability.md)
@@ -383,4 +393,3 @@ When implementing high availability with kubebuilder:
 Now that you understand high availability, let's learn about performance optimization.
 
 **Navigation:** [← Previous: RBAC and Security](02-rbac-security.md) | [Module Overview](../README.md) | [Next: Performance and Scalability →](04-performance-scalability.md)
-

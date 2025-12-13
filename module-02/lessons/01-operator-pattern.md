@@ -1,3 +1,13 @@
+---
+layout: default
+title: "02.1 Operator Pattern"
+nav_order: 1
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/lessons/operator-pattern/
+mermaid: true
+---
+
 # Lesson 2.1: The Operator Pattern
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: Kubebuilder Fundamentals →](02-kubebuilder-fundamentals.md)
@@ -337,4 +347,3 @@ When building operators:
 Now that you understand what operators are, let's learn about Kubebuilder - the framework that makes building operators easier.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: Kubebuilder Fundamentals →](02-kubebuilder-fundamentals.md)
-

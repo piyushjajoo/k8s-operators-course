@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 03.2: Designing Api"
+nav_order: 12
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/labs/designing-api/
+mermaid: true
+---
+
 # Lab 3.2: API Design for Database Operator
 
 **Related Lesson:** [Lesson 3.2: Designing Your API](../lessons/02-designing-api.md)  
@@ -364,4 +374,3 @@ The API design from this lab is used in the complete Database operator solution:
 Now that you have a well-designed API, let's implement the reconciliation logic to make it work!
 
 **Navigation:** [← Previous Lab: Controller Runtime](lab-01-controller-runtime.md) | [Related Lesson](../lessons/02-designing-api.md) | [Next Lab: Reconciliation Logic →](lab-03-reconciliation-logic.md)
-

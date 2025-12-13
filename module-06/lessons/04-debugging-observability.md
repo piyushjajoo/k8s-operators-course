@@ -1,3 +1,13 @@
+---
+layout: default
+title: "06.4 Debugging Observability"
+nav_order: 4
+parent: "Module 6: Testing & Debugging"
+grand_parent: Modules
+permalink: /module-06/lessons/debugging-observability/
+mermaid: true
+---
+
 # Lesson 6.4: Debugging and Observability
 
 **Navigation:** [← Previous: Integration Testing](03-integration-testing.md) | [Module Overview](../README.md)
@@ -338,4 +348,3 @@ Congratulations! You've completed Module 6. You now understand:
 In [Module 7](../../module-07/README.md), you'll learn about production deployment and best practices.
 
 **Navigation:** [← Previous: Integration Testing](03-integration-testing.md) | [Module Overview](../README.md) | [Next: Module 7 →](../../module-07/README.md)
-

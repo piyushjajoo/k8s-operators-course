@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 6: Testing & Debugging"
+nav_order: 6
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-06/
+mermaid: true
+---
+
 # Module 6: Testing and Debugging
 
 ## Overview

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 04.2: Finalizers Cleanup"
+nav_order: 12
+parent: "Module 4: Advanced Reconciliation"
+grand_parent: Modules
+permalink: /module-04/labs/finalizers-cleanup/
+mermaid: true
+---
+
 # Lab 4.2: Implementing Finalizers
 
 **Related Lesson:** [Lesson 4.2: Finalizers and Cleanup](../lessons/02-finalizers-cleanup.md)  
@@ -416,4 +426,3 @@ Complete working solutions for this lab are available in the [solutions director
 Now let's set up watches and indexes for efficient controllers!
 
 **Navigation:** [← Previous Lab: Conditions](lab-01-conditions-status.md) | [Related Lesson](../lessons/02-finalizers-cleanup.md) | [Next Lab: Watching →](lab-03-watching-indexing.md)
-

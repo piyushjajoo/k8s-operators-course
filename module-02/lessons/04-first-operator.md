@@ -1,3 +1,13 @@
+---
+layout: default
+title: "02.4 First Operator"
+nav_order: 4
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/lessons/first-operator/
+mermaid: true
+---
+
 # Lesson 2.4: Your First Operator
 
 **Navigation:** [← Previous: Dev Environment](03-dev-environment.md) | [Module Overview](../README.md)
@@ -412,4 +422,3 @@ This is the foundation for all operators!
 Congratulations! You've built your first operator. In [Module 3](../../module-03/README.md), you'll learn to build more sophisticated controllers with advanced patterns.
 
 **Navigation:** [← Previous: Dev Environment](03-dev-environment.md) | [Module Overview](../README.md) | [Next: Module 3 →](../../module-03/README.md)
-

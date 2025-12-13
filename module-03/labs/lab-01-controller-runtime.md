@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 03.1: Controller Runtime"
+nav_order: 11
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/labs/controller-runtime/
+mermaid: true
+---
+
 # Lab 3.1: Exploring Controller Runtime
 
 **Related Lesson:** [Lesson 3.1: Controller Runtime Deep Dive](../lessons/01-controller-runtime.md)  
@@ -235,4 +245,3 @@ In this lab, you:
 Now that you understand controller-runtime, let's design a proper API for a database operator!
 
 **Navigation:** [← Module Overview](../README.md) | [Related Lesson](../lessons/01-controller-runtime.md) | [Next Lab: Designing API →](lab-02-designing-api.md)
-

@@ -1,3 +1,13 @@
+---
+layout: default
+title: "03.1 Controller Runtime"
+nav_order: 1
+parent: "Module 3: Building Custom Controllers"
+grand_parent: Modules
+permalink: /module-03/lessons/controller-runtime/
+mermaid: true
+---
+
 # Lesson 3.1: Controller Runtime Deep Dive
 
 **Navigation:** [Module Overview](../README.md) | [Next Lesson: Designing Your API →](02-designing-api.md)
@@ -360,4 +370,3 @@ When building operators:
 Now that you understand controller-runtime, let's design a proper API for a more complex operator.
 
 **Navigation:** [← Module Overview](../README.md) | [Next: Designing Your API →](02-designing-api.md)
-

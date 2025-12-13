@@ -1,3 +1,14 @@
+---
+layout: default
+title: "Module 4: Advanced Reconciliation"
+nav_order: 4
+parent: Modules
+has_children: true
+has_toc: false
+permalink: /module-04/
+mermaid: true
+---
+
 # Module 4: Advanced Reconciliation Patterns
 
 ## Overview

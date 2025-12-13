@@ -1,3 +1,13 @@
+---
+layout: default
+title: "02.3 Dev Environment"
+nav_order: 3
+parent: "Module 2: Introduction to Operators"
+grand_parent: Modules
+permalink: /module-02/lessons/dev-environment/
+mermaid: true
+---
+
 # Lesson 2.3: Development Environment Setup
 
 **Navigation:** [← Previous: Kubebuilder Fundamentals](02-kubebuilder-fundamentals.md) | [Module Overview](../README.md) | [Next: First Operator →](04-first-operator.md)
@@ -330,4 +340,3 @@ export GO111MODULE=on
 Now that your environment is ready, let's build your first operator!
 
 **Navigation:** [← Previous: Kubebuilder Fundamentals](02-kubebuilder-fundamentals.md) | [Module Overview](../README.md) | [Next: First Operator →](04-first-operator.md)
-

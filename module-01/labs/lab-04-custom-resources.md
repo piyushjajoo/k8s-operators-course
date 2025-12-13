@@ -1,3 +1,13 @@
+---
+layout: default
+title: "Lab 01.4: Custom Resources"
+nav_order: 14
+parent: "Module 1: Kubernetes Architecture"
+grand_parent: Modules
+permalink: /module-01/labs/custom-resources/
+mermaid: true
+---
+
 # Lab 1.4: Creating Your First CRD
 
 **Related Lesson:** [Lesson 1.4: Custom Resources](../lessons/04-custom-resources.md)  
@@ -480,4 +490,3 @@ Complete working solutions for this lab are available in the [solutions director
 - [Example Website](../solutions/example-website.yaml) - Example Custom Resource
 
 **Navigation:** [← Previous Lab: Controller Pattern](lab-03-controller-pattern.md) | [Related Lesson](../lessons/04-custom-resources.md) | [Module Overview](../README.md)
-
