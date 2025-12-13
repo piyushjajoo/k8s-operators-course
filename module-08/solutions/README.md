@@ -5,22 +5,22 @@ This directory contains complete, working solutions for Module 8 labs.
 ## Files
 
 ### Lab 8.1 - Multi-Tenant Operator
-- **clusterdatabase-types.go**: ClusterDatabase API type definitions (cluster-scoped)
-- **clusterdatabase-controller.go**: ClusterDatabase controller implementation
-- **multi-tenant-controller.go**: Multi-tenant patterns and helper functions
+- [**clusterdatabase-types.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/clusterdatabase-types.go): ClusterDatabase API type definitions (cluster-scoped)
+- [**clusterdatabase-controller.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/clusterdatabase-controller.go): ClusterDatabase controller implementation
+- [**multi-tenant-controller.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/multi-tenant-controller.go): Multi-tenant patterns and helper functions
 
 ### Lab 8.2 - Operator Composition
-- **backup_types.go**: Backup API type definitions (scaffold with kubebuilder)
-- **backup-operator.go**: Complete backup controller
-- **operator-coordination.go**: Operator coordination examples
+- [**backup_types.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/backup_types.go): Backup API type definitions
+- [**backup-operator.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/backup-operator.go): Complete backup controller
+- [**operator-coordination.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/operator-coordination.go): Operator coordination examples
 
 ### Lab 8.3 - Stateful Application Management
-- **restore_types.go**: Restore API type definitions (scaffold with kubebuilder)
-- **restore-controller.go**: Complete Restore controller implementation
-- **backup.go**: Backup functionality implementation (`internal/backup/`)
-- **restore.go**: Restore functionality implementation (`internal/restore/`)
-- **rolling-update.go**: Rolling update handling for Database controller
-- **Dockerfile**: Dockerfile with PostgreSQL client tools for backup/restore functionality
+- [**restore_types.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/restore_types.go): Restore API type definitions
+- [**restore-controller.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/restore-controller.go): Complete Restore controller implementation
+- [**backup.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/backup.go): Backup functionality implementation
+- [**restore.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/restore.go): Restore functionality implementation
+- [**rolling-update.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/rolling-update.go): Rolling update handling
+- [**Dockerfile**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-08/solutions/Dockerfile): Dockerfile with PostgreSQL client tools
 
 ## Usage
 

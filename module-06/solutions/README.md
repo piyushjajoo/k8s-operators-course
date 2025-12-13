@@ -5,15 +5,15 @@ This directory contains complete, working solutions for Module 6 labs.
 ## Files
 
 ### Testing (Labs 1-3)
-- **suite_test.go**: Complete test suite setup with envtest (for `internal/controller/`)
-- **database_controller_test.go**: Complete unit test examples
-- **integration_test.go**: Complete integration test examples (combines suite + tests)
+- [**suite_test.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/suite_test.go): Complete test suite setup with envtest
+- [**database_controller_test.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/database_controller_test.go): Complete unit test examples
+- [**integration_test.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/integration_test.go): Complete integration test examples
 
 ### Observability (Lab 4)
-- **metrics.go**: Custom Prometheus metrics (copy to `internal/controller/metrics.go`)
-- **observability.go**: Patterns for structured logging and event emission
-- **metrics_reader_role_binding.yaml**: RBAC binding for metrics access (copy to `config/rbac/`)
-- **rbac_kustomization.yaml**: Updated kustomization including metrics binding
+- [**metrics.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/metrics.go): Custom Prometheus metrics
+- [**observability.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/observability.go): Patterns for structured logging and event emission
+- [**metrics_reader_role_binding.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/metrics_reader_role_binding.yaml): RBAC binding for metrics access
+- [**rbac_kustomization.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-06/solutions/rbac_kustomization.yaml): Updated kustomization including metrics binding
 
 ## Usage
 

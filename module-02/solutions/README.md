@@ -4,9 +4,9 @@ This directory contains complete, working solutions for Module 2 labs.
 
 ## Files
 
-- **hello-world-operator-main.go**: Complete main.go for Hello World operator
-- **hello-world-controller.go**: Complete controller implementation
-- **hello-world-types.go**: Complete API type definitions
+- [**hello-world-operator-main.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-02/solutions/hello-world-operator-main.go): Complete main.go for Hello World operator
+- [**hello-world-controller.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-02/solutions/hello-world-controller.go): Complete controller implementation
+- [**hello-world-types.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-02/solutions/hello-world-types.go): Complete API type definitions
 
 ## Usage
 

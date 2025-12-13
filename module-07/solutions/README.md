@@ -4,20 +4,15 @@ This directory contains complete, working solutions for Module 7 labs, aligned w
 
 ## Files
 
-- **Dockerfile**: Production-ready multi-stage Dockerfile (matches kubebuilder default)
-- **rbac.yaml**: Optimized RBAC configuration (generated via kubebuilder markers)
-- **security.yaml**: Security best practices (deployment, network policy)
-- **leader-election.go**: Complete `cmd/main.go` with leader election configuration
-- **ha-deployment.yaml**: High availability deployment with PDB (kubebuilder `config/manager/` format)
-- **ratelimiter.go**: Rate limiting using controller-runtime and golang.org/x/time/rate
-- **performance.go**: Performance optimization examples with kubebuilder patterns
-- **helm-chart/**: Helm chart generated from Kustomize (matches `make helm-chart` output)
-  - `Chart.yaml`: Chart metadata
-  - `values.yaml`: Default values
-  - `templates/manifests.yaml`: All resources from `kustomize build config/default`
-- **github-actions/**: CI/CD workflows for automated releases
-  - `release.yaml`: Main release workflow (Docker + Helm to GHCR)
-  - `helm-gh-pages.yaml`: Alternative GitHub Pages Helm repository
+- [**Dockerfile**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/Dockerfile): Production-ready multi-stage Dockerfile
+- [**rbac.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/rbac.yaml): Optimized RBAC configuration
+- [**security.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/security.yaml): Security best practices
+- [**leader-election.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/leader-election.go): Complete main.go with leader election
+- [**ha-deployment.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/ha-deployment.yaml): High availability deployment with PDB
+- [**ratelimiter.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/ratelimiter.go): Rate limiting examples
+- [**performance.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-07/solutions/performance.go): Performance optimization examples
+- [**helm-chart/**](https://github.com/piyushjajoo/k8s-operators-course/tree/main/module-07/solutions/helm-chart): Helm chart generated from Kustomize
+- [**github-actions/**](https://github.com/piyushjajoo/k8s-operators-course/tree/main/module-07/solutions/github-actions): CI/CD workflows for automated releases
 
 ## Kubebuilder Integration
 

@@ -8,7 +8,6 @@ mermaid: true
 ---
 
 # Building Kubernetes Operators
-{: .fs-9 .fw-700 }
 
 A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder.
 {: .fs-6 .fw-300 }

@@ -4,8 +4,8 @@ This directory contains complete, working solutions for Module 1 labs.
 
 ## Files
 
-- **website-crd.yaml**: Complete Website CRD definition
-- **example-website.yaml**: Example Website Custom Resource
+- [**website-crd.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-01/solutions/website-crd.yaml): Complete Website CRD definition
+- [**example-website.yaml**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-01/solutions/example-website.yaml): Example Website Custom Resource
 
 ## Usage
 

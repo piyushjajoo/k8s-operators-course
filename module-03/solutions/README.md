@@ -4,8 +4,8 @@ This directory contains complete, working solutions for Module 3 labs.
 
 ## Files
 
-- **database-types.go**: Complete Database API type definitions
-- **database-controller.go**: Complete Database controller implementation
+- [**database-types.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-03/solutions/database-types.go): Complete Database API type definitions
+- [**database-controller.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-03/solutions/database-controller.go): Complete Database controller implementation
 
 ## Usage
 

@@ -4,8 +4,8 @@ This directory contains complete, working solutions for Module 5 labs.
 
 ## Files
 
-- **validating-webhook.go**: Complete validating webhook implementation
-- **mutating-webhook.go**: Complete mutating webhook implementation
+- [**validating-webhook.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-05/solutions/validating-webhook.go): Complete validating webhook implementation
+- [**mutating-webhook.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-05/solutions/mutating-webhook.go): Complete mutating webhook implementation
 
 ## Usage
 

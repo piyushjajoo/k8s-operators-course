@@ -4,10 +4,10 @@ This directory contains complete, working solutions for Module 4 labs.
 
 ## Files
 
-- **conditions-helpers.go**: Helper functions for managing conditions
-- **finalizer-handler.go**: Complete finalizer implementation
-- **watch-setup.go**: Watch setup examples
-- **state-machine-controller.go**: Complete multi-phase reconciliation with state machine
+- [**conditions-helpers.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-04/solutions/conditions-helpers.go): Helper functions for managing conditions
+- [**finalizer-handler.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-04/solutions/finalizer-handler.go): Complete finalizer implementation
+- [**watch-setup.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-04/solutions/watch-setup.go): Watch setup examples
+- [**state-machine-controller.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-04/solutions/state-machine-controller.go): Complete multi-phase reconciliation with state machine
 
 ## Usage
 
