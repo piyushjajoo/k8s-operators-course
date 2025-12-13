@@ -1,5 +1,5 @@
 ---
-layout: home
+layout: default
 title: Home
 nav_order: 1
 description: "A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder"
@@ -8,7 +8,7 @@ mermaid: true
 ---
 
 # Building Kubernetes Operators
-{: .fs-9 }
+{: .fs-9 .fw-700 }
 
 A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder.
 {: .fs-6 .fw-300 }
@@ -31,33 +31,16 @@ This course teaches you how to build Kubernetes operators from the ground up. Yo
 
 ## What You'll Learn
 
-<div class="code-example" markdown="1">
-
-### Module 1: Kubernetes Architecture Deep Dive
-Learn how the control plane works, API machinery operates, and understand the controller pattern.
-
-### Module 2: Introduction to Operators
-Understand the operator pattern and build your first operator with Kubebuilder.
-
-### Module 3: Building Custom Controllers
-Master controller-runtime, API design, and reconciliation logic.
-
-### Module 4: Advanced Reconciliation Patterns
-Handle conditions, finalizers, watching, and advanced patterns.
-
-### Module 5: Webhooks and Admission Control
-Implement validating and mutating webhooks.
-
-### Module 6: Testing and Debugging
-Unit testing, integration testing, and observability.
-
-### Module 7: Production Considerations
-Packaging, RBAC, high availability, and performance.
-
-### Module 8: Advanced Topics
-Multi-tenancy, operator composition, and real-world patterns.
-
-</div>
+| Module | Description |
+|:-------|:------------|
+| **Module 1: Kubernetes Architecture Deep Dive** | Learn how the control plane works, API machinery operates, and understand the controller pattern. |
+| **Module 2: Introduction to Operators** | Understand the operator pattern and build your first operator with Kubebuilder. |
+| **Module 3: Building Custom Controllers** | Master controller-runtime, API design, and reconciliation logic. |
+| **Module 4: Advanced Reconciliation Patterns** | Handle conditions, finalizers, watching, and advanced patterns. |
+| **Module 5: Webhooks and Admission Control** | Implement validating and mutating webhooks. |
+| **Module 6: Testing and Debugging** | Unit testing, integration testing, and observability. |
+| **Module 7: Production Considerations** | Packaging, RBAC, high availability, and performance. |
+| **Module 8: Advanced Topics** | Multi-tenancy, operator composition, and real-world patterns. |
 
 ---
 

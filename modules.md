@@ -42,14 +42,14 @@ graph LR
     M6 --> M7[Module 7<br/>Production]
     M7 --> M8[Module 8<br/>Advanced Topics]
     
-    style M1 fill:#1a1a2e,stroke:#4cc9f0
-    style M2 fill:#1a1a2e,stroke:#4cc9f0
-    style M3 fill:#1a1a2e,stroke:#4cc9f0
-    style M4 fill:#1a1a2e,stroke:#4cc9f0
-    style M5 fill:#1a1a2e,stroke:#4cc9f0
-    style M6 fill:#1a1a2e,stroke:#4cc9f0
-    style M7 fill:#1a1a2e,stroke:#4cc9f0
-    style M8 fill:#1a1a2e,stroke:#4cc9f0
+    style M1 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M2 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M3 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M4 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M5 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M6 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M7 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M8 fill:#dbeafe,stroke:#2563eb,color:#1e40af
 ```
 
 ---
