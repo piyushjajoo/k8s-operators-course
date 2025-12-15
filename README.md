@@ -1,3 +1,10 @@
+---
+layout: default
+title: Course Overview
+nav_order: 0
+nav_exclude: true
+---
+
 # Building Kubernetes Operators Course
 
 A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder.

@@ -1,5 +1,5 @@
 # Site settings
-title: Building Kubernetes Operators
+title: K8s Operators Course
 description: A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder
 url: "https://piyushjajoo.github.io"
 baseurl: "/k8s-operators-course"
