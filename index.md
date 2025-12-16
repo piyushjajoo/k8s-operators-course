@@ -104,7 +104,7 @@ Kubebuilder 4.7+
 
 ## Share Your Project
 
-If you've completed the course and built an operator, share your project on LinkedIn and tag [Piyush Jajoo](https://www.linkedin.com/in/pjajoo) for feedback!
+If you've completed the course and built an operator, share your project on LinkedIn and tag [Piyush Jajoo](https://www.linkedin.com/in/pjajoo) for feedback! Please consider ⭐ing the project if you found it useful.
 
 ---
 
