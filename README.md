@@ -177,7 +177,7 @@ The only requirement is that you include the original copyright notice and licen
 
 ## Share Your Project
 
-If you've completed the course and built an operator, we'd love to see it! Share your project on LinkedIn and tag [Piyush Jajoo](https://www.linkedin.com/in/pjajoo). I'll make my best effort in my free time to review your code and provide feedback.
+If you've completed the course and built an operator, we'd love to see it! Share your project on LinkedIn and tag [Piyush Jajoo](https://www.linkedin.com/in/pjajoo). I'll make my best effort in my free time to review your code and provide feedback. Please consider ⭐ing the project if you found it useful.
 
 ## Support
 
