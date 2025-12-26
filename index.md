@@ -36,7 +36,7 @@ This course teaches you how to build Kubernetes operators from the ground up. Yo
 | **Module 2: Introduction to Operators** | Understand the operator pattern and build your first operator with Kubebuilder. |
 | **Module 3: Building Custom Controllers** | Master controller-runtime, API design, and reconciliation logic. |
 | **Module 4: Advanced Reconciliation Patterns** | Handle conditions, finalizers, watching, and advanced patterns. |
-| **Module 5: Webhooks and Admission Control** | Implement validating and mutating webhooks. |
+| **Module 5: Webhooks and Admission Control** | Implement validating, mutating, and conversion webhooks for API versioning. |
 | **Module 6: Testing and Debugging** | Unit testing, integration testing, and observability. |
 | **Module 7: Production Considerations** | Packaging, RBAC, high availability, and performance. |
 | **Module 8: Advanced Topics** | Multi-tenancy, operator composition, and real-world patterns. |
