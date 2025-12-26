@@ -51,6 +51,7 @@ The course is divided into 8 modules, each building on the previous:
    - [Validating webhooks](module-05/lessons/02-validating-webhooks.md)
    - [Mutating webhooks](module-05/lessons/03-mutating-webhooks.md)
    - [Webhook deployment](module-05/lessons/04-webhook-deployment.md)
+   - [Conversion webhooks](module-05/lessons/05-conversion-webhooks.md)
 
 6. **[Module 6: Testing and Debugging](module-06/README.md)**
    - [Testing fundamentals](module-06/lessons/01-testing-fundamentals.md)
