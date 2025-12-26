@@ -6,6 +6,7 @@ This directory contains complete, working solutions for Module 5 labs.
 
 - [**validating-webhook.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-05/solutions/validating-webhook.go): Complete validating webhook implementation
 - [**mutating-webhook.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-05/solutions/mutating-webhook.go): Complete mutating webhook implementation
+- [**conversion-webhook.go**](https://github.com/piyushjajoo/k8s-operators-course/blob/main/module-05/solutions/conversion-webhook.go): Complete conversion webhook implementation for API versioning
 
 ## Usage
 
@@ -18,9 +19,10 @@ These solutions can be used as:
 
 To use these solutions in your operator:
 
-1. Copy the webhook code to `internal/webhook/v1/database_webhook.go`
-2. Ensure your API types match the structure
-3. Run `make generate` and `make manifests`
+1. **For validating/mutating webhooks:** Copy the webhook code to `internal/webhook/v1/database_webhook.go`
+2. **For conversion webhooks:** Copy the conversion code to `api/v1/database_conversion.go`
+3. Ensure your API types match the structure
+4. Run `make generate` and `make manifests`
 
 ## Testing Webhooks
 
@@ -64,13 +66,16 @@ make deploy IMG=localhost/postgres-operator:latest
 
 ## Notes
 
-- Webhook code goes in `internal/webhook/v1/` directory
-- Uses `webhook.CustomValidator` and `webhook.CustomDefaulter` interfaces
+- **Validating/Mutating webhooks:** Code goes in `internal/webhook/v1/` directory
+- **Conversion webhooks:** Code goes in `api/v1/` directory (or respective version directory)
+- Uses `webhook.CustomValidator` and `webhook.CustomDefaulter` interfaces for admission webhooks
+- Uses `conversion.Hub` interface and `ConvertTo`/`ConvertFrom` methods for conversion webhooks
 - Methods receive `context.Context` as first parameter
 - `ValidateUpdate` receives both old and new objects as `runtime.Object`
 - Error messages are clear and actionable
 - Mutations are idempotent
 - Validation covers common scenarios
+- Conversion functions handle bidirectional conversion (v1 ↔ v2)
 
 ## Important: CRD Schema Defaults vs Webhook Defaults
 
