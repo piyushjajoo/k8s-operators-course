@@ -313,12 +313,6 @@ When deploying webhooks:
 
 ## Next Steps
 
-Congratulations! You've completed Module 5. You now understand:
-- Admission control and webhooks
-- Validating webhooks for custom validation
-- Mutating webhooks for defaulting
-- Certificate management and deployment
+**Next:** Learn about conversion webhooks for API versioning in [Lesson 5.5: Conversion Webhooks](05-conversion-webhooks.md).
 
-In [Module 6](../../module-06/README.md), you'll learn about testing and debugging operators.
-
-**Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)
+**Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Conversion Webhooks →](05-conversion-webhooks.md)

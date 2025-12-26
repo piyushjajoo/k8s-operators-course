@@ -23,7 +23,7 @@ The course is divided into 8 modules, each building on the previous.
 | [Module 2]({{ site.baseurl }}/module-02/) | Introduction to Operators | 5-6 hours |
 | [Module 3]({{ site.baseurl }}/module-03/) | Building Custom Controllers | 6-7 hours |
 | [Module 4]({{ site.baseurl }}/module-04/) | Advanced Reconciliation Patterns | 6-7 hours |
-| [Module 5]({{ site.baseurl }}/module-05/) | Webhooks and Admission Control | 5-6 hours |
+| [Module 5]({{ site.baseurl }}/module-05/) | Webhooks and Admission Control | 6-7 hours |
 | [Module 6]({{ site.baseurl }}/module-06/) | Testing and Debugging | 5-6 hours |
 | [Module 7]({{ site.baseurl }}/module-07/) | Production Considerations | 5-6 hours |
 | [Module 8]({{ site.baseurl }}/module-08/) | Advanced Topics and Real-World Patterns | 5-6 hours |
@@ -102,12 +102,13 @@ Handle complex scenarios with advanced patterns.
 
 ### [Module 5: Webhooks and Admission Control]({{ site.baseurl }}/module-05/)
 
-Implement admission webhooks.
+Implement admission and conversion webhooks.
 
 - Admission control fundamentals
 - Validating webhooks
 - Mutating webhooks
 - Webhook deployment
+- Conversion webhooks for API versioning
 
 ---
 
