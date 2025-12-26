@@ -18,6 +18,29 @@ This course teaches you how to build Kubernetes operators from the ground up. Yo
 **Prerequisites:** Basic Kubernetes knowledge, Go programming fundamentals, understanding of containerization  
 **License:** Free and open-source - Licensed under [MIT License](LICENSE)
 
+## How This Course Differs from the Kubebuilder Book
+
+The [Kubebuilder Book](https://book.kubebuilder.io/) is an excellent **reference documentation** for Kubebuilder. This course complements it by providing a **structured learning path** with hands-on practice. Here's how they differ:
+
+| Aspect | Kubebuilder Book | This Course |
+|:-------|:------------------|:------------|
+| **Format** | Reference documentation | Structured course with lessons and labs |
+| **Learning Path** | Topic-based chapters | Progressive modules building complexity |
+| **Hands-on Practice** | Examples and tutorials | Comprehensive labs with complete solutions |
+| **Project Structure** | Multiple small examples | One operator built throughout (Database/Postgres) |
+| **Visual Learning** | Code examples | Extensive Mermaid diagrams for architecture |
+| **Testing** | Basic testing examples | Deep dive into unit, integration, and debugging |
+| **Production Readiness** | Framework features | Production patterns, HA, performance, security |
+| **Best Practices** | Scattered throughout | Centralized in advanced modules |
+| **Prerequisites** | Assumes Kubernetes knowledge | Starts with Kubernetes architecture deep dive |
+
+**When to use each:**
+
+- **Use the Kubebuilder Book** when you need quick reference, API documentation, or want to explore specific features
+- **Use this course** when you want to learn systematically, build production-ready operators, and understand the "why" behind patterns
+
+**They work great together:** Use this course to learn, then reference the Kubebuilder Book for specific implementation details.
+
 ## Course Structure
 
 The course is divided into 8 modules, each building on the previous:
