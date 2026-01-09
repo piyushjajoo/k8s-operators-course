@@ -10,7 +10,7 @@ mermaid: true
 # Lab 8.4: Final Project
 
 **Related Lesson:** [Lesson 8.4: Real-World Patterns and Best Practices](../lessons/04-real-world-patterns.md)  
-**Navigation:** [← Previous Lab: Stateful Applications](lab-03-stateful-applications.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
+**Navigation:** [← Previous Lab: Stateful Applications](lab-03-stateful-applications.md) | [Module Overview](../README.md) | [Next: Module 9 →](../../module-09/README.md) | [Course Overview](../../README.md)
 
 ## Objectives
 
@@ -763,4 +763,4 @@ You now have:
 
 **You are now ready to build production-ready Kubernetes operators!**
 
-**Navigation:** [← Previous Lab: Stateful Applications](lab-03-stateful-applications.md) | [Related Lesson](../lessons/04-real-world-patterns.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
+**Navigation:** [← Previous Lab: Stateful Applications](lab-03-stateful-applications.md) | [Related Lesson](../lessons/04-real-world-patterns.md) | [Module Overview](../README.md) | [Next: Module 9 →](../../module-09/README.md) | [Course Overview](../../README.md)

@@ -1,16 +1,16 @@
 ---
 layout: default
-title: "Lab 05.5: Conversion Webhooks"
-nav_order: 14
-parent: "Module 5: Webhooks & Admission Control"
+title: "Lab 09.1: Conversion Webhooks"
+nav_order: 11
+parent: "Module 9: API Evolution and Versioning"
 grand_parent: Modules
 mermaid: true
 ---
 
-# Lab 5.5: Conversion Webhooks and API Versioning
+# Lab 9.1: Conversion Webhooks and API Versioning
 
-**Related Lesson:** [Lesson 5.5: Conversion Webhooks](../lessons/05-conversion-webhooks.md)  
-**Navigation:** [← Previous Lab: Webhook Deployment](lab-04-webhook-deployment.md) | [Module Overview](../README.md)
+**Related Lesson:** [Lesson 9.1: Conversion Webhooks](../lessons/01-conversion-webhooks.md)  
+**Navigation:** [← Previous Lab: Final Project](../../module-08/labs/lab-04-final-project.md) | [Module Overview](../README.md)
 
 ## Objectives
 
@@ -22,8 +22,8 @@ mermaid: true
 
 ## Prerequisites
 
-- Completion of [Lab 5.4](lab-04-webhook-deployment.md)
-- Database operator with webhooks deployed
+- Completion of [Module 8](../../module-08/README.md)
+- Database operator with admission webhooks deployed (from Module 5)
 - Understanding of API versioning concepts
 
 ## Exercise 1: Create v2 API Version
@@ -37,6 +37,10 @@ cd ~/postgres-operator
 # Create v2 API version
 kubebuilder create api --group database --version v2 --kind Database
 ```
+
+When prompted:
+- Create resource? `y`
+- Create controller? `n` (we already have a controller from v1)
 
 **Observe:**
 - What files were created in `api/v2/`?
@@ -58,11 +62,11 @@ cat api/v2/groupversion_info.go
 
 Let's evolve the API by adding new features. This demonstrates a realistic API evolution scenario.
 
-> **Important:** v1 remains the **storage version** and continues to be used throughout the course (modules 6, 7, 8) for consistency. Conversion webhooks allow both versions to coexist.
+> **Important:** v1 remains the **storage version** and is used throughout Modules 6-8 for consistency. Conversion webhooks allow both versions to coexist.
 
 ### Task 2.1: Update v2 DatabaseSpec
 
-Edit `api/v2/database_types.go` to evolve the API. The v1 API already has `DatabaseName`, `Storage` as `StorageSpec`, etc. For v2, we'll add replication mode and backup configuration:
+Edit `api/v2/database_types.go` to evolve the API. Start from the v1 types in your operator and keep the status fields the same so conversions don't drop data. For v2, we'll add replication mode and backup configuration:
 
 ```go
 package v2
@@ -120,6 +124,15 @@ type DatabaseStatus struct {
     
     // Ready indicates if the database is ready
     Ready bool `json:"ready,omitempty"`
+
+    // Endpoint is the database endpoint
+    Endpoint string `json:"endpoint,omitempty"`
+
+    // SecretName is the name of the Secret containing database credentials
+    SecretName string `json:"secretName,omitempty"`
+
+    // Conditions represent the latest observations
+    Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // DatabasePhase represents the phase of a Database
@@ -164,7 +177,22 @@ func init() {
 }
 ```
 
-### Task 2.2: Regenerate Code
+### Task 2.2: Mark v1 as the Storage Version
+
+Open `api/v1/database_types.go` and add the storage version marker to the v1 `Database` type (above the `type Database struct` line):
+
+```go
+// +kubebuilder:storageversion
+```
+
+This prevents the `make manifests` error that says there is no storage version.
+
+### Task 2.3: Regenerate Code
+
+Before running `make manifests`, ensure the conversion webhook patch is enabled:
+
+- `config/crd/kustomization.yaml` includes `patches/webhook_in_database.yaml`
+- `config/crd/patches/webhook_in_database.yaml` sets `conversion.strategy: Webhook`
 
 ```bash
 # Generate deepcopy methods
@@ -179,6 +207,11 @@ make manifests
 ### Task 3.1: Create Conversion File for v1
 
 Create `api/v1/database_conversion.go`:
+
+> **Note:** Replace `github.com/example/postgres-operator` with your module path from `go.mod` (first line). For example:
+> ```bash
+> head -n 1 go.mod
+> ```
 
 ```go
 package v1
@@ -323,9 +356,29 @@ conversion:
 
 ## Exercise 5: Register Conversion Webhook
 
-### Task 5.1: Update main.go
+### Task 5.1: Ensure v2 API Is Registered
+
+Confirm `cmd/main.go` registers the v2 API scheme. If it's missing, add it to the scheme initialization:
+
+```go
+import (
+    // ... existing imports ...
+    databasev2 "github.com/example/postgres-operator/api/v2"
+)
+
+func init() {
+    utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+    utilruntime.Must(databasev1.AddToScheme(scheme))
+    utilruntime.Must(databasev2.AddToScheme(scheme))
+    // +kubebuilder:scaffold:scheme
+}
+```
+
+### Task 5.2: Update main.go
 
 Edit `cmd/main.go` to register the conversion webhook:
+
+> **Note:** You do **not** need a new controller or a second webhook setup for v2. The conversion webhook below uses your `ConvertTo`/`ConvertFrom` methods to handle version translation.
 
 ```go
 package main
@@ -353,7 +406,7 @@ func main() {
 }
 ```
 
-### Task 5.2: Verify Webhook Registration
+### Task 5.3: Verify Webhook Registration
 
 ```bash
 # Build the operator
@@ -365,20 +418,54 @@ go vet ./...
 
 ## Exercise 6: Deploy and Test Conversion
 
-### Task 6.1: Deploy Updated Operator
+### Task 6.1: Build the Operator Image
 
 ```bash
-# Build and deploy
-make docker-build IMG=postgres-operator:latest
-kind load docker-image postgres-operator:latest --name k8s-operators-course
-make deploy IMG=postgres-operator:latest
+cd ~/postgres-operator
 
-# Wait for deployment
-kubectl wait --for=condition=Available deployment/postgres-operator-controller-manager \
-  -n postgres-operator-system --timeout=120s
+# Build the container image
+make docker-build IMG=postgres-operator:latest
+
+# For Podman users:
+# make docker-build IMG=postgres-operator:latest CONTAINER_TOOL=podman
 ```
 
-### Task 6.2: Verify CRD Versions
+### Task 6.2: Load Image into Kind
+
+```bash
+# For Docker:
+kind load docker-image postgres-operator:latest --name k8s-operators-course
+
+# For Podman:
+# podman save localhost/postgres-operator:latest -o /tmp/postgres-operator.tar
+# kind load image-archive /tmp/postgres-operator.tar --name k8s-operators-course
+# rm /tmp/postgres-operator.tar
+```
+
+### Task 6.3: Deploy Updated Operator
+
+```bash
+# Deploy operator with conversion webhook
+make deploy IMG=postgres-operator:latest
+
+# For Podman users:
+# make deploy IMG=localhost/postgres-operator:latest
+```
+
+### Task 6.4: Verify Deployment
+
+```bash
+# Check deployment
+kubectl get deployment -n postgres-operator-system
+
+# Check pods
+kubectl get pods -n postgres-operator-system
+
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod -l control-plane=controller-manager -n postgres-operator-system --timeout=120s
+```
+
+### Task 6.5: Verify CRD Versions
 
 ```bash
 # Check CRD has both versions
@@ -392,7 +479,7 @@ kubectl get crd databases.database.example.com -o jsonpath='{.spec.versions[?(@.
 # Should show: v1
 ```
 
-### Task 6.3: Test v1 → v2 Conversion
+### Task 6.6: Test v1 → v2 Conversion
 
 ```bash
 # Create resource using v1 API (matches Module 3 structure)
@@ -422,7 +509,7 @@ kubectl get database.v2.database.example.com test-conversion-v1 -o yaml
 # - spec.storage.storageClass should be "standard"
 ```
 
-### Task 6.4: Test v2 → v1 Conversion
+### Task 6.7: Test v2 → v1 Conversion
 
 ```bash
 # Create resource using v2 API
@@ -458,7 +545,7 @@ kubectl get database.v1.database.example.com test-conversion-v2 -o yaml
 # - Note: backup config and replication.mode are lost (v1 doesn't support them)
 ```
 
-### Task 6.5: Test Round-Trip Conversion
+### Task 6.8: Test Round-Trip Conversion
 
 ```bash
 # Create v1 resource
@@ -570,8 +657,10 @@ As a challenge, try adding a v3 API version:
 kubectl delete database test-conversion-v1 test-conversion-v2 test-roundtrip \
   test-missing-fields test-minimal-v2
 
-# Optional: Remove v2 API if not needed
-# (This requires careful planning and migration)
+# Optional: Undeploy operator
+# make undeploy
+
+# Optional: Remove v2 API only after planning a migration for existing resources
 ```
 
 ## Key Takeaways
@@ -591,5 +680,4 @@ kubectl delete database test-conversion-v1 test-conversion-v2 test-roundtrip \
 - Consider deprecation strategies for old versions
 - Plan migration path for existing resources
 
-**Navigation:** [← Previous Lab: Webhook Deployment](lab-04-webhook-deployment.md) | [Module Overview](../README.md)
-
+**Navigation:** [← Previous Lab: Final Project](../../module-08/labs/lab-04-final-project.md) | [Related Lesson](../lessons/01-conversion-webhooks.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)

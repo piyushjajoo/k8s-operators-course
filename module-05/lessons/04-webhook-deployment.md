@@ -313,6 +313,6 @@ When deploying webhooks:
 
 ## Next Steps
 
-**Next:** Learn about conversion webhooks for API versioning in [Lesson 5.5: Conversion Webhooks](05-conversion-webhooks.md).
+**Next:** Continue to [Module 6: Testing and Debugging](../../module-06/README.md) to validate your operator with tests.
 
-**Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Conversion Webhooks →](05-conversion-webhooks.md)
+**Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)

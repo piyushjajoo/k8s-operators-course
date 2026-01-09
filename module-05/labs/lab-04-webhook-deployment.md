@@ -329,4 +329,4 @@ You've completed Module 5! You now understand:
 
 In Module 6, you'll learn about testing and debugging operators!
 
-**Navigation:** [← Previous Lab: Mutating Webhooks](lab-03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next Lab: Conversion Webhooks →](lab-05-conversion-webhooks.md)
+**Navigation:** [← Previous Lab: Mutating Webhooks](lab-03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)

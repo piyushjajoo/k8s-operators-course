@@ -31,7 +31,6 @@ By the end of this module, you will:
 - Implement validating webhooks for custom validation
 - Implement mutating webhooks for defaulting and mutation
 - Manage webhook certificates and deployment
-- Implement conversion webhooks for API versioning
 - Test webhooks locally and in production
 
 ## Module Structure
@@ -47,9 +46,6 @@ By the end of this module, you will:
 
 4. **[Lesson 5.4: Webhook Deployment and Certificates](lessons/04-webhook-deployment.md)**
    - [Lab 5.4: Certificate Management](labs/lab-04-webhook-deployment.md)
-
-5. **[Lesson 5.5: Conversion Webhooks and API Versioning](lessons/05-conversion-webhooks.md)**
-   - [Lab 5.5: Conversion Webhooks](labs/lab-05-conversion-webhooks.md)
 
 ## Prerequisites Check
 
@@ -69,7 +65,6 @@ Throughout this module, you'll add webhooks to your Database operator:
 - Validating webhook for custom validation rules
 - Mutating webhook for defaulting values
 - Certificate management for webhook security
-- Conversion webhook for API versioning
 - Local testing setup for webhook development
 
 ## Setup
@@ -99,14 +94,12 @@ Each lesson includes hands-on exercises that add webhooks to your operator.
 - [Lab 5.2: Building Validating Webhook](labs/lab-02-validating-webhooks.md)
 - [Lab 5.3: Building Mutating Webhook](labs/lab-03-mutating-webhooks.md)
 - [Lab 5.4: Certificate Management](labs/lab-04-webhook-deployment.md)
-- [Lab 5.5: Conversion Webhooks](labs/lab-05-conversion-webhooks.md)
 
 ## Solutions
 
 Complete working solutions for all labs are available in the [solutions directory](solutions/):
 - [Lab 5.2 Solutions](solutions/validating-webhook.go) - Complete validating webhook
 - [Lab 5.3 Solutions](solutions/mutating-webhook.go) - Complete mutating webhook
-- [Lab 5.5 Solutions](solutions/conversion-webhook.go) - Complete conversion webhook
 
 
 ## Navigation
@@ -114,4 +107,3 @@ Complete working solutions for all labs are available in the [solutions director
 - [← Previous: Module 4 - Advanced Reconciliation Patterns](../module-04/README.md)
 - [Course Overview](../README.md)
 - [Next: Module 6 - Testing and Debugging →](../module-06/README.md)
-

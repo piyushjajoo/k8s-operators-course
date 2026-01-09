@@ -13,7 +13,7 @@ A comprehensive, hands-on course for building production-ready Kubernetes operat
 
 This course teaches you how to build Kubernetes operators from the ground up. You'll learn the fundamentals of Kubernetes architecture, the controller pattern, and how to use Kubebuilder to create custom operators that manage complex applications.
 
-**Duration:** 8 weeks (40-50 hours total)  
+**Duration:** 9 weeks (45-55 hours total)  
 **Level:** Intermediate to Advanced  
 **Prerequisites:** Basic Kubernetes knowledge, Go programming fundamentals, understanding of containerization  
 **License:** Free and open-source - Licensed under [MIT License](LICENSE)
@@ -43,7 +43,7 @@ The [Kubebuilder Book](https://book.kubebuilder.io/) is an excellent **reference
 
 ## Course Structure
 
-The course is divided into 8 modules, each building on the previous:
+The course is divided into 9 modules, each building on the previous:
 
 1. **[Module 1: Kubernetes Architecture Deep Dive](module-01/README.md)**
    - [Control plane components](module-01/lessons/01-control-plane.md)
@@ -74,7 +74,6 @@ The course is divided into 8 modules, each building on the previous:
    - [Validating webhooks](module-05/lessons/02-validating-webhooks.md)
    - [Mutating webhooks](module-05/lessons/03-mutating-webhooks.md)
    - [Webhook deployment](module-05/lessons/04-webhook-deployment.md)
-   - [Conversion webhooks](module-05/lessons/05-conversion-webhooks.md)
 
 6. **[Module 6: Testing and Debugging](module-06/README.md)**
    - [Testing fundamentals](module-06/lessons/01-testing-fundamentals.md)
@@ -93,6 +92,9 @@ The course is divided into 8 modules, each building on the previous:
    - [Operator composition](module-08/lessons/02-operator-composition.md)
    - [Stateful application management](module-08/lessons/03-stateful-applications.md)
    - [Real-world patterns and best practices](module-08/lessons/04-real-world-patterns.md)
+
+9. **[Module 9: API Evolution and Versioning](module-09/README.md)**
+   - [Conversion webhooks](module-09/lessons/01-conversion-webhooks.md)
 
 ## Getting Started
 

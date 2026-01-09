@@ -13,7 +13,7 @@ mermaid: true
 
 ## Overview
 
-Congratulations on reaching the final module! Now that you can build production-ready operators ([Module 7](../module-07/README.md)), it's time to explore advanced topics and real-world patterns. This module covers multi-tenancy, operator composition, stateful application management, and best practices from popular operators.
+Now that you can build production-ready operators ([Module 7](../module-07/README.md)), it's time to explore advanced topics and real-world patterns. This module covers multi-tenancy, operator composition, stateful application management, and best practices from popular operators.
 
 **Duration:** 6-7 hours  
 **Prerequisites:** 
@@ -119,3 +119,4 @@ Complete working solutions for all labs are available in the [solutions director
 
 - [← Previous: Module 7 - Production Considerations](../module-07/README.md)
 - [Course Overview](../README.md)
+- [Next: Module 9 - API Evolution and Versioning →](../module-09/README.md)

@@ -1,15 +1,15 @@
 ---
 layout: default
-title: "05.5 Conversion Webhooks"
-nav_order: 5
-parent: "Module 5: Webhooks & Admission Control"
+title: "09.1 Conversion Webhooks"
+nav_order: 1
+parent: "Module 9: API Evolution and Versioning"
 grand_parent: Modules
 mermaid: true
 ---
 
-# Lesson 5.5: Conversion Webhooks and API Versioning
+# Lesson 9.1: Conversion Webhooks and API Versioning
 
-**Navigation:** [← Previous: Webhook Deployment](04-webhook-deployment.md) | [Module Overview](../README.md)
+**Navigation:** [← Previous: Real-World Patterns](../../module-08/lessons/04-real-world-patterns.md) | [Module Overview](../README.md)
 
 ## Introduction
 
@@ -607,7 +607,7 @@ kubectl get database.v1.database.example.com test-db -o yaml | \
 - **Hub pattern** designates one version as the conversion hub
 - **Round-trip conversion** should preserve data (where possible)
 - **Gradual migration** allows safe API evolution
-- **v1 remains primary** - All subsequent modules (6, 7, 8) continue using v1 for consistency; conversion webhooks allow both versions to coexist without breaking existing code
+- **v1 remains primary** - Modules 6-8 use v1 for consistency; conversion webhooks allow both versions to coexist without breaking existing code
 
 ## Understanding for Building Operators
 
@@ -622,7 +622,7 @@ When implementing conversion webhooks:
 
 ## Related Lab
 
-- [Lab 5.5: Conversion Webhooks](../labs/lab-05-conversion-webhooks.md) - Hands-on exercises for this lesson
+- [Lab 9.1: Conversion Webhooks](../labs/lab-01-conversion-webhooks.md) - Hands-on exercises for this lesson
 
 ## References
 
@@ -643,14 +643,10 @@ When implementing conversion webhooks:
 
 ## Next Steps
 
-Congratulations! You've completed Module 5. You now understand:
-- Admission control and webhooks
-- Validating webhooks for custom validation
-- Mutating webhooks for defaulting
-- Certificate management and deployment
-- Conversion webhooks for API versioning
+Congratulations! You've completed Module 9. You now understand:
+- API evolution and versioning strategies
+- Conversion webhooks for version translation
+- Hub-and-spoke conversion patterns
+- Round-trip conversion testing
 
-In [Module 6](../../module-06/README.md), you'll learn about testing and debugging operators.
-
-**Navigation:** [← Previous: Webhook Deployment](04-webhook-deployment.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)
-
+**Navigation:** [← Previous: Real-World Patterns](../../module-08/lessons/04-real-world-patterns.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)

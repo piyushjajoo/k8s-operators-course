@@ -10,7 +10,7 @@ permalink: /modules
 # Course Modules
 {: .fs-9 }
 
-The course is divided into 8 modules, each building on the previous.
+The course is divided into 9 modules, each building on the previous.
 {: .fs-6 .fw-300 }
 
 ---
@@ -27,6 +27,7 @@ The course is divided into 8 modules, each building on the previous.
 | [Module 6]({{ site.baseurl }}/module-06/) | Testing and Debugging | 5-6 hours |
 | [Module 7]({{ site.baseurl }}/module-07/) | Production Considerations | 5-6 hours |
 | [Module 8]({{ site.baseurl }}/module-08/) | Advanced Topics and Real-World Patterns | 5-6 hours |
+| [Module 9]({{ site.baseurl }}/module-09/) | API Evolution and Versioning | 3-4 hours |
 
 ---
 
@@ -41,6 +42,7 @@ graph LR
     M5 --> M6[Module 6<br/>Testing]
     M6 --> M7[Module 7<br/>Production]
     M7 --> M8[Module 8<br/>Advanced Topics]
+    M8 --> M9[Module 9<br/>API Evolution]
     
     style M1 fill:#dbeafe,stroke:#2563eb,color:#1e40af
     style M2 fill:#dbeafe,stroke:#2563eb,color:#1e40af
@@ -50,6 +52,7 @@ graph LR
     style M6 fill:#dbeafe,stroke:#2563eb,color:#1e40af
     style M7 fill:#dbeafe,stroke:#2563eb,color:#1e40af
     style M8 fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    style M9 fill:#dbeafe,stroke:#2563eb,color:#1e40af
 ```
 
 ---
@@ -102,13 +105,12 @@ Handle complex scenarios with advanced patterns.
 
 ### [Module 5: Webhooks and Admission Control]({{ site.baseurl }}/module-05/)
 
-Implement admission and conversion webhooks.
+Implement admission webhooks.
 
 - Admission control fundamentals
 - Validating webhooks
 - Mutating webhooks
 - Webhook deployment
-- Conversion webhooks for API versioning
 
 ---
 
@@ -145,6 +147,16 @@ Master advanced operator patterns.
 
 ---
 
+### [Module 9: API Evolution and Versioning]({{ site.baseurl }}/module-09/)
+
+Safely evolve your API with conversion webhooks.
+
+- Multi-version CRD design
+- Conversion functions and Hub pattern
+- Storage vs served versions
+- Round-trip conversion testing
+
+---
+
 {: .note }
 Each module includes lessons, hands-on labs, and complete solutions.
-
