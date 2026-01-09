@@ -9,7 +9,7 @@ mermaid: true
 
 # Building Kubernetes Operators
 
-A comprehensive, hands-on course for building production-ready Kubernetes operators using Kubebuilder.
+A comprehensive, hands-on and free course for building production-ready Kubernetes operators using Kubebuilder.
 {: .fs-6 .fw-300 }
 
 [Get Started]({{ site.baseurl }}/modules){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
@@ -19,7 +19,7 @@ A comprehensive, hands-on course for building production-ready Kubernetes operat
 
 ## Course Overview
 
-This course teaches you how to build Kubernetes operators from the ground up. You'll learn the fundamentals of Kubernetes architecture, the controller pattern, and how to use Kubebuilder to create custom operators that manage complex applications.
+This free course teaches you how to build Kubernetes operators from the ground up. You'll learn the fundamentals of Kubernetes architecture, the controller pattern, and how to use Kubebuilder to create custom operators that manage complex applications.
 
 | **Duration** | 9 weeks (45-55 hours total) |
 | **Level** | Intermediate to Advanced |
