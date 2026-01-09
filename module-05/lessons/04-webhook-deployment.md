@@ -313,12 +313,6 @@ When deploying webhooks:
 
 ## Next Steps
 
-Congratulations! You've completed Module 5. You now understand:
-- Admission control and webhooks
-- Validating webhooks for custom validation
-- Mutating webhooks for defaulting
-- Certificate management and deployment
-
-In [Module 6](../../module-06/README.md), you'll learn about testing and debugging operators.
+**Next:** Continue to [Module 6: Testing and Debugging](../../module-06/README.md) to validate your operator with tests.
 
 **Navigation:** [← Previous: Mutating Webhooks](03-mutating-webhooks.md) | [Module Overview](../README.md) | [Next: Module 6 →](../../module-06/README.md)

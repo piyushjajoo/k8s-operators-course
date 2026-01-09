@@ -15,7 +15,7 @@ mermaid: true
 
 Now that you can build sophisticated operators ([Module 4](../module-04/README.md)), it's time to add webhooks for validation and mutation. Webhooks allow you to validate and modify resources before they're stored in etcd, providing powerful control over your Custom Resources.
 
-**Duration:** 5-6 hours  
+**Duration:** 6-7 hours  
 **Prerequisites:** 
 - Completion of [Module 1: Kubernetes Architecture Deep Dive](../module-01/README.md)
 - Completion of [Module 2: Introduction to Operators](../module-02/README.md)
@@ -107,4 +107,3 @@ Complete working solutions for all labs are available in the [solutions director
 - [← Previous: Module 4 - Advanced Reconciliation Patterns](../module-04/README.md)
 - [Course Overview](../README.md)
 - [Next: Module 6 - Testing and Debugging →](../module-06/README.md)
-

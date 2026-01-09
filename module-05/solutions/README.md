@@ -18,7 +18,7 @@ These solutions can be used as:
 
 To use these solutions in your operator:
 
-1. Copy the webhook code to `internal/webhook/v1/database_webhook.go`
+1. **For validating/mutating webhooks:** Copy the webhook code to `internal/webhook/v1/database_webhook.go`
 2. Ensure your API types match the structure
 3. Run `make generate` and `make manifests`
 
@@ -64,8 +64,8 @@ make deploy IMG=localhost/postgres-operator:latest
 
 ## Notes
 
-- Webhook code goes in `internal/webhook/v1/` directory
-- Uses `webhook.CustomValidator` and `webhook.CustomDefaulter` interfaces
+- **Validating/Mutating webhooks:** Code goes in `internal/webhook/v1/` directory
+- Uses `webhook.CustomValidator` and `webhook.CustomDefaulter` interfaces for admission webhooks
 - Methods receive `context.Context` as first parameter
 - `ValidateUpdate` receives both old and new objects as `runtime.Object`
 - Error messages are clear and actionable
