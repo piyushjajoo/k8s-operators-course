@@ -9,7 +9,7 @@ mermaid: true
 
 # Lesson 8.4: Real-World Patterns and Best Practices
 
-**Navigation:** [← Previous: Stateful Applications](03-stateful-applications.md) | [Module Overview](../README.md)
+**Navigation:** [← Previous: Stateful Applications](03-stateful-applications.md) | [Module Overview](../README.md) | [Next: Module 9 →](../../module-09/README.md)
 
 ## Introduction
 
@@ -356,4 +356,4 @@ When building production operators:
 
 Congratulations! You've completed the entire course! You now have the knowledge and skills to build production-ready Kubernetes operators.
 
-**Navigation:** [← Previous: Stateful Applications](03-stateful-applications.md) | [Module Overview](../README.md) | [Course Overview](../../README.md)
+**Navigation:** [← Previous: Stateful Applications](03-stateful-applications.md) | [Module Overview](../README.md) | [Next: Module 9 →](../../module-09/README.md) | [Course Overview](../../README.md)
